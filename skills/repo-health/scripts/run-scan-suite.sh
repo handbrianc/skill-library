@@ -132,9 +132,14 @@ fi
 
 # ---- Bundle Artifacts ----
 echo "" >&2
-LOG "MAIN" "Bundling artifacts to $OUT_ZIP..."
+LOG "MAIN" "Bundling artifacts..."
+ARCHIVE_PATH=""
 pushd /tmp >/dev/null
-zip -r "$OUT_ZIP" "repo-health-${TIMESTAMP}/" -q 2>/dev/null || tar czf "${OUT_ZIP%.zip}.tgz" "repo-health-${TIMESTAMP}/" 2>/dev/null || true
+if zip -r "$OUT_ZIP" "repo-health-${TIMESTAMP}/" -q 2>/dev/null; then
+  ARCHIVE_PATH="$OUT_ZIP"
+elif tar czf "${OUT_ZIP%.zip}.tgz" "repo-health-${TIMESTAMP}/" 2>/dev/null; then
+  ARCHIVE_PATH="${OUT_ZIP%.zip}.tgz"
+fi
 popd >/dev/null
 
 ARTIFACT_COUNT=$(ls "$ARTIFACT_DIR" 2>/dev/null | wc -l)
@@ -142,7 +147,7 @@ echo "" >&2
 echo "==============================================" >&2
 echo "  SCAN SUITE COMPLETE" >&2
 echo "  Artifacts: $ARTIFACT_COUNT files in $ARTIFACT_DIR" >&2
-echo "  Archive:   $OUT_ZIP" >&2
+echo "  Archive:   ${ARCHIVE_PATH:-N/A}" >&2
 echo "  Project:   $PROJECT_NAME" >&2
 echo "  Date:      $(date)" >&2
 echo "==============================================" >&2
