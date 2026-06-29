@@ -16,7 +16,7 @@ echo "Target: $TARGET" >&2
 echo "" >&2
 
 TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
+trap 'rm -rf "$TMPDIR"' EXIT
 
 # ---- Pattern Definitions ----
 # Each pattern maps to a (SEVERITY, REGEX) tuple.
