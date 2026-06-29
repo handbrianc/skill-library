@@ -31,8 +31,7 @@ if [ -f "$COVER_DATA" ] && jq -e 'type=="object" and (to_entries[0].value | has(
     | ($stmts | map(select(.value > 0)) | length) as $covered
     | (if $total == 0 then 100 else (($covered * 100) / $total) end) as $pct
     | select($pct < 50)
-    | "LOW_COVERAGE: \($file) (stmt_pct=\($pct)%)"' "$COVER_DATA" 2>/dev/null >&2
-
+    | "LOW_COVERAGE: \($file) (stmt_pct=\($pct)%)"' "$COVER_DATA" 1>&2 2>/dev/null
   jq -r 'to_entries[] | select((.value.s | to_entries | map(.value) | max) == 0) | .key' "$COVER_DATA" 2>/dev/null \
     | while read -r f; do echo "ZERO_COVERAGE: $f" >&2; done
 # -------- LCOV format --------
