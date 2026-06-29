@@ -4,8 +4,7 @@
 # Parses an SPDX-formatted SBOM and flags license compliance risks.
 #
 # Usage: ./scan-licenses.sh <sbom_spdx_json>
-# Output: GROUPED by risk tier: PERMISSIVE | NOTICE | COPYLEFT_WEAK | COPYLEFT_STRONG | UNKNOWN
-#
+# Output: GROUPED by risk tier: PERMISSIVE | COPYLEFT_WEAK | COPYLEFT_STRONG | UNKNOWN
 set -euo pipefail
 
 SBOM="${1:-/tmp/sbom.spdx.json}"
