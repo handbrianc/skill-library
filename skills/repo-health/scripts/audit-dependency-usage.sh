@@ -74,9 +74,9 @@ if [ "$PKG_MANAGER" == "npm" ] || [ "$PKG_MANAGER" == "pnpm" ] || [ "$PKG_MANAGE
       echo -e "DEAD_INSTALL\t$DEPK" >&2
       
       # Check if it's actually used dynamically
-      grep -r "$BASENAME" --include="*.ts" --include="*.js" \
-        --include="*.json" --include="*.config.*" . \
-        ! -path "*/node_modules/*" ! -path "*/dist/*" 2>/dev/null | head -3 || true
+      find . -type f \( -name "*.ts" -o -name "*.js" -o -name "*.json" -o -name "*.config.*" \) \
+        ! -path "*/node_modules/*" ! -path "*/dist/*" \
+        -exec grep -nH "$BASENAME" {} + 2>/dev/null | head -3 || true
     fi
   done
   
