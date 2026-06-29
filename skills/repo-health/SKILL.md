@@ -335,7 +335,7 @@ Coverage threshold enforcement:
 Gap analysis — find untested code:
 ```bash
 # GitNexus for untested symbols:
-gitnexus_impact({target: "CriticalModule", direction: "downstream", includeTests: false})
+impact({target: "CriticalModule", direction: "downstream", includeTests: false})
 
 # Or use coverage report:
 # Script: find-uncovered.sh /tmp/coverage/
