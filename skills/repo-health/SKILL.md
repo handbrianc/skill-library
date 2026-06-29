@@ -276,7 +276,7 @@ EXIT_CODE=$?
 echo "TEST_EXIT_CODE: $EXIT_CODE"
 ```
 
-**Rule: NEVER timeout the test suite. It MUST finish.**
+**Rule: Use a generous timeout (e.g., 10+ minutes) and treat timeouts as failures requiring investigation.**
 
 **Step 5.3 — Parse test results**
 
