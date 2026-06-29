@@ -71,10 +71,8 @@ grep -rHn --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" 
   | grep -v "return\|_(" \
   | head -30 || true
 
-# b) Unreachable code (after return/throw in blocks)
-grep -rHn --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
-  -E "^\s*(else\s*{|})\s*$" \
-  "$TARGET" 2>/dev/null | head -20 || true
+# b) Unreachable code is hard to detect reliably with grep alone — rely on compiler/linter output instead.
+:
 
 # c) Python: empty function bodies (pass without logic)
 if [ -n "$PYTHON_FILES" ]; then
