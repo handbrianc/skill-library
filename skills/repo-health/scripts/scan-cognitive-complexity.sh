@@ -5,8 +5,10 @@
 # Relies on ESLint complexity rule for TS/JS.
 #
 # Usage: ./scan-cognitive-complexity.sh <target_dir>
-# Output: CSV: file, function, complexity, cognitive_complexity, severity
-#
+# Output: Text report to stderr summarizing:
+#   - ESLint complexity-rule violations (cyclomatic complexity)
+#   - Heuristic cognitive-complexity red flags (CSV: file,line,pattern,score)
+# Note: This script does not currently emit a single unified CSV.
 set -euo pipefail
 
 TARGET="${1:-.}"
