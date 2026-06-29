@@ -115,7 +115,8 @@ HIGH_VALUE_TYPES="AKIA[A-Z0-9]{16}|sk_live_|-----BEGIN PRIVATE KEY-----|mongodb:
 for FILE in $NETWORK_FILES; do
   if grep -qE "$HIGH_VALUE_TYPES" "$FILE" 2>/dev/null; then
     grep -nE "$HIGH_VALUE_TYPES" "$FILE" 2>/dev/null | head -5 | while IFS=: read -r LN MATCH; do
-      echo -e "NETWORK_PROXIMATE_CRITICAL\t$FILE:$LN\t(masked)\tCRITICAL" >&2
+      masked=$(printf '%s' "$MATCH" | sed -E 's/(AKIA|sk_live|sk_test|pk_live|pk_test|ghp_|github_pat_|Bearer )[A-Za-z0-9._\/=:+.:-]+/\1*REDACTED*/g')
+      printf 'NETWORK_PROXIMATE_CRITICAL\t%s\t%s\t%s\tCRITICAL\n' "$FILE" "$LN" "$masked"
     done
   fi
 done
