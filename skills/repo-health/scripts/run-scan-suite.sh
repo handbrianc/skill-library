@@ -137,7 +137,7 @@ pushd /tmp >/dev/null
 zip -r "$OUT_ZIP" "repo-health-${TIMESTAMP}/" -q 2>/dev/null || tar czf "${OUT_ZIP%.zip}.tgz" "repo-health-${TIMESTAMP}/" 2>/dev/null || true
 popd >/dev/null
 
-ARTIFACT_COUNT=$(ls "repo-health-${TIMESTAMP}" | wc -l)
+ARTIFACT_COUNT=$(ls "$ARTIFACT_DIR" 2>/dev/null | wc -l)
 echo "" >&2
 echo "==============================================" >&2
 echo "  SCAN SUITE COMPLETE" >&2
