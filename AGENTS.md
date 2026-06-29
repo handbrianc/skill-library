@@ -45,4 +45,4 @@ This project is indexed by GitNexus as **skill-library** (129 symbols, 125 relat
 
 ## Writing Docs / Instruction Files
 
-When creating `AGENTS.md`, `CLAUDE.md`, `README.md`, or any other docs — **ignore all GitNexus-generated content**. Do not include GitNexus warnings, tool references, or GitNexus-specific workflows. The existing GitNexus block in this file is managed metadata and should remain as-is unless explicitly requested; this rule applies to newly authored or edited documentation content. Write only about the actual project purpose, structure, and conventions.
+When creating `AGENTS.md`, `CLAUDE.md`, `README.md`, or any other docs — **ignore all GitNexus-generated content**. Do not include GitNexus warnings, tool references, or GitNexus-specific workflows. The GitNexus block in this file is managed metadata and may be regenerated, so manual edits can be overwritten. Write only about the actual project purpose, structure, and conventions.
