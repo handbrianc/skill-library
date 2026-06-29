@@ -584,7 +584,7 @@ Synthesize all findings into a **prioritized, executable plan**.
 Supporting scripts referenced in this skill live at:
 
 ```
-.claude/skills/repo-health/scripts/
+skills/repo-health/scripts/
 ├── detect-dead-code.sh      # Static dead-code detector
 ├── find-duplicates.sh       # Text-similarity duplicate finder
 ├── scan-cognitive-complexity.sh  # Cyclomatic+cognitive metric scanner
