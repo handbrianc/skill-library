@@ -40,6 +40,13 @@ fi
 echo "Detected framework: $FRAMEWORK" >&2
 echo "" >&2
 
+# Initialize counters to defaults before framework-specific parsing (set -u safety)
+PASSED=0
+FAILED=0
+SKIPPED=0
+ERROR_COUNT=0
+RETRIED=0
+
 # ============================================================
 # JEST/VITEST FORMAT
 # ============================================================

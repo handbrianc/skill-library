@@ -85,7 +85,7 @@ dispatch "$SCRIPT_BASE/check-doc-links.sh" "DOC_LINKS" "scan-05-doc-links.log"
 echo "" >&2
 LOG "MAIN" "=== Specification Scans ==="
 if [ -d "specs" ]; then
-  dispatch "$SCRIPT_BASE/compare-specs.sh" "SPEC_ALIGN" "scan-06-spec-align.log"
+  dispatch "$SCRIPT_BASE/compare-specs.sh" "SPEC_ALIGN" "scan-06-spec-align.log" "$WORKDIR/specs" "$WORKDIR/specs/archive"
 else
   LOG "SPEC_ALIGN" "SKIPPED (no specs/ directory)"
 fi
@@ -104,7 +104,7 @@ LOG "MAIN" "=== License Scans ==="
 if command -v syft &>/dev/null; then
   LOG "SBOM" "Generating SBOM with syft..."
   syft . -o spdx-json > "$ARTIFACT_DIR/sbom.spdx.json" 2>&1 && LOG "SBOM" "Generated." || LOG "SBOM" "Warning: syft failed."
-  dispatch "$SCRIPT_BASE/scan-licenses.sh" "LICENSES" "scan-08-licenses.log"
+  dispatch "$SCRIPT_BASE/scan-licenses.sh" "LICENSES" "scan-08-licenses.log" "$ARTIFACT_DIR/sbom.spdx.json"
 else
   LOG "SBOM+LICENSE" "SKIPPED (syft not available)"
 fi

@@ -40,9 +40,10 @@ if find "$TARGET" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -n
       --format json 2>/dev/null | \
       jq -r '.[]
         | select(.messages != null)
+        | .filePath as $fp
         | .messages[]
         | select(.ruleId and (.ruleId | contains("complexity")))
-        | [.filePath, (.line|tostring), (.column|tostring), (.message|gsub("[\t\r\n]+";" ")), .ruleId]
+        | [$fp, (.line|tostring), (.column|tostring), (.message|gsub("[\t\r\n]+";" ")), .ruleId]
         | @tsv' 2>/dev/null | \
       while IFS=$'\t' read -r filepath line col msg rule; do
         echo "$filepath",line=$line,"$msg" >> "$OUT"
