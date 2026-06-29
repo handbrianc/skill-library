@@ -31,8 +31,9 @@ echo "Checking internal links..." >&2
 # Extract relative links from markdown
 # ![alt](path) and [text](url) patterns
 grep -rhn --include="*.md" --include="*.mdx" -E '\[([^\]]+)\]\(([^)]+)\)' "$TARGET" 2>/dev/null \
-  | grep -vE '^(https?|ftp|ssh|npm|tel|mailto|javascript|blob):' \
-  | while IFS=: read -r file linum pattern url; do
+  | while IFS=: read -r file linum match; do
+    url=$(printf '%s' "$match" | sed -nE 's/.*\(([^)]+)\).*/\1/p')
+    [[ "$url" =~ ^(https?|ftp|ssh|npm|tel|mailto|javascript|blob): ]] && continue
     # Strip anchors (#fragment) for file existence check
     BASE_URL="${url%%#*}"
     
