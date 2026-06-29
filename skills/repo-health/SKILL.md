@@ -460,8 +460,7 @@ Synthesize all findings into a **prioritized, executable plan**.
 
 **Audited:** `{repo}`  
 **Date:** `{YYYY-MM-DD}`  
-** auditors:** Human (repo-health skill) + automated scanners  
-
+**Auditors:** Human (repo-health skill) + automated scanners  
 ---
 
 ### SUMMARY
