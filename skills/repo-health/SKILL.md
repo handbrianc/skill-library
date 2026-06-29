@@ -24,7 +24,7 @@ A rigorous, deterministic repository audit covering six dimensions. Produces a p
 **Required environment:**
 - Node.js >= 18 (for `npx`)
 - Git installed and accessible
-- For security scan: `npm audit`, ` Grype` or `Syft` (container/jar projects)
+- For security scan: `npm audit`, `Grype` or `Syft` (container/jar projects)
 - For coverage: project's test runner with coverage reporter (vitest, jest, etc.)
 - For complexity metrics: `eslint --quiet` with `complexity` rule, or `tsq` for TS
 
