@@ -30,10 +30,12 @@ echo "Checking internal links..." >&2
 
 # Extract relative links from markdown
 # ![alt](path) and [text](url) patterns
-grep -rhn --include="*.md" --include="*.mdx" -E '\[([^\]]+)\]\(([^)]+)\)' "$TARGET" 2>/dev/null \
+grep -roEn --include="*.md" --include="*.mdx" '\[([^]]+)\]\(([^)]+)\)' "$TARGET" 2>/dev/null \
   | while IFS=: read -r file linum match; do
-    url=$(printf '%s' "$match" | sed -nE 's/.*\(([^)]+)\).*/\1/p')
-    [[ "$url" =~ ^(https?|ftp|ssh|npm|tel|mailto|javascript|blob): ]] && continue
+    url="$(printf '%s\n' "$match" | sed -E 's/^\[[^]]+\]\(([^)]+)\)$/\1/')"
+    if [[ "$url" =~ ^(https?|ftp|ssh|npm|tel|mailto|javascript|blob): ]]; then
+      continue
+    fi
     # Strip anchors (#fragment) for file existence check
     BASE_URL="${url%%#*}"
     
