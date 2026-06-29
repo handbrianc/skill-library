@@ -53,7 +53,7 @@ if [ "$FRAMEWORK" == "jest" ] || [ "$FRAMEWORK" == "vitest" ]; then
   SKIPPED=$(perl -ne 'if (/Tests?:.*?\b(\d+)\s+skipped\b/i) { $v=$1 } END { print defined($v) ? $v : 0 }' "$INPUT")
   ERROR_COUNT=$(perl -ne 'if (/Tests?:.*?\b(\d+)\s+errors?\b/i) { $v=$1 } END { print defined($v) ? $v : 0 }' "$INPUT")
   TOTAL=$(perl -ne 'if (/Tests?:.*?\b(\d+)\s+total\b/i) { $v=$1 } END { print defined($v) ? $v : 0 }' "$INPUT")
-  RETRIED=$(grep -c "Retry(" "$INPUT" 2>/dev/null || grep -c "retry" "$INPUT" 2>/dev/null || echo "0")
+  RETRIED=$(grep -ciE 'Retry\(|retry' "$INPUT" 2>/dev/null || true)
   
   echo "" >&2
   echo "--- SLOWEST TESTS ---" >&2
