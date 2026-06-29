@@ -55,8 +55,10 @@ do_scan() {
   find "$TARGET" -type f -name "$file_glob" \
     ! -path "*/node_modules/*" ! -path "*/.git/*" ! -path "*/dist/*" \
     ! -path "*/build/*" ! -path "*/vendor/*" \
-    -exec grep -Hn -E "$pattern" {} + 2>/dev/null | while IFS=: read -r file line match; do
-    masked=$(printf '%s' "$match" | sed -E 's/(AKIA|sk_live|sk_test|pk_live|pk_test|ghp_|github_pat_|Bearer )[A-Za-z0-9._\/+==:-]+/\1*REDACTED*/g')
+    -exec grep -Hn -E "$pattern" {} + 2>/dev/null | while IFS= read -r hit; do
+    file=${hit%%:*}
+    rest=${hit#*:}; line=${rest%%:*}; match=${rest#*:}
+    masked=$(printf '%s' "$match" | sed -E 's/(AKIA|sk_live|sk_test|pk_live|pk_test|ghp_|github_pat_|Bearer )[A-Za-z0-9._\/+=:-]+/\1*REDACTED*/g')
     printf '%s\t%s\t%s\t%s\t%s\n' "$secret_type" "$file" "$line" "$masked" "$sev"
   done
 }
