@@ -4,7 +4,7 @@
 # Detects unused exports, unreachable functions, and dead code paths.
 # For deterministic results, run from a clean working tree (no uncommitted changes).
 # Usage: ./detect-dead-code.sh <target_dir> [--aggressive]
-# Output: Machine-parseable TSV
+# Output: Human-readable report to stderr/stdout (not strict TSV)
 #
 # Copyright: OpenCode contributors
 # License: MIT
