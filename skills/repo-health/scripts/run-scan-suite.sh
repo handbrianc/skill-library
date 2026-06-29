@@ -53,15 +53,16 @@ dispatch() {
   local SCRIPT="$1"
   local LABEL="$2"
   local OUTFILE="$3"
-  
+  shift 3
+
   LOG "$LABEL" "Starting..."
   if [ ! -f "$SCRIPT" ]; then
     LOG "$LABEL" "SKIPPED (script not found: $SCRIPT)"
     return
   fi
-  
+
   local START=$(date +%s.%N)
-  if bash "$SCRIPT" "$WORKDIR" 2>&1 | tee "$ARTIFACT_DIR/$OUTFILE"; then
+  if bash "$SCRIPT" "$@" 2>&1 | tee "$ARTIFACT_DIR/$OUTFILE"; then
     LOG "$LABEL" "Done."
   else
     LOG "$LABEL" "Warning: exited non-zero."
