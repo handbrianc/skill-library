@@ -4,14 +4,7 @@
 # Detects duplicated code blocks across the codebase using text similarity.
 # Uses a sliding-window line-hash approach for deterministic results.
 #
-# Usage: ./find-duplicates.sh <target_dir> [--min-lines 20] [--threshold 0.85]
-# Output: Machine-parseable TSV: SOURCE_FILE\tDUP_FILE\tMATCH_LINES\tSIMILARITY
-#
-set -euo pipefail
-
-TARGET="${1:-.}"
-MIN_LINES="${2:-20}"
-THRESHOLD="${3:-0.85}"
+# Usage: ./find-duplicates.sh <target_dir> [min_lines] [threshold]
 
 echo "=== DUPLICATE CODE SCAN ===" >&2
 echo "Target: $TARGET" >&2
