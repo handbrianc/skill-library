@@ -92,7 +92,7 @@ else
 fi
 
 echo "" >&2
-if [ -z "$SKIP_NETWORK" ]; then
+if ! $SKIP_NETWORK; then
   LOG "MAIN" "=== Security Scans ==="
   dispatch "$SCRIPT_BASE/scan-secrets.sh" "SECRETS" "scan-07-secrets.log"
 else
