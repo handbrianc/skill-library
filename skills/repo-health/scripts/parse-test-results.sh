@@ -69,7 +69,7 @@ if [ "$FRAMEWORK" == "jest" ] || [ "$FRAMEWORK" == "vitest" ]; then
   
   echo "" >&2
   echo "--- FAILED TESTS ---" >&2
-  grep -A 5 "^  ✗\|^  ×\|^  FAIL\|^\s*\d+\)\) " "$INPUT" 2>/dev/null | head -60 >&2
+  grep -A 5 -E "^  (✗|×)|^  FAIL|^[[:space:]]*[0-9]+\)" "$INPUT" 2>/dev/null | head -60 >&2
   
   echo "" >&2
   echo "--- ERRORS ---" >&2
