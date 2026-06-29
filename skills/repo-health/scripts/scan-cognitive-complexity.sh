@@ -67,7 +67,7 @@ find "$TARGET" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name
 
 # Red-flag patterns and their cognitive complexity increments:
 # Recursion: +3
-if grep -P '' </dev/null >/dev/null 2>&1; then
+if grep -P '' <<< '' >/dev/null 2>&1; then
   { grep -rnP --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
     '\\bfunction\\s+(\\w+)\\([^)]*\\)\\s*\\{[^}]*\\b\\1\\s*\\(' \
     "$TARGET" 2>/dev/null || true; } | head -20 | while IFS=: read -r f l _; do
