@@ -97,7 +97,7 @@ echo "(Detects secrets ever committed — even if subsequently removed)" >&2
 
 # Keys worth searching history for
 HISTORY_PATTERNS="AKIA[A-Z0-9]{16}|sk_live_[a-z0-9]{24}|-----BEGIN PRIVATE KEY-----"
-git log --all --full-history --source -p -S "$HISTORY_PATTERNS" \
+git log --all --full-history --source -p -S "$HISTORY_PATTERNS" --pickaxe-regex \
   -- "*.js" "*.ts" "*.json" "*.yaml" "*.env*" 2>/dev/null \
   | grep -m5 -E "$HISTORY_PATTERNS" || true
 
