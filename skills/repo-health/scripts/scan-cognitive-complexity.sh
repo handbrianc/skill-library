@@ -27,27 +27,27 @@ if find "$TARGET" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -n
   ! -path "*/node_modules/*" ! -path "*/dist/*" | grep -q .; then
 
   echo "Running ESLint complexity analysis..." >&2
-  
-  # We'll run eslint on each file capturing JSON output
-  # Complexity rule will give us cyclomatic complexity
-  ESLINT_RULES='"complexity": ["warn", 15]'
-  
-  npx eslint "$TARGET" \
-    --parser @typescript-eslint/parser \
-    --plugin @typescript-eslint \
-    --rule 'complexity: ["warn", 15]' \
-    --format json 2>/dev/null | \
-    jq -r '.[]
-      | select(.messages != null)
-      | .messages[]
-      | select(.ruleId and (.ruleId | contains("complexity")))
-      | [.filePath, (.line|tostring), (.column|tostring), (.message|gsub("[\t\r\n]+";" ")), .ruleId]
-      | @tsv' 2>/dev/null | \
-    while IFS=$'\t' read -r filepath line col msg rule; do
-      # Cyclomatic complexity threshold here is 15
-      echo "$filepath",line=$line,"$msg" >> "$OUT"
-    done
-  
+
+  if ! command -v npx &>/dev/null; then
+    echo "npx not available — skipping ESLint complexity analysis." >&2
+  elif ! command -v jq &>/dev/null; then
+    echo "jq not available — skipping ESLint complexity JSON parsing." >&2
+  else
+    npx eslint "$TARGET" \
+      --parser @typescript-eslint/parser \
+      --plugin @typescript-eslint \
+      --rule 'complexity: ["warn", 15]' \
+      --format json 2>/dev/null | \
+      jq -r '.[]
+        | select(.messages != null)
+        | .messages[]
+        | select(.ruleId and (.ruleId | contains("complexity")))
+        | [.filePath, (.line|tostring), (.column|tostring), (.message|gsub("[\t\r\n]+";" ")), .ruleId]
+        | @tsv' 2>/dev/null | \
+      while IFS=$'\t' read -r filepath line col msg rule; do
+        echo "$filepath",line=$line,"$msg" >> "$OUT"
+      done
+  fi
   if [ -s "$OUT" ]; then
     echo "Cyclomatic Complexity Violations:" >&2
     sort -t, -k2 -n "$OUT" | uniq >&2
