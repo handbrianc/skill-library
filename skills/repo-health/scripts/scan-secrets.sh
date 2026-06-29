@@ -60,7 +60,7 @@ do_scan() {
   } | while IFS= read -r hit; do
     file=${hit%%:*}
     rest=${hit#*:}; line=${rest%%:*}; match=${rest#*:}
-    masked=$(printf '%s' "$match" | sed -E 's/(AKIA|sk_live|sk_test|pk_live|pk_test|ghp_|github_pat_|Bearer )[A-Za-z0-9._\/+=:-]+/\1*REDACTED*/g')
+    masked=$(printf '%s' "$match" | sed -E 's/([A-Za-z0-9._\/=:+-]{4})[A-Za-z0-9._\/=:+-]{8,}/\1*REDACTED*/g')
     printf '%s\t%s\t%s\t%s\t%s\n' "$secret_type" "$file" "$line" "$masked" "$sev"
   done || true
 }
