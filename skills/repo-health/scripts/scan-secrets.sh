@@ -83,9 +83,11 @@ echo "" >&2
 echo "=== ENV/CONFIG FILE SWEEP (CRITICAL SEVERITY) ===" >&2
 
 for entry in "${PATTERNS[@]}"; do
-  IFS=':' read -r SECRET_TYPE SEV PATTERN <<< "$entry"
-  
-    echo -e "$SECRET_TYPE\t$FILE:$LINE\t$MATCH\tCRITICAL"
+  SECRET_TYPE="${entry%%:*}"; rest="${entry#*:}"; SEV="${rest%%:*}"; PATTERN="${rest#*:}"
+
+  # Env/config files are higher-signal; treat matches as CRITICAL regardless of base severity.
+  do_scan "*.env*" "$SECRET_TYPE" "CRITICAL" "$PATTERN"
+  do_scan "*.env" "$SECRET_TYPE" "CRITICAL" "$PATTERN"
 done
 
 # ---- GIT HISTORY SCAN (proxy via -S string search) ----
