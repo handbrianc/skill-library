@@ -58,8 +58,7 @@ if [ "$PKG_MANAGER" == "npm" ] || [ "$PKG_MANAGER" == "pnpm" ] || [ "$PKG_MANAGE
   TOTAL_SRC=""
   for DIR in $SRC_DIRS; do
     # Count import/require usages
-    TOTAL_SRC="$TOTAL_SRC $(grep -rh "require\|import.*from" "$DIR" \
-      --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" 2>/dev/null)"
+    TOTAL_SRC="$TOTAL_SRC $(grep -rh --include=\"*.ts\" --include=\"*.tsx\" --include=\"*.js\" --include=\"*.jsx\" -E \"require\\(|import[[:space:]].*from\" \"$DIR\" 2>/dev/null)"
   done
   
   echo "" >&2
