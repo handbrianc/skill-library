@@ -112,7 +112,7 @@ npx eslint src/ \
 # radon cc -a -b src/ --max-complexity 10
 ```
 
-Flag any function with complexity > 15 as HIGH RISK, 10-15 as MEDIUM.
+Flag cyclomatic complexity > 15 as MEDIUM risk, > 25 as HIGH risk, and > 40 as CRITICAL.
 
 **Step 2.4 — Cognitive complexity**
 
