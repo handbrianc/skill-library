@@ -37,6 +37,12 @@ normalize() {
 }
 
 # Build hash index of line-windows
+if (( ${BASH_VERSINFO[0]:-0} < 4 )); then
+  echo "Bash >= 4 is required for associative arrays (declare -A)." >&2
+  echo "Run with a newer bash (e.g., brew install bash) and re-run this script." >&2
+  exit 1
+fi
+
 declare -A HASH_MAP
 
 while IFS= read -r FILE; do
