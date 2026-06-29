@@ -35,8 +35,7 @@ echo "" >&2
 PERMISSIVE=()
 COPYLEFT_WEAK=()     # LGPL-2.1, MPL-1.1, CDDL-1.0, EPL-1.0, OSL-3.0
 COPYLEFT_STRONG=()   # GPL-3.0, AGPL-3.0, EUPL-1.2
-RESTRICTIVE=()       # Commercial, Proprietary, BSLause, Simpler弥
-UNKNOWN=()
+RESTRICTIVE=()       # Commercial, Proprietary, Business Source License (BSL), other non-standard licenses
 
 PERMISSIVE_PATTERNS="Apache-2\.0|MIT|BSD-2-Clause|BSD-3-Clause|ISC|CC0-1\.0|Unlicense|BlueOak-1\.0|WTFpl|PHP-3\.0|PostgreSQL"
 WEAK_PATTERNS="LGPL-2\.1|LGPL-3\.0|MPL-1\.1|MPL-2\.0|CDDL-1\.0|EPL-1\.0|EPL-2\.0|OSL-3\.0|AFPL-3\.0|APL-1\.0"
