@@ -60,6 +60,7 @@ while IFS= read -r FILE; do
       # Found a duplicate
       ORIG="${HASH_MAP[$KEY]}"
       echo -e "$ORIG\t$FILE:$START\t$WINDOW_SIZE lines\t100% (hash match)"
+    fi
   done
   
 done < "$FILES"
