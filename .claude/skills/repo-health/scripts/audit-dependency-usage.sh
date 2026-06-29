@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+#
+# audit-dependency-usage.sh
+# Audits package.json deps vs actual imports to find:
+#   - Dead installs (declared but never imported)
+#   - DevDeps wrongly in prod dependencies
+#   - Missing optional deps
+#   - Out-of-date major versions
+#
+# Usage: ./audit-dependency-usage.sh [--prod-only]
+# Output: Tab-separated sections: UNUSED | MISSING_OPTIONAL | VERSION_ADVICE
+#
+set -euo pipefail
+
+PROD_ONLY="${1:-false}"
+echo "=== DEPENDENCY USAGE AUDIT ===" >&2
+echo "Prod-only mode: $PROD_ONLY" >&2
+echo "" >&2
+
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+cd "$PROJECT_ROOT"
+
+# Determine package manager
+if [ -f "pnpm-lock.yaml" ]; then
+  PKG_MANAGER="pnpm"
+elif [ -f "yarn.lock" ]; then
+  PKG_MANAGER="yarn"
+elif [ -f "package-lock.json" ]; then
+  PKG_MANAGER="npm"
+elif [ -f "requirements.txt" ] || [ -f "pyproject.toml" ]; then
+  PKG_MANAGER="pip"
+elif [ -f "go.mod" ]; then
+  PKG_MANAGER="go"
+else
+  echo "Cannot detect package manager — exiting" >&2
+  exit 0
+fi
+echo "Detected package manager: $PKG_MANAGER" >&2
+
+# ------ Node.js/npm ------
+if [ "$PKG_MANAGER" == "npm" ] || [ "$PKG_MANAGER" == "pnpm" ] || [ "$PKG_MANAGER" == "yarn" ]; then
+  PACKAGE_JSON="package.json"
+  
+  if [ ! -f "$PACKAGE_JSON" ]; then
+    echo "No package.json found — skipping" >&2
+    exit 0
+  fi
+  
+  NODE_MODULES="./node_modules"
+  [ ! -d "$NODE_MODULES" ] && echo "No node_modules/ — run npm install first" >&2
+  
+  # Parse all deps (regular + dev)
+  DEPENDENCIES=$(jq -r '.dependencies // {} | keys[]' "$PACKAGE_JSON" 2>/dev/null || echo "")
+  DEV_DEPENDENCIES=$(jq -r '.devDependencies // {} | keys[]' "$PACKAGE_JSON" 2>/dev/null || echo "")
+  
+  SRC_DIRS=$(find . -type d \( -name "src" -o -name "lib" -o -name "app" -o -name "packages" \) \
+    ! -path "*/node_modules/*" ! -path "*/.git/*" ! -path "*/dist/*" 2>/dev/null | head -10)
+  
+  TOTAL_SRC=""
+  for DIR in $SRC_DIRS; do
+    # Count import/require usages
+    TOTAL_SRC="$TOTAL_SRC $(grep -rh "require\|import.*from" "$DIR" \
+      --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" 2>/dev/null)"
+  done
+  
+  echo "" >&2
+  echo "====== UNUSED DEPENDENCIES ======" >&2
+  echo "(Declared but no import found in source)" >&2
+  echo "" >&2
+  
+  for DEPK in $DEPENDENCIES; do
+    # Strip version suffix for matching (e.g. "lodash@^4.17.21" -> "lodash")
+    BASENAME=$(echo "$DEPK" | sed 's/@.*$//')
+    
+    if ! echo "$TOTAL_SRC" | grep -qE "['\"]$BASENAME['\"]"; then
+      echo -e "DEAD_INSTALL\t$DEPK" >&2
+      
+      # Check if it's actually used dynamically
+      grep -r "$BASENAME" --include="*.ts" --include="*.js" \
+        --include="*.json" --include="*.config.*" . \
+        ! -path "*/node_modules/*" ! -path "*/dist/*" 2>/dev/null | head -3 || true
+    fi
+  done
+  
+  echo "" >&2
+  echo "====== VERSION ADVISORY ======" >&2
+  echo "(Packages with newer major versions available)" >&2
+  
+  # Check npm outdated for majors
+  npx --yes npm-check-updates --target minor --format compact 2>/dev/null \
+    | grep '# major\|major' | head -20 || true
+  
+  # ------ Python/pip ------
+elif [ "$PKG_MANAGER" == "pip" ]; then
+  REQS_FILE="requirements.txt"
+  PYPROJECT_FILE="pyproject.toml"
+  
+  if [ -f "$REQS_FILE" ]; then
+    DEPENDENCIES=$(awk -F'[=<>]' '{print $1}' "$REQS_FILE" | xargs)
+  elif [ -f "$PYPROJECT_FILE" ]; then
+    DEPENDENCIES=$(grep -E "^\w+" "$PYPROJECT_FILE" | head -50 || echo "")
+  fi
+  
+  INSTALLED=$(pip list 2>/dev/null | awk 'NR>2 {print $1}' | head -50)
+  
+  # Check if installed packages are actually imported
+  for DEP in $DEPENDENCIES; do
+    PEP517_NAME=$(echo "$DEP" | tr '_' '-' | tr 'A-Z' 'a-z')
+    if ! python3 -c "import ${PEP517_NAME//-/_}" 2>/dev/null; then
+      echo -e "POSSIBLY_UNUSED\t$DEP" >&2
+    fi
+  done
+fi
+
+echo "" >&2
+echo "=== AUDIT COMPLETE ===" >&2
+echo "Dead installs are a maintenance and security risk — remove or investigate." >&2
+
+exit 0

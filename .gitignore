@@ -1,0 +1,284 @@
+# =============================================================================
+# Skill Library — Project-Level GitIgnore
+# =============================================================================
+
+# === Environment & Config ===
+
+# Local config overrides
+.env
+.env.local
+.env.*.local
+.envrc
+
+# Credentials / secrets (never commit these)
+*.pem
+*.key
+*.crt
+secrets/
+credentials/
+.vault/
+
+# !== Editor & IDE ====
+
+# JetBrains / IntelliJ
+.idea/
+*.ipr
+*.iws
+
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Vim / Neovim
+*.swp
+*.swo
+*~
+.nvimrc
+
+# Emacs
+*~/
+\#*#
+.elpa/
+
+# Sublime Text
+*.sublime-*
+
+# Eclipse /STS
+.project
+.classpath
+.settings/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# Windows
+thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# !== Build & Distribution Artifacts ===
+
+# Compiled output
+dist/
+build/
+out/
+*.o
+*.obj
+*.pdb
+*.dll
+*.so
+*.dylib
+*.exe
+*.bin
+*.pak
+*.iso
+
+# Byte-compiled / cached — Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+.Python
+*.egg-info/
+dist/
+*.whl
+
+# Virtual environments
+venv/
+.venv/
+ENV/
+env/
+.env/
+
+# Rust
+target/
+**/*.rs.bk
+Cargo.lock
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+
+# Java / Kotlin (Gradle)
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Maven
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-palm.xml
+.flattened-pom.xml
+
+# Elm
+elm-stuff/
+
+# Elixir / Mix
+_build/
+deps/
+.config/
+
+# Ruby / Bundler
+.bundle/
+vendor/bundle/
+
+# PHP Composer
+/vendor/
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.dll.config
+
+# !== Packages & Dependencies ===
+
+node_modules/
+.npm
+.yarn/install-state.gz
+.npmrc
+.yarnrc*
+.pnpm-store/
+.pnp.*
+
+# !== Package Managers Lock Files ===
+# Keep lockfiles that are intentional for reproducibiity
+
+# Yarn — keep intentional
+# yarn.lock
+
+# npm — keep intentional for reproducibility
+# package-lock.json
+
+# PNPM — keep intentional
+# pnpm-lock.yaml
+
+# But exclude package-manager caches
+.npm/
+.yarn/
+.pnpm/
+.pkg-cache/
+
+
+# !== Git Nexus Indexing ===
+
+.gitnexus/
+!.gitnexus/cache/
+
+
+# !== OpenCode / Claude Code ===
+
+.omo/                     # OpenCode todo/task state
+.claude/projects/         # Claude project memories
+.claude/sessions/         # Session transcripts
+claudecode_history        # Legacy claude code history
+
+# Workspace-specific state
+.workspace_cache/
+.session_state/
+
+
+# !== Testing & Coverage ===
+
+coverage/
+.nyc_output/
+htmlcov/
+.coverage
+.coverage.*
+*.cover
+
+# Test results (keep the tests themselves, not the artifacts)
+test-results/
+.playwright-test-results/
+vlw/
+__snapshots__/
+*.spec.js.snap
+*.test.js.snap
+
+
+# !== Temporary / Scratch ===
+
+*.log
+logs/
+*.tmp
+*.temp
+.tmp/
+.cache/
+tmp/
+temp/
+
+# Crash dumps
+*.crash
+*.stackdump
+
+
+# !== Documentation Builds ===
+
+site/
+_site/
+docs/_build/
+.github/pages/
+.jekyll-cache/
+.jekyll-metadata
+
+
+# !== Distribution / Release ===
+
+*.tgz
+*.tar.gz
+*.zip
+release/
+releases/
+
+
+# !== Misc ===
+
+# Fonts
+*.otf
+*.ttf
+*.woff
+*.woff2
+*.eot
+
+# Images/media (large binaries)
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.pdf
+*.mp4
+*.mov
+*.avi
+
+
+# =============================================================================
+# Exceptions — always track even though they usually belong in .gitignore
+# =============================================================================
+
+# Keep lockfiles tracked
+# yarn.lock
+# package-lock.json
+# pnpm-lock.yaml
+
+# Keep env example templates tracked
+!.env.example
+!.env.template

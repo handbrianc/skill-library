@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+#
+# scan-secrets.sh
+# Scans source code for leaked credentials, API keys, tokens, and secrets.
+# Checks git history AND current tree.
+#
+# Usage: ./scan-secrets.sh <target_dir>
+# Output: TSV: SECRET_TYPE | FILE | LINE | EVIDENCE_MASKED | SEVERITY
+#
+set -euo pipefail
+
+TARGET="${1:-.}"
+
+echo "=== SECRET/CREDENTIAL SCAN ===" >&2
+echo "Target: $TARGET" >&2
+echo "" >&2
+
+TMPDIR=$(mktemp -d)
+trap "rm -rf $TMPDIR" EXIT
+
+# ---- Pattern Definitions ----
+# Each pattern maps to a (SEVERITY, REGEX) tuple.
+# High-confidence secrets get HIGH/CRITICAL; common placeholders get LOW.
+declare -a PATTERNS=(
+  "AWS_ACCESS_KEY_ID:HIGH:AKIA[0-9A-Z]{16}"
+  "AWS_SECRET_KEY:HIGH:aws_secret[_key]*.*=.*['\"][A-Za-z0-9/+=]{40}"
+  "GITHUB_TOKEN:HIGH:ghp_[A-Za-z0-9]{36}"
+  "GITHUB_TOKEN:HIGH:github_pat_[A-Za-z0-9_]{22,}"
+  "STRIPE_SECRET_KEY:HIGH:sk_live_[0-9a-zA-Z]{24,}"
+  "STRIPE_SECRET_KEY:HIGH:sk_test_[0-9a-zA-Z]{24,}"
+  "STRIPE_PUBLISHABLE:MEDIUM:pk_live_[0-9a-zA-Z]{24,}"
+  "STRIPE_PUBLISHABLE:MEDIUM:pk_test_[0-9a-zA-Z]{24,}"
+  "JWT_SECRET:HIGH:(jwt|JsonWebToken).*(secret|key).*=.*['\"][^'\"]{8,}"
+  "DATABASE_URL_WITH_CREDS:CRITICAL:mysql://[^:]+:[^@]+@|postgres://[^:]+:[^@]+@|mongodb://[^:]+:[^@]+@|redis://[^:]+:[^@]+@"
+  "PRIVATE_KEY_BLOCK:CRITICAL:-----BEGIN (RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY-----"
+  "API_KEY_GENERIC:HIGH:api[_-]?key.*=.*['\"][A-Za-z0-9_\-]{20,}"
+  "BEARER_TOKEN:MEDIUM:Bearer [A-Za-z0-9_\-\.]{20,}"
+  "BASIC_AUTH_URL:HIGH:https?://[^:]+:[^@]+@[a-zA-Z0-9.-]"
+  "GENERIC_PASSWORD:LOW:password.*=.*['\"][^'\"]{3,}[\"']"
+  "GENERIC_SECRET:LOW:secret.*=.*['\"][^'\"]{6,}[\"']"
+  "SLACK_TOKEN:HIGH:xox[baprs]-[0-9]{10,}-[0-9]{10,}-[0-9a-zA-Z]{24,}"
+  "SENDGRID_KEY:HIGH:SG\\.[a-zA-Z0-9_-]{22}\\.[a-zA-Z0-9_-]{43}"
+  "MAILGUN_API:MEDIUM:MG[a-zA-Z0-9]{32}"
+  "TWILIO_ACCOUNT:MEDIUM:AC[a-z0-9]{32}"
+  "OPENAI_KEY:HIGH:sk-[A-Za-z0-9]{48}"
+)
+
+# ---- SCAN FUNCTION ----
+do_scan() {
+  local file_ext="$1"
+  shift
+  local sevs=("$@")
+
+  find "$TARGET" -type f \( -name "$file_ext" \) \
+    ! -path "*/node_modules/*" ! -path "*/.git/*" ! -path "*/dist/*" \
+    ! -path "*/build/*" ! -path "*/vendor/*" \
+    -exec grep -rHn -E "$2" {} \; 2>/dev/null | while IFS=: read -r FILE LINE MATCH; do
+    # Partial mask so we can still see context
+    MASKED=$(echo "$MATCH" | sed 's/\(AKIA\|sk_live\|sk_test\|pk_live\|pk_test\|ghp_\|github_pat_\ Bearer \|-----BEGIN PRIVATE KEY\|\.com:\)[^*]*/*REDACTED*\/')
+    echo -e "$1\t$FILE:$LINE\t$MASKED\t$sev" >&2
+  done
+}
+
+for entry in "${PATTERNS[@]}"; do
+  IFS=':' read -r SECRET_TYPE SEV PATTERN <<< "$entry"
+  
+  do_scan "*.ts" "$SECRET_TYPE" "$SEV" "$PATTERN"
+  do_scan "*.tsx" "$SECRET_TYPE" "$SEV" "$PATTERN"
+  do_scan "*.js" "$SECRET_TYPE" "$SEV" "$PATTERN"
+  do_scan "*.jsx" "$SECRET_TYPE" "$SEV" "$PATTERN"
+  do_scan "*.py" "$SECRET_TYPE" "$SEV" "$PATTERN"
+  do_scan "*.go" "$SECRET_TYPE" "$SEV" "$PATTERN"
+  do_scan "*.json" "$SECRET_TYPE" "$SEV" "$PATTERN"
+  do_scan "*.yaml" "$SECRET_TYPE" "$SEV" "$PATTERN"
+  do_scan "*.yml" "$SECRET_TYPE" "$SEV" "$PATTERN"
+  do_scan "*.toml" "$SECRET_TYPE" "$SEV" "$PATTERN"
+done
+
+# ---- ENV FILES GET HIGHER SENSITIVITY ----
+echo "" >&2
+echo "=== ENV/CONFIG FILE SWEEP (CRITICAL SEVERITY) ===" >&2
+
+for entry in "${PATTERNS[@]}"; do
+  IFS=':' read -r SECRET_TYPE SEV PATTERN <<< "$entry"
+  
+  find "$TARGET" -type f \( -name ".env*" -o -name "*.env*" -o -name "secrets*" -o -name "credentials*" -o -name "*.config.*" \) \
+    ! -path "*/node_modules/*" ! -path "*/.git/*" \
+    -exec grep -rHn -E "$PATTERN" {} \; 2>/dev/null | while IFS=: read -r FILE LINE MATCH; do
+    echo -e "$SECRET_TYPE\t$FILE:$LINE\t$MATCH\tCRITICAL" >&2
+  done
+done
+
+# ---- GIT HISTORY SCAN (proxy via -S string search) ----
+echo "" >&2
+echo "=== GIT HISTORY SWEEP ===" >&2
+echo "(Detects secrets ever committed — even if subsequently removed)" >&2
+
+# Keys worth searching history for
+HISTORY_PATTERNS="AKIA[A-Z0-9]{16}|sk_live_[a-z0-9]{24}|-----BEGIN PRIVATE KEY-----"
+git log --all --full-history --source -p -S "$HISTORY_PATTERNS" \
+  -- "*.js" "*.ts" "*.json" "*.yaml" "*.env*" 2>/dev/null \
+  | grep -m5 -E "$HISTORY_PATTERNS" || true
+
+# ---- NETWORK-PROXIMATE SECRETS (higher exploitability) ----
+echo "" >&2
+echo "=== NETWORK-PROXIMATE SECRET SWEEP ===" >&2
+echo "(Secrets in files that make HTTP/-network calls — easier to exfiltrate)" >&2
+
+NETWORK_FILES=$(find "$TARGET" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" \) \
+  ! -path "*/node_modules/*" ! -path "*/dist/*" \
+  -exec grep -lE "fetch\(|axios\.|requests?\.|\.get\(|\.post\(|\.put\(|\.delete\(|http\.|urllib\.|net/http|RPC|gRPC|graphql" {} \; 2>/dev/null)
+
+HIGH_VALUE_TYPES="AKIA[A-Z0-9]{16}|sk_live_|-----BEGIN PRIVATE KEY-----|mongodb://|postgres://|mysql://|redis://"
+
+for FILE in $NETWORK_FILES; do
+  if grep -qE "$HIGH_VALUE_TYPES" "$FILE" 2>/dev/null; then
+    grep -nE "$HIGH_VALUE_TYPES" "$FILE" 2>/dev/null | head -5 | while IFS=: read -r LN MATCH; do
+      echo -e "NETWORK_PROXIMATE_CRITICAL\t$FILE:$LN\t(masked)\tCRITICAL" >&2
+    done
+  fi
+done
+
+echo "" >&2
+echo "=== SCAN COMPLETE ===" >&2
+echo "Action required for CRITICAL/HIGH findings regardless of quantity." >&2
+echo "Rotate ALL exposed secrets immediately — do not assume only one key matters." >&2
+echo "Use 'git filter-branch' or 'bfg' to purge secret-containing commits from history." >&2
+
+exit 0
