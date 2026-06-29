@@ -48,7 +48,8 @@ grep -roEn --include="*.md" --include="*.mdx" '\[([^]]+)\]\(([^)]+)\)' "$TARGET"
       ABS_PATH="$(dirname "$file")/$BASE_URL"
       ABS_PATH="$(realpath -m "$ABS_PATH" 2>/dev/null || echo "$ABS_PATH")"
     else
-      ABS_PATH="$BASE_URL"
+      ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+      ABS_PATH="$ROOT/${BASE_URL#/}"
     fi
     
     if [ ! -e "$ABS_PATH" ]; then
