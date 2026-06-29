@@ -9,23 +9,20 @@
 #
 set -euo pipefail
 
-SKIP_TESTS="${1:-}"
-SKIP_NETWORK="${2:-}"
+SKIP_TESTS=false
+SKIP_NETWORK=false
+
+for arg in "$@"; do
+  case "$arg" in
+    --skip-tests) SKIP_TESTS=true ;;
+    --skip-network-checks) SKIP_NETWORK=true ;;
+  esac
+done
+
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 OUT_ZIP="/tmp/repo-health-${TIMESTAMP}.zip"
 WORKDIR=$(pwd)
 PROJECT_NAME=$(basename "$WORKDIR")
-
-echo "==============================================" >&2
-echo "  REPO HEALTH SCAN SUITE" >&2
-echo "  Project: $PROJECT_NAME" >&2
-echo "  Timestamp: $TIMESTAMP" >&2
-echo "  Workdir: $WORKDIR" >&2
-echo "==============================================" >&2
-
-SKIP_NETWORK="${SKIP_NETWORK:-}"
-SKIP_TESTS="${SKIP_TESTS:-}"
-
 # ---- SETUP ARTIFACT DIR ----
 ARTIFACT_DIR="/tmp/repo-health-${TIMESTAMP}"
 mkdir -p "$ARTIFACT_DIR"
