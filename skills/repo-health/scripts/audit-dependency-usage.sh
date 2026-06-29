@@ -84,9 +84,9 @@ if [ "$PKG_MANAGER" == "npm" ] || [ "$PKG_MANAGER" == "pnpm" ] || [ "$PKG_MANAGE
   echo "====== VERSION ADVISORY ======" >&2
   echo "(Packages with newer major versions available)" >&2
   
-  # Check npm outdated for majors
-  npx --yes npm-check-updates --target minor --format compact 2>/dev/null \
-    | grep '# major\|major' | head -20 || true
+  # Check for majors
+  npx --yes npm-check-updates --target latest --format compact 2>/dev/null \
+    | grep -E '# major|major' | head -20 || true
   
   # ------ Python/pip ------
 elif [ "$PKG_MANAGER" == "pip" ]; then
