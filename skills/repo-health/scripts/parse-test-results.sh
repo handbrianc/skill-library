@@ -62,8 +62,8 @@ if [ "$FRAMEWORK" == "jest" ] || [ "$FRAMEWORK" == "vitest" ]; then
   grep -E "^  (✓|✗|○|●|[√×✕]) " "$INPUT" \
     | grep -oE '\[[0-9]+(\.[0-9]+)?(ms|s|m)\]' \
     | sort -t'[' -k2 -rn | head -20 | while read -r timing; do
-    TIMING_MS=$(echo "$timing" | grep -oP '\d+' | head -1)
-    UNIT=$(echo "$timing" | grep -oP '[a-z]+$' )
+    TIMING_MS=$(echo "$timing" | grep -oE '[0-9]+' | head -1)
+    UNIT=$(echo "$timing" | grep -oE '[a-z]+$' )
     echo "  SLOW: ${TIMING_MS}${UNIT}" >&2
   done
   
