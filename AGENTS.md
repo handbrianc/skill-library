@@ -1,50 +1,40 @@
 <!-- gitnexus:start -->
-# GitNexus — Skill Library
+# GitNexus — Skill Distribution Template
 
-This is a GitNexus skill distribution repo. Index is minimal (1 symbol) — treat as infrastructure template, not production code.
+This repo packages GitNexus skill files. Treat as **infrastructure template** — it has no product code and minimal index (1 symbol: "HI").
 
-> If any GitNexus tool warns "index is stale", run `npx gitnexus analyze` from the project root first.
+> If GitNexus tools report "index is stale," run `npx gitnexus analyze` from the project root.
 
-## Core Workflow (Enforced)
+## Two Skill Locations
+
+There are TWO sets of GitNexus skills. **User-installed skills (at `~/.config/opencode/skills/gitnexus-*`) take priority** over project-local ones (at `.claude/skills/gitnexus/`).
+
+- Project-local skills: `.claude/skills/gitnexus/` (gitnexus-cli, exploring, impact-analysis, debugging, refactoring, guide)
+- Distributed skills (in `skills/`): `skills/sarcastic/` — a tone/sarcasm skill for the user's amusement
+
+## Enforced Workflows
 
 ### Before Editing Any Symbol
 1. `gitnexus_impact({target: "symbolName", direction: "upstream"})` — get blast radius
-2. Report risk to user: **HIGH/CRITICAL requires explicit user consent before proceeding**
-3. Make edits
+2. Report risk: **HIGH/CRITICAL requires user consent before proceeding**
 
 ### Before Committing
-- `gitnexus_detect_changes({scope: "staged"})` — verify only expected symbols/execution flows are affected
+- `gitnexus_detect_changes({scope: "staged"})` — verify only expected symbols/execution flows affected
 
-### Exploration Defaults
-- Use `gitnexus_query({query: "concept"})` instead of grep — returns process-grouped execution flows
-- Use `gitnexus_context({name: "symbol"})` for 360° symbol view (callers, callees, processes)
+### Exploration
+- `gitnexus_query({query: "concept"})` → process-grouped execution flows (prefer over grep)
+- `gitnexus_context({name: "symbol"})` → 360° view: callers, callees, processes
 
-## Naming Safety
+### Safe Rename
+Always use: `gitnexus_rename({symbol_name: "oldName", new_name: "newName", dry_run: true})`
+Graph edits = high confidence; text_search edits = review carefully before accepting.
 
-**NEVER** use find-and-replace to rename symbols — use only:
+## Index Maintenance
+
+The index goes stale frequently (visible via `npx gitnexus status`). Refresh with:
+```bash
+npx gitnexus analyze --force
 ```
-gitnexus_rename({symbol_name: "oldName", new_name: "newName", dry_run: true})
-```
-Review all edits before accepting. Confidence-tagged: `graph` (high) vs `text_search` (needs scrutiny).
-
-## Skill File References
-
-| Task | File |
-|------|------|
-| Architecture, "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md` |
-| Blast radius, "What breaks if I change X?" | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
-| Bug hunting, "Why is X failing?" | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md` |
-| Rename / extract / refactor | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
-| Tools, graph schema, resources | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
-| Index/clean/wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
-
-## Repo Resources
-
-| Resource | Purpose |
-|----------|---------|
-| `gitnexus://repo/skill-library/context` | Overview + index freshness check |
-| `gitnexus://repo/skill-library/clusters` | Functional areas with cohesion scores |
-| `gitnexus://repo/skill-library/processes` | All execution flow traces |
-| `gitnexus://repo/skill-library/process/{name}` | Specific step-by-step flow |
+This also regenerates `AGENTS.md` and `CLAUDE.md`.
 
 <!-- gitnexus:end -->
