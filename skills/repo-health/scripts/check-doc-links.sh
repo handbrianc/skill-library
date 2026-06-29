@@ -70,7 +70,10 @@ if [ "$EXTERNAL" == "--external" ]; then
   echo "Checking external links (this can be slow)..." >&2
   
   grep -rhn --include="*.md" --include="*.mdx" -E '\[([^\]]+)\]\((https?://[^)]+)\)' "$TARGET" 2>/dev/null \
-    | head -50 | while IFS=: read -r file linum pattern url; do
+    | head -50 | while IFS= read -r line; do
+    file=${line%%:*}
+    rest=${line#*:}; linum=${rest%%:*}; match=${rest#*:}
+    url="$(printf '%s\n' "$match" | sed -E 's/^.*\((https?:\/\/[^)]+)\).*$/\1/')"
     HTTP_CODE=$(curl -sIL --max-time 10 -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000")
     if [ "$HTTP_CODE" == "000" ] || [ "$HTTP_CODE" == "404" ] || [ "$HTTP_CODE" == "410" ]; then
       echo -e "BROKEN_EXTERNAL\t$file:$linum\t$url\tHTTP:$HTTP_CODE" >&2
