@@ -47,10 +47,8 @@ if [ "$PKG_MANAGER" == "npm" ] || [ "$PKG_MANAGER" == "pnpm" ] || [ "$PKG_MANAGE
   NODE_MODULES="./node_modules"
   [ ! -d "$NODE_MODULES" ] && echo "No node_modules/ — run npm install first" >&2
   
-  # Parse all deps (regular + dev)
+  # Parse declared production dependencies
   DEPENDENCIES=$(jq -r '.dependencies // {} | keys[]' "$PACKAGE_JSON" 2>/dev/null || echo "")
-  DEV_DEPENDENCIES=$(jq -r '.devDependencies // {} | keys[]' "$PACKAGE_JSON" 2>/dev/null || echo "")
-  
   SRC_DIRS=$(find . -type d \( -name "src" -o -name "lib" -o -name "app" -o -name "packages" \) \
     ! -path "*/node_modules/*" ! -path "*/.git/*" ! -path "*/dist/*" 2>/dev/null | head -10)
   
