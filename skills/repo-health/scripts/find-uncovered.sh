@@ -19,30 +19,22 @@ TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 
 # -------- Istanbul/Jest JSON coverage format --------
-if [ -f "$COVER_DATA" ] && grep -q "path" "$COVER_DATA" 2>/dev/null; then
+# coverage-final.json format: {"/abs/path/file.js": { s: {"1": 0, ...}, ... }, ...}
+if [ -f "$COVER_DATA" ] && jq -e 'type=="object" and (to_entries[0].value | has("s"))' "$COVER_DATA" >/dev/null 2>&1; then
   echo "Detected Istanbul/Jest JSON format" >&2
-  
+
   jq -r '
-    . as $data
-    | $data | to_entries[]
+    to_entries[]
     | .key as $file
-    | .value.s as $stmt
-    | .value.b as $br
-    | .value.f as $fn
-    | .value.fnMap as $fnmap
-    | select($stmt.pct < ($data | to_entries | .[].value.s.pct | min))
-    | [$file, ($fn | length), ($stmt | .pct | tonumber)]
-  ' "$COVER_DATA" 2>/dev/null | while IFS='|' read -r file fn_count pct; do
-    echo "LOW_COVERAGE: $file (fn=$fn_count, stmt_pct=$pct%)" >&2
-  done
-  
-  # Find files with 0% statement coverage
-  jq -r '
-    .[] | select(.s.pct == 0) | .path
-  ' "$COVER_DATA" 2>/dev/null | while read -r f; do
-    echo "ZERO_COVERAGE: $f" >&2
-  done
-  
+    | (.value.s | to_entries) as $stmts
+    | ($stmts | length) as $total
+    | ($stmts | map(select(.value > 0)) | length) as $covered
+    | (if $total == 0 then 100 else (($covered * 100) / $total) end) as $pct
+    | select($pct < 50)
+    | "LOW_COVERAGE: \($file) (stmt_pct=\($pct)%)"' "$COVER_DATA" 2>/dev/null >&2
+
+  jq -r 'to_entries[] | select((.value.s | to_entries | map(.value) | max) == 0) | .key' "$COVER_DATA" 2>/dev/null \
+    | while read -r f; do echo "ZERO_COVERAGE: $f" >&2; done
 # -------- LCOV format --------
 elif [ -d "$COVER_DATA" ] && ls "$COVER_DATA"/*.info "$COVER_DATA"/*.lcov 2>/dev/null | head -1 | grep -q .; then
   echo "Detected LCOV format" >&2
