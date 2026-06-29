@@ -65,8 +65,8 @@ find "$TARGET" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name
 
 # Red-flag patterns and their cognitive complexity increments:
 # Recursion: +3
-grep -rn --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
-  -E "\bfunction\s+\w+\([^)]*\).*\{[^}]*\b\1\s*\(" \
+grep -rnP --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
+  '\bfunction\s+(\w+)\([^)]*\)\s*\{[^}]*\b\1\s*\(' \
   "$TARGET" 2>/dev/null | head -20 | while IFS=: read -r f l _; do
   echo "\"$f\",\"$l\",\"RECURSIVE_CALL\",3" >> "$COGNITIVE_FLAGS"
 done
