@@ -4,17 +4,16 @@
 # Master script — runs all deterministic scans in sequence.
 # Produces a combined artifact bundle.
 #
-# Usage: ./run-scan-suite.sh [--skip-tests] [--skip-network-checks]
+# Usage: ./run-scan-suite.sh [--skip-network-checks]
 # Output: /tmp/repo-health-{timestamp}.zip containing all scan outputs
 #
+
 set -euo pipefail
 
-SKIP_TESTS=false
 SKIP_NETWORK=false
 
 for arg in "$@"; do
   case "$arg" in
-    --skip-tests) SKIP_TESTS=true ;;
     --skip-network-checks) SKIP_NETWORK=true ;;
   esac
 done
