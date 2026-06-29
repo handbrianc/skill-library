@@ -399,8 +399,7 @@ Common patterns to flag:
 
 ```bash
 git log --all --full-history -p \
-  -- .env* *.env* secrets.* credentials.* \
-  --gitignore 2>/dev/null | grep -iE "password|secret|apikey|token" \
+  -- .env* *.env* secrets.* credentials.* 2>/dev/null | grep -iE "password|secret|apikey|token" \
   | grep -v "^[-+]#\|^#\|Binary" | head -50
 ```
 
