@@ -83,10 +83,8 @@ fi
 if [ "$MODE" == "aggressive" ]; then
   echo "" >&2
   echo "[Aggressive] Looking for old TODOs (>1 year)..." >&2
-  git log --since="1 year ago" --pretty=%H -- "*.ts" "*.tsx" "*.js" "*.py" \
-    | xargs grep -rHn "TODO\|FIXME\|HACK\|XXX" --include="*.ts" --include="*.tsx" \
-      --include="*.js" --include="*.jsx" --include="*.py" 2>/dev/null \
-    | head -30 || true
+  git log --since="1 year ago" -p -G "TODO|FIXME|HACK|XXX" -- "*.ts" "*.tsx" "*.js" "*.jsx" "*.py" 2>/dev/null \
+    | head -200 || true
 fi
 
 echo "" >&2
