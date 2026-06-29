@@ -123,8 +123,8 @@ Cognitive complexity is harder to automate. Use:
 ./skills/repo-health/scripts/scan-cognitive-complexity.sh src/
 
 # Manual spot-check via GitNexus:
-gitnexus_query({query: " deeply nested callback hell", limit: 5})
-gitnexus_query({query: " monstrous switch statement", limit: 5})
+query({search_query: "deeply nested callback hell", limit: 5})
+query({search_query: "monstrous switch statement", limit: 5})
 ```
 
 **Step 2.5 — Duplicated code**
@@ -148,7 +148,7 @@ Report duplicates > 50 lines identical.
 Use GitNexus clusters to assess architectural coherence:
 
 ```bash
-gitnexus_query({query: "arch component module service layer"})
+query({search_query: "arch component module service layer"})
 READ gitnexus://repo/{name}/clusters
 READ gitnexus://repo/{name}/processes
 ```
@@ -236,7 +236,7 @@ ls -lt specs/archive/ specs/v0.*/ specs/old/ 2>/dev/null
 
 For each spec:
 1. Read the spec requirements (Given/When/Then or plain requirements)
-2. Cross-reference with GitNexus — `gitnexus_query({query: "requirement keyword"})`
+2. Cross-reference with GitNexus — `query({search_query: "requirement keyword"})`
 3. Verify implementation exists
 
 ```bash
