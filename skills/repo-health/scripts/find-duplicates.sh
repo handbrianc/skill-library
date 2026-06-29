@@ -6,6 +6,12 @@
 #
 # Usage: ./find-duplicates.sh <target_dir> [min_lines] [threshold]
 
+set -euo pipefail
+
+TARGET="${1:-.}"
+MIN_LINES="${2:-20}"
+THRESHOLD="${3:-100}"
+
 echo "=== DUPLICATE CODE SCAN ===" >&2
 echo "Target: $TARGET" >&2
 echo "Min lines: $MIN_LINES, Threshold: $THRESHOLD" >&2
