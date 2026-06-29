@@ -20,7 +20,7 @@ echo "" >&2
 TMPDIR=$(mktemp -d)
 OUT="$TMPDIR/complexity_out.csv"
 
-trap "rm -rf $TMPDIR" EXIT
+trap 'rm -rf "$TMPDIR"' EXIT
 
 # ------- ESLint-based cyclomatic complexity for TS/JS ----------
 if find "$TARGET" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \) \
