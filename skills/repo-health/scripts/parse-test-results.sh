@@ -48,11 +48,11 @@ if [ "$FRAMEWORK" == "jest" ] || [ "$FRAMEWORK" == "vitest" ]; then
   echo "--- SUMMARY ---" >&2
   grep -E "Tests?:|" "$INPUT" | grep -v "^$" | tail -10 >&2
   
-  PASSED=$(grep -oP "Tests?: \K\d+(?= passed)" "$INPUT" | tail -1 || echo "0")
-  FAILED=$(grep -oP "Tests?:.*?, (\d+) failed" "$INPUT" | grep -oP '\d+(?= failed)' | tail -1 || echo "0")
-  SKIPPED=$(grep -oP "Tests?:.*?, (\d+) skipped" "$INPUT" | grep -oP '\d+(?= skipped)' | tail -1 || echo "0")
-  ERROR_COUNT=$(grep -oP "Tests?:.*?, (\d+) errors" "$INPUT" | grep -oP '\d+(?= errors)' | tail -1 || echo "0")
-  TOTAL=$(grep -oP "Tests?: (\d+) " "$INPUT" | grep -oP '\d+' | tail -1 || echo "0")
+  PASSED=$(perl -ne 'if (/Tests?:.*?\b(\d+)\s+passed\b/i) { $v=$1 } END { print defined($v) ? $v : 0 }' "$INPUT")
+  FAILED=$(perl -ne 'if (/Tests?:.*?\b(\d+)\s+failed\b/i) { $v=$1 } END { print defined($v) ? $v : 0 }' "$INPUT")
+  SKIPPED=$(perl -ne 'if (/Tests?:.*?\b(\d+)\s+skipped\b/i) { $v=$1 } END { print defined($v) ? $v : 0 }' "$INPUT")
+  ERROR_COUNT=$(perl -ne 'if (/Tests?:.*?\b(\d+)\s+errors?\b/i) { $v=$1 } END { print defined($v) ? $v : 0 }' "$INPUT")
+  TOTAL=$(perl -ne 'if (/Tests?:.*?\b(\d+)\s+total\b/i) { $v=$1 } END { print defined($v) ? $v : 0 }' "$INPUT")
   RETRIED=$(grep -c "Retry(" "$INPUT" 2>/dev/null || grep -c "retry" "$INPUT" 2>/dev/null || echo "0")
   
   echo "" >&2
