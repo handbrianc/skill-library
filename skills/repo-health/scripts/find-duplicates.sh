@@ -39,7 +39,7 @@ echo "Files to scan: $FILE_COUNT" >&2
 # Strip comments and normalize whitespace before hashing
 # This prevents false-negatives from cosmetic differences
 normalize() {
-  sed 's/#.*//' | sed 's|//.*||' | tr -s ' \t' '\n' | grep -v '^$' | sort -u | tr '\n' ' '
+  sed 's/#.*//' | sed 's|//.*||' | sed -E 's/[[:space:]]+/ /g' | sed -E 's/^ +//; s/ +$//' | grep -v '^[[:space:]]*$'
 }
 
 # Build hash index of line-windows
