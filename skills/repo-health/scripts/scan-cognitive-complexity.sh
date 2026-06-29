@@ -107,7 +107,7 @@ fi
 
 # ------- Aggregated Summary -------
 echo "=== COMPLEXITY SUMMARY ===" >&2
-HIGH_COMPLEXITY=$(grep -Ec 'complexity.*(15|20|25|30|999)' "$OUT" 2>/dev/null || echo "0")
+HIGH_COMPLEXITY=$(perl -ne 'if (/complexity of (\d+)/i) { $c++ if $1 > 15 } END { print $c // 0 }' "$OUT" 2>/dev/null || echo "0")
 echo "Functions exceeding cyclomatic complexity threshold (15): $HIGH_COMPLEXITY" >&2
 
 TOTAL_COGNITIVE=$( awk -F',' 'NR>1 {sum+=$4} END {print sum}' "$COGNITIVE_FLAGS" 2>/dev/null || echo "0")
