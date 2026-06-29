@@ -7,7 +7,7 @@ description: "Comprehensive repository health audit — code quality, docs, spec
 
 A rigorous, deterministic repository audit covering six dimensions. Produces a prioritized, actionable plan when complete.
 
-> **Prerequisite:** Run `npx gitnexus analyze --force` on the target repo before starting. This ensures the knowledge graph reflects current state.
+> **Prerequisite:** Run `node .gitnexus/run.cjs analyze --force` on the target repo before starting (fallback: `npx gitnexus analyze --force` if the local runner doesn't exist). This ensures the knowledge graph reflects current state.
 
 ## Scope & Preconditions
 
