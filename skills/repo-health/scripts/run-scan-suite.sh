@@ -75,11 +75,10 @@ SCRIPT_BASE="$(dirname "$0")"
 echo "" >&2
 
 LOG "MAIN" "=== Code Quality Scans ===" 
-dispatch "$SCRIPT_BASE/detect-dead-code.sh" "DEAD_CODE" "scan-01-dead-code.log"
-dispatch "$SCRIPT_BASE/scan-cognitive-complexity.sh" "COMPLEXITY" "scan-02-complexity.log"
-dispatch "$SCRIPT_BASE/find-duplicates.sh" "DUPLICATES" "scan-03-duplicates.log"
+dispatch "$SCRIPT_BASE/detect-dead-code.sh" "DEAD_CODE" "scan-01-dead-code.log" "$WORKDIR"
+dispatch "$SCRIPT_BASE/scan-cognitive-complexity.sh" "COMPLEXITY" "scan-02-complexity.log" "$WORKDIR"
+dispatch "$SCRIPT_BASE/find-duplicates.sh" "DUPLICATES" "scan-03-duplicates.log" "$WORKDIR"
 dispatch "$SCRIPT_BASE/audit-dependency-usage.sh" "DEPS_USAGE" "scan-04-deps-usage.log"
-
 echo "" >&2
 LOG "MAIN" "=== Documentation Scans ==="
 dispatch "$SCRIPT_BASE/check-doc-links.sh" "DOC_LINKS" "scan-05-doc-links.log"
