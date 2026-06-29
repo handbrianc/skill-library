@@ -60,7 +60,7 @@ do_scan() {
     rest=${hit#*:}; line=${rest%%:*}; match=${rest#*:}
     masked=$(printf '%s' "$match" | sed -E 's/(AKIA|sk_live|sk_test|pk_live|pk_test|ghp_|github_pat_|Bearer )[A-Za-z0-9._\/+=:-]+/\1*REDACTED*/g')
     printf '%s\t%s\t%s\t%s\t%s\n' "$secret_type" "$file" "$line" "$masked" "$sev"
-  done
+  done || true
 }
 
 for entry in "${PATTERNS[@]}"; do
@@ -97,9 +97,17 @@ echo "(Detects secrets ever committed — even if subsequently removed)" >&2
 
 # Keys worth searching history for
 HISTORY_PATTERNS="AKIA[A-Z0-9]{16}|sk_live_[a-z0-9]{24}|-----BEGIN PRIVATE KEY-----"
-git log --all --full-history --source -p -S "$HISTORY_PATTERNS" --pickaxe-regex \
-  -- "*.js" "*.ts" "*.json" "*.yaml" "*.env*" 2>/dev/null \
-  | grep -m5 -E "$HISTORY_PATTERNS" || true
+# Emit only commit metadata and affected filenames — never print patch lines that contain the secret value.
+git log --all --full-history --format="COMMIT:%H %as %s" --name-only -G "$HISTORY_PATTERNS" --pickaxe-regex \
+  -- "*.js" "*.ts" "*.json" "*.yaml" "*.env*" 2>/dev/null | \
+while IFS= read -r histline; do
+  if [[ "$histline" == COMMIT:* ]]; then
+    _COMMIT_INFO="${histline#COMMIT:}"
+  elif [ -n "$histline" ]; then
+    printf 'HISTORY_SECRET\t%s\t(git-history)\t[SECRET FOUND IN HISTORY — review commit: %s]\tHIGH\n' \
+      "$histline" "${_COMMIT_INFO:-unknown}"
+  fi
+done || true
 
 # ---- NETWORK-PROXIMATE SECRETS (higher exploitability) ----
 echo "" >&2
@@ -117,7 +125,7 @@ for FILE in $NETWORK_FILES; do
     grep -nE "$HIGH_VALUE_TYPES" "$FILE" 2>/dev/null | head -5 | while IFS=: read -r LN MATCH; do
       masked=$(printf '%s' "$MATCH" | sed -E 's/(AKIA|sk_live|sk_test|pk_live|pk_test|ghp_|github_pat_|Bearer )[A-Za-z0-9._\/=:+.:-]+/\1*REDACTED*/g')
       printf 'NETWORK_PROXIMATE_CRITICAL\t%s\t%s\t%s\tCRITICAL\n' "$FILE" "$LN" "$masked"
-    done
+    done || true
   fi
 done
 

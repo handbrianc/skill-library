@@ -46,7 +46,7 @@ echo "" >&2
 if [ "$FRAMEWORK" == "jest" ] || [ "$FRAMEWORK" == "vitest" ]; then
   # Summary line: "Tests: X passed, Y failed, Z total, W skipped"
   echo "--- SUMMARY ---" >&2
-  grep -E "Tests?:|" "$INPUT" | grep -v "^$" | tail -10 >&2
+  grep -E "Tests?:" "$INPUT" | grep -v "^$" | tail -10 >&2
   
   PASSED=$(perl -ne 'if (/Tests?:.*?\b(\d+)\s+passed\b/i) { $v=$1 } END { print defined($v) ? $v : 0 }' "$INPUT")
   FAILED=$(perl -ne 'if (/Tests?:.*?\b(\d+)\s+failed\b/i) { $v=$1 } END { print defined($v) ? $v : 0 }' "$INPUT")

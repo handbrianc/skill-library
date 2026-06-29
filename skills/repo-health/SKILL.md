@@ -95,7 +95,7 @@ If stale: `npx gitnexus analyze --force`
 
 ```bash
 # Scripts/detect-dead-code.sh  (see helpers below)
-./scripts/detect-dead-code.sh src/
+./skills/repo-health/scripts/detect-dead-code.sh src/
 ```
 
 **Step 2.3 — Cyclomatic complexity**
@@ -106,7 +106,7 @@ npx eslint src/ \
   --rule 'complexity: ["error", 15]' \
   --format json \
   --max-warnings 0 \
-  2>/dev/null | jq '.[] | {file: filePath, func: functions[] | {name, complexity}}'
+  2>/dev/null | jq '.[] | .filePath as $f | .messages[] | select(.ruleId == "complexity") | {file: $f, line: .line, message: .message}'
 
 # For Python:
 # radon cc -a -b src/ --max-complexity 10
@@ -120,7 +120,7 @@ Cognitive complexity is harder to automate. Use:
 
 ```bash
 # scan-cognitive-complexity.sh (see helpers)
-./scripts/scan-cognitive-complexity.sh src/
+./skills/repo-health/scripts/scan-cognitive-complexity.sh src/
 
 # Manual spot-check via GitNexus:
 gitnexus_query({query: " deeply nested callback hell", limit: 5})
@@ -138,7 +138,7 @@ npx jscpd --threshold 3 --failOn true src/ 2>/dev/null || true
 
 # Generic (works on any text):
 # Find files with >80% similarity using line-hash
-./scripts/find-duplicates.sh src/
+./skills/repo-health/scripts/find-duplicates.sh src/
 ```
 
 Report duplicates > 50 lines identical.
@@ -159,7 +159,7 @@ Flag clusters with LOW cohesion or no natural grouping.
 
 ```bash
 # Script: audit-dependency-usage.sh
-./scripts/audit-dependency-usage.sh
+./skills/repo-health/scripts/audit-dependency-usage.sh
 ```
 
 Checks `package.json` dependencies against `node_modules/` and import graphs:
@@ -282,7 +282,7 @@ echo "TEST_EXIT_CODE: $EXIT_CODE"
 
 ```bash
 # Script: parse-test-results.sh /tmp/test-output.txt
-./scripts/parse-test-results.sh /tmp/test-output.txt
+./skills/repo-health/scripts/parse-test-results.sh /tmp/test-output.txt
 ```
 
 Produces:
@@ -339,7 +339,7 @@ gitnexus_impact({target: "CriticalModule", direction: "downstream", includeTests
 
 # Or use coverage report:
 # Script: find-uncovered.sh /tmp/coverage/
-./scripts/find-uncovered.sh /tmp/coverage/
+./skills/repo-health/scripts/find-uncovered.sh /tmp/coverage/
 ```
 
 ---
@@ -373,7 +373,7 @@ npx eslint src/ --plugin=security --format json 2>/dev/null | jq '.'
 
 # Secrets scanning:
 # Scripts/scan-secrets.sh src/
-./scripts/scan-secrets.sh src/
+./skills/repo-health/scripts/scan-secrets.sh src/
 ```
 
 Common patterns to flag:
@@ -428,7 +428,7 @@ npm ls --all --omit=dev > /tmp/npm-tree.txt
 ```bash
 # Scan for copyleft / restrictively licensed deps:
 # Scripts/scan-licenses.sh /tmp/sbom.spdx.json
-./scripts/scan-licenses.sh /tmp/sbom.spdx.json
+./skills/repo-health/scripts/scan-licenses.sh /tmp/sbom.spdx.json
 
 # Common flags:
 # GPL-3.0, LGPL-3.0, MPL-2.0, CC-SA-*, EUPL-1.2 → RESTRICTIVE

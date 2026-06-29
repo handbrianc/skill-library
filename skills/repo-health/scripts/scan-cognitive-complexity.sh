@@ -71,28 +71,28 @@ grep -rnP --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" 
   '\bfunction\s+(\w+)\([^)]*\)\s*\{[^}]*\b\1\s*\(' \
   "$TARGET" 2>/dev/null | head -20 | while IFS=: read -r f l _; do
   echo "\"$f\",\"$l\",\"RECURSIVE_CALL\",3" >> "$COGNITIVE_FLAGS"
-done
+done || true
 
 # Ternary nesting (chained ternaries): +2
 grep -rn --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
   -E "\?\s*\w.*\?\s*\w.*\?\s*\w" \
   "$TARGET" 2>/dev/null | head -20 | while IFS=: read -r f l _; do
   echo "\"$f\",\"$l\",\"CHAINED_TERNARY\",2" >> "$COGNITIVE_FLAGS"
-done
+done || true
 
 # Arrow function returning arrow function: +2
 grep -rn --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
   -E "=>\s*\(.*\)\s*=>\s*\(|=>\s*\([^)]*\)\s*=>\s*\{[^}]*=>" \
   "$TARGET" 2>/dev/null | head -20 | while IFS=: read -r f l _; do
   echo "\"$f\",\"$l\",\"NESTED_ARROW\",2" >> "$COGNITIVE_FLAGS"
-done
+done || true
 
 # Early returns in loops (confusing flow): +1
 grep -rn --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
   -E "for\s*\([^)]+\)[^;]*\{[^}]*return[^}]*\}[^}]*\}\s*;" \
   "$TARGET" 2>/dev/null | head -20 | while IFS=: read -r f l _; do
   echo "\"$f\",\"$l\",\"EARLY_RETURN_LOOP\",1" >> "$COGNITIVE_FLAGS"
-done
+done || true
 
 if [ -s "$COGNITIVE_FLAGS" ] && [ "$(wc -l < "$COGNITIVE_FLAGS")" -gt 1 ]; then
   echo "Cognitive Complexity Red Flags (score contribution):" >&2
