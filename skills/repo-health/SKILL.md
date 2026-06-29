@@ -52,7 +52,7 @@ pip list 2>/dev/null | head -30
 
 # Entry points
 ls src/ lib/ app/ cmd/ main.* */main.* 2>/dev/null | head -20
-ls **/__main__.py **/main.go 2>/dev/null
+find . -name "__main__.py" -o -name "main.go" 2>/dev/null | head -20
 
 # Documentation locations
 ls *.md *.rst *.txt LICENSE* CONTRIBUTING* docs/ wiki/ .github/ 2>/dev/null | head -30

@@ -32,14 +32,14 @@ This project is indexed by GitNexus as **skill-library** (129 symbols, 125 relat
 
 ## CLI
 
-| Task | Read this skill file |
-|------|---------------------|
-| Understand architecture / "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md` |
-| Blast radius / "What breaks if I change X?" | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
-| Trace bugs / "Why is X failing?" | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md` |
-| Rename / extract / split / refactor | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
-| Tools, resources, schema reference | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
-| Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
+| Task | How |
+|------|-----|
+| Understand architecture / "How does X work?" | Use `query({search_query: "concept"})` built-in tool |
+| Blast radius / "What breaks if I change X?" | Use `impact({target: "symbolName", direction: "upstream"})` built-in tool |
+| Trace bugs / "Why is X failing?" | Use `context({name: "symbolName"})` built-in tool |
+| Rename / extract / split / refactor | Use `rename` built-in tool |
+| Tools, resources, schema reference | See Resources table above |
+| Index, status, clean, wiki CLI commands | Run `node .gitnexus/run.cjs` from the project root |
 
 <!-- gitnexus:end -->
 
