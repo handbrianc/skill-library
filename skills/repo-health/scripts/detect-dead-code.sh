@@ -2,8 +2,7 @@
 #
 # detect-dead-code.sh
 # Detects unused exports, unreachable functions, and dead code paths.
-# Operates on committed HEAD only for determinism.
-#
+# For deterministic results, run from a clean working tree (no uncommitted changes).
 # Usage: ./detect-dead-code.sh <target_dir> [--aggressive]
 # Output: Machine-parseable TSV
 #
