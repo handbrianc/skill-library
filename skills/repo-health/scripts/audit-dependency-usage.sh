@@ -6,14 +6,13 @@
 #   - Out-of-date versions (via npm-check-updates)
 # Note: DevDependency/prodDependency classification and optionalDependencies are not currently analyzed.
 #
-# Usage: ./audit-dependency-usage.sh [--prod-only]
-# Output: Tab-separated sections: UNUSED | MISSING_OPTIONAL | VERSION_ADVICE
+# Usage: ./audit-dependency-usage.sh
+# Output: Tab-separated sections: UNUSED | VERSION_ADVICE
 #
+
 set -euo pipefail
 
-PROD_ONLY="${1:-false}"
 echo "=== DEPENDENCY USAGE AUDIT ===" >&2
-echo "Prod-only mode: $PROD_ONLY" >&2
 echo "" >&2
 
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
