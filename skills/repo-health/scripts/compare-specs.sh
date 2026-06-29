@@ -100,8 +100,8 @@ fi
 echo "" >&2
 echo "=== ALIGNMENT NOTES ===" >&2
 echo "For each spec above, cross-reference with:" >&2
-echo "  1. gitnexus_query({query: 'spec keyword'}) to find relevant code" >&2
-echo "  2. gitnexus_context() on key symbols to verify they're called" >&2
+echo "  1. query({search_query: 'spec keyword'}) to find relevant code" >&2
+echo "  2. context({name: 'key_symbol'}) to verify symbols are called" >&2
 echo "  3. Confirm feature flag or config enables the spec-covered behavior" >&2
 echo "" >&2
 echo "Divergence = code implemented without matching spec, OR spec not implemented." >&2
