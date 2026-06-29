@@ -38,10 +38,14 @@ echo "Scanned files: $TOTAL_FILES" >&2
 if command -v npx &>/dev/null && [ -f package.json ]; then
   echo "" >&2
   echo "[TSCheck] Looking for unused exports via TypeScript..." >&2
-  # Attempt a fast unused variable check
-  npx tsc --noEmit --walkDir "$TARGET" 2>&1 \
-    | grep -E "(is declared but never used|unused)" \
-    | head -50 || true
+
+  if [ -f tsconfig.json ]; then
+    npx tsc --noEmit -p tsconfig.json 2>&1 \
+      | grep -E "(is declared but never used|unused)" \
+      | head -50 || true
+  else
+    echo "[TSCheck] tsconfig.json not found — skipping TypeScript dead-code scan" >&2
+  fi
 fi
 
 # ---- 3. Python: flake8 F401 (imported but unused) ----
