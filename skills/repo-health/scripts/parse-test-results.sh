@@ -131,7 +131,7 @@ fi
 echo "" >&2
 echo "=== PARSING COMPLETE ===" >&2
 echo "Machine-readable counts:" >&2
-echo "PASSED=$PASSED" >&2
+echo "PASSED=${PASSED:-0}" >&2
 echo "FAILED=${FAILED:-0}" >&2
 echo "SKIPPED=${SKIPPED:-0}" >&2
 echo "ERRORS=${ERROR_COUNT:-0}" >&2
