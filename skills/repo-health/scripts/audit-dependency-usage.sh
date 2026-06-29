@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 #
 # audit-dependency-usage.sh
-# Audits package.json deps vs actual imports to find:
+# Audits package.json dependencies vs import/require usage to find:
 #   - Dead installs (declared but never imported)
-#   - DevDeps wrongly in prod dependencies
-#   - Missing optional deps
-#   - Out-of-date major versions
+#   - Out-of-date versions (via npm-check-updates)
+# Note: DevDependency/prodDependency classification and optionalDependencies are not currently analyzed.
 #
 # Usage: ./audit-dependency-usage.sh [--prod-only]
 # Output: Tab-separated sections: UNUSED | MISSING_OPTIONAL | VERSION_ADVICE
