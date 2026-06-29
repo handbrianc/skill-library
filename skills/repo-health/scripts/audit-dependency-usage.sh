@@ -69,10 +69,8 @@ if [ "$PKG_MANAGER" == "npm" ] || [ "$PKG_MANAGER" == "pnpm" ] || [ "$PKG_MANAGE
   echo "" >&2
   
   for DEPK in $DEPENDENCIES; do
-    # Strip version suffix for matching (e.g. "lodash@^4.17.21" -> "lodash")
-    BASENAME=$(echo "$DEPK" | sed 's/@.*$//')
-    
-    if ! echo "$TOTAL_SRC" | grep -qE "['\"]$BASENAME['\"]"; then
+    # Dependency keys from package.json are already package names (no version suffix)
+    BASENAME="$DEPK"
       echo -e "DEAD_INSTALL\t$DEPK" >&2
       
       # Check if it's actually used dynamically
