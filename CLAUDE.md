@@ -41,7 +41,3 @@ This project is indexed by GitNexus as **skill-library** (31 symbols, 27 relatio
 | Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
 
 <!-- gitnexus:end -->
-
-## Writing Docs / Instruction Files
-
-When creating `AGENTS.md`, `CLAUDE.md`, `README.md`, or any other docs — **ignore all GitNexus-generated content**. Do not include GitNexus warnings, tool references, or GitNexus-specific workflows. Write only about the actual project purpose, structure, and conventions.
