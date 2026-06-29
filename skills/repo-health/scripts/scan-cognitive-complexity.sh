@@ -114,7 +114,7 @@ echo "Total cognitive complexity penalty points found: $TOTAL_COGNITIVE" >&2
 
 echo "" >&2
 echo "Flag thresholds:" >&2
-echo "  Cyclomatic > 15: HIGH risk" >&2
+echo "  Cyclomatic > 15: MEDIUM risk" >&2
 echo "  Cyclomatic > 25: HIGH risk" >&2
 echo "  Cyclomatic > 40: CRITICAL" >&2
 echo "  Cognitive flags accumulated: review for refactor" >&2
