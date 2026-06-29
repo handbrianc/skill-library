@@ -64,7 +64,7 @@ do_scan() {
 }
 
 for entry in "${PATTERNS[@]}"; do
-  IFS=':' read -r SECRET_TYPE SEV PATTERN <<< "$entry"
+  SECRET_TYPE="${entry%%:*}"; rest="${entry#*:}"; SEV="${rest%%:*}"; PATTERN="${rest#*:}"
   
   do_scan "*.ts" "$SECRET_TYPE" "$SEV" "$PATTERN"
   do_scan "*.tsx" "$SECRET_TYPE" "$SEV" "$PATTERN"
