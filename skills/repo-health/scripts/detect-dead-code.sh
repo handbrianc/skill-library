@@ -13,8 +13,10 @@
 set -euo pipefail
 
 TARGET="${1:-.}"
-MODE="${2:-normal}"  # normal | aggressive
-
+MODE="normal"  # normal | aggressive
+if [[ "${2:-}" == "--aggressive" || "${2:-}" == "aggressive" ]]; then
+  MODE="aggressive"
+fi
 WORKDIR=$(pwd)
 TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
