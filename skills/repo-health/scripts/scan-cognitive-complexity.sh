@@ -33,17 +33,17 @@ if find "$TARGET" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -n
   npx eslint "$TARGET" \
     --parser @typescript-eslint/parser \
     --plugin @typescript-eslint \
-    --rule "@typescript-eslint/complexity: [warn, 15]" \
-    --formatter json 2>/dev/null | \
-    jq -r '.[] | 
-      select(.messages != null) | 
-      .messages[] | 
-      select(.ruleId and (.ruleId | contains("complexity"))) | 
-      [.filePath, .line, .column, .message, .ruleId] | 
-      @csv' 2>/dev/null | \
-    while IFS=, read -r filepath line col msg rule; do
+    --rule 'complexity: ["warn", 15]' \
+    --format json 2>/dev/null | \
+    jq -r '.[]
+      | select(.messages != null)
+      | .messages[]
+      | select(.ruleId and (.ruleId | contains("complexity")))
+      | [.filePath, (.line|tostring), (.column|tostring), (.message|gsub("[\t\r\n]+";" ")), .ruleId]
+      | @tsv' 2>/dev/null | \
+    while IFS=$'\t' read -r filepath line col msg rule; do
       # Cyclomatic complexity threshold here is 15
-      echo "\"$filepath\",line=$line,$msg" >> "$OUT"
+      echo "$filepath",line=$line,"$msg" >> "$OUT"
     done
   
   if [ -s "$OUT" ]; then
