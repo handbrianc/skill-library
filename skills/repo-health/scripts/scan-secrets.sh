@@ -47,17 +47,17 @@ declare -a PATTERNS=(
 
 # ---- SCAN FUNCTION ----
 do_scan() {
-  local file_ext="$1"
-  shift
-  local sevs=("$@")
+  local file_glob="$1"
+  local secret_type="$2"
+  local sev="$3"
+  local pattern="$4"
 
-  find "$TARGET" -type f \( -name "$file_ext" \) \
+  find "$TARGET" -type f -name "$file_glob" \
     ! -path "*/node_modules/*" ! -path "*/.git/*" ! -path "*/dist/*" \
     ! -path "*/build/*" ! -path "*/vendor/*" \
-    -exec grep -rHn -E "$2" {} \; 2>/dev/null | while IFS=: read -r FILE LINE MATCH; do
-    # Partial mask so we can still see context
-    MASKED=$(echo "$MATCH" | sed 's/\(AKIA\|sk_live\|sk_test\|pk_live\|pk_test\|ghp_\|github_pat_\ Bearer \|-----BEGIN PRIVATE KEY\|\.com:\)[^*]*/*REDACTED*\/')
-    echo -e "$1\t$FILE:$LINE\t$MASKED\t$sev" >&2
+    -exec grep -Hn -E "$pattern" {} + 2>/dev/null | while IFS=: read -r file line match; do
+    masked=$(printf '%s' "$match" | sed -E 's/(AKIA|sk_live|sk_test|pk_live|pk_test|ghp_|github_pat_|Bearer )[A-Za-z0-9._\/+==:-]+/\1*REDACTED*/g')
+    printf '%s\t%s\t%s\t%s\t%s\n' "$secret_type" "$file" "$line" "$masked" "$sev"
   done
 }
 
