@@ -57,11 +57,9 @@ if command -v jq &>/dev/null; then
         COPYLEFT_WEAK+=("$NAME ($LIC)")
       elif echo "$LIC" | grep -qE "$STRONG_PATTERNS"; then
         COPYLEFT_STRONG+=("$NAME ($LIC)")
-      elif echo "$LIC" | grep -qE "$UNKNOWN_PATTERNS"; then
-        UNKNOWN+=("$NAME ($LIC)")
       else
         # Commercial or unusual licenses
-        COPYLEFT_WEAK+=("$NAME ($LIC) [VERIFY]")
+        UNKNOWN+=("$NAME ($LIC) [VERIFY]")
       fi
     done <<< "$PACKAGES"
   fi
