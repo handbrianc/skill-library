@@ -35,7 +35,7 @@ declare -a PATTERNS=(
   "PRIVATE_KEY_BLOCK:CRITICAL:-----BEGIN (RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY-----"
   "API_KEY_GENERIC:HIGH:api[_-]?key.*=.*['\"][A-Za-z0-9_\-]{20,}"
   "BEARER_TOKEN:MEDIUM:Bearer [A-Za-z0-9_\-\.]{20,}"
-  "BASIC_AUTH_URL:HIGH:https?://[^:]+:[^@]+@[a-zA-Z0-9.-]"
+  "BASIC_AUTH_URL:HIGH:https?://[^:]+:[^@]+@[a-zA-Z0-9.-]+"
   "GENERIC_PASSWORD:LOW:password.*=.*['\"][^'\"]{3,}[\"']"
   "GENERIC_SECRET:LOW:secret.*=.*['\"][^'\"]{6,}[\"']"
   "SLACK_TOKEN:HIGH:xox[baprs]-[0-9]{10,}-[0-9]{10,}-[0-9a-zA-Z]{24,}"
