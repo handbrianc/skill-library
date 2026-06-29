@@ -134,7 +134,7 @@ gitnexus_query({query: " monstrous switch statement", limit: 5})
 npx jscpd --threshold 3 --failOn true src/ 2>/dev/null || true
 
 # Python:
-# duplicates.py or coverage/runDupicate.py
+# duplicates.py or coverage/runDuplicate.py
 
 # Generic (works on any text):
 # Find files with >80% similarity using line-hash
