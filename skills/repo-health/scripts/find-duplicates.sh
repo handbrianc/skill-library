@@ -66,8 +66,7 @@ while IFS= read -r FILE; do
     else
       # Found a duplicate
       ORIG="${HASH_MAP[$KEY]}"
-      echo -e "$ORIG\t$FILE:$START\t$WINDOW_SIZE lines\t$(echo "scale=2; ${THRESHOLD} * 100" | bc)%+"
-    fi
+      echo -e "$ORIG\t$FILE:$START\t$WINDOW_SIZE lines\t100% (hash match)"
   done
   
 done < "$FILES"
