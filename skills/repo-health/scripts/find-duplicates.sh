@@ -5,6 +5,11 @@
 # Uses a sliding-window line-hash approach for deterministic results.
 #
 # Usage: ./find-duplicates.sh <target_dir> [min_lines] [threshold]
+set -euo pipefail
+
+TARGET="${1:-.}"
+MIN_LINES="${2:-50}"
+THRESHOLD="${3:-100}"
 
 set -euo pipefail
 
