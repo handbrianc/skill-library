@@ -85,11 +85,7 @@ echo "=== ENV/CONFIG FILE SWEEP (CRITICAL SEVERITY) ===" >&2
 for entry in "${PATTERNS[@]}"; do
   IFS=':' read -r SECRET_TYPE SEV PATTERN <<< "$entry"
   
-  find "$TARGET" -type f \( -name ".env*" -o -name "*.env*" -o -name "secrets*" -o -name "credentials*" -o -name "*.config.*" \) \
-    ! -path "*/node_modules/*" ! -path "*/.git/*" \
-    -exec grep -rHn -E "$PATTERN" {} \; 2>/dev/null | while IFS=: read -r FILE LINE MATCH; do
-    echo -e "$SECRET_TYPE\t$FILE:$LINE\t$MATCH\tCRITICAL" >&2
-  done
+    echo -e "$SECRET_TYPE\t$FILE:$LINE\t$MATCH\tCRITICAL"
 done
 
 # ---- GIT HISTORY SCAN (proxy via -S string search) ----
