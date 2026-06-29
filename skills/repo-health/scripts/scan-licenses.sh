@@ -44,7 +44,7 @@ UNKNOWN_PATTERNS="NOASSERTION|NONE|Unknown|Custom"
 
 if command -v jq &>/dev/null; then
   # SPDX JSON: packages[*].licenseConcluded or packages[*].licenseInfoFromFiles
-  PACKAGES=$(jq -r '.packages[] | select(.licenseConcluded != "NOASSERTION") | {name: .name, license: .licenseConcluded}' "$SBOM" 2>/dev/null || true)
+  PACKAGES=$(jq -c '.packages[] | {name: .name, license: (.licenseConcluded // "NOASSERTION")}' "$SBOM" 2>/dev/null || true)
   
   if [ -n "$PACKAGES" ]; then
     while IFS= read -r line; do
