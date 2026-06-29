@@ -79,6 +79,6 @@ echo "Prioritize adding tests for:" >&2
 echo "  1. Files with ZERO coverage — greenfield tests needed" >&2
 echo "  2. Files with <50% coverage — substantial test additions needed" >&2
 echo "  3. Hot-path code (high cyclomatic complexity) with low coverage" >&2
-echo "Use gitnexus_context() on high-complexity functions with no coverage" >&2
+echo "Use context() on high-complexity functions with no coverage" >&2
 
 exit 0

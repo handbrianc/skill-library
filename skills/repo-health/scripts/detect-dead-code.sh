@@ -93,8 +93,8 @@ fi
 echo "" >&2
 echo "=== SCAN COMPLETE ===" >&2
 echo "Review the output above. Flag as DEAD any:" >&2
-echo "  - Export not imported anywhere (verify via gitnexus_impact)" >&2
-echo "  - Function with no side-effect and no callers (verify via gitnexus_context)" >&2
+echo "  - Export not imported anywhere (verify via impact)" >&2
+echo "  - Function with no side-effect and no callers (verify via context)" >&2
 echo "  - Unreachable code after return/throw" >&2
 echo "  - Empty function body (no business logic)" >&2
 
