@@ -95,9 +95,12 @@ if [ "$PKG_MANAGER" == "npm" ] || [ "$PKG_MANAGER" == "pnpm" ] || [ "$PKG_MANAGE
   echo "(Packages with newer major versions available)" >&2
   
   # Check for majors
-  npx --yes npm-check-updates --target latest --format compact 2>/dev/null \
-    | grep -E '# major|major' | head -20 || true
-  
+  if command -v npx &>/dev/null; then
+    npx --yes npm-check-updates --target latest --format compact 2>/dev/null \
+      | grep -E '# major|major' | head -20 || true
+  else
+    echo "npx not available — skipping version advisory" >&2
+  fi
   # ------ Python/pip ------
 elif [ "$PKG_MANAGER" == "pip" ]; then
   REQS_FILE="requirements.txt"
