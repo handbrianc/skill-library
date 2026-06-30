@@ -58,8 +58,7 @@ fi
 
 # ------- Cognitive complexity — manual heuristics --------------
 # Since there's no standard free cognitive complexity tool,
-# we use AST-aware grep to find red-flag patterns:
-COGNITIVE_FLAGS="$TMPDIR/cognitive_flags.csv"
+# we use regex-based grep heuristics to find red-flag patterns:
 echo '"file","line","pattern","score"' > "$COGNITIVE_FLAGS"
 
 find "$TARGET" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" \) \
