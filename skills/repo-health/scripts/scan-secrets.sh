@@ -88,6 +88,8 @@ for entry in "${PATTERNS[@]}"; do
   SECRET_TYPE="${entry%%:*}"; rest="${entry#*:}"; SEV="${rest%%:*}"; PATTERN="${rest#*:}"
 
   # Env/config files are higher-signal; treat matches as CRITICAL regardless of base severity.
+  do_scan ".env" "$SECRET_TYPE" "CRITICAL" "$PATTERN"
+  do_scan ".env.*" "$SECRET_TYPE" "CRITICAL" "$PATTERN"
   do_scan "*.env*" "$SECRET_TYPE" "CRITICAL" "$PATTERN"
   do_scan "*.env" "$SECRET_TYPE" "CRITICAL" "$PATTERN"
 done
