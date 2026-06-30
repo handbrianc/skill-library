@@ -116,13 +116,13 @@ echo "" >&2
 echo "=== NETWORK-PROXIMATE SECRET SWEEP ===" >&2
 echo "(Secrets in files that make HTTP/-network calls — easier to exfiltrate)" >&2
 
-NETWORK_FILES=$(find "$TARGET" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" \) \
+readarray -t NETWORK_FILES < <(find "$TARGET" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" \) \
   ! -path "*/node_modules/*" ! -path "*/dist/*" \
   -exec grep -lE "fetch\(|axios\.|requests?\.|\.get\(|\.post\(|\.put\(|\.delete\(|http\.|urllib\.|net/http|RPC|gRPC|graphql" {} \; 2>/dev/null)
 
 HIGH_VALUE_TYPES="AKIA[A-Z0-9]{16}|sk_live_|-----BEGIN PRIVATE KEY-----|mongodb://|postgres://|mysql://|redis://"
 
-for FILE in $NETWORK_FILES; do
+for FILE in "${NETWORK_FILES[@]}"; do
   if grep -qE "$HIGH_VALUE_TYPES" "$FILE" 2>/dev/null; then
     grep -nE "$HIGH_VALUE_TYPES" "$FILE" 2>/dev/null | head -5 | while IFS=: read -r LN MATCH; do
       masked=$(printf '%s' "$MATCH" | sed -E 's/([A-Za-z0-9._\/=:+-]{4})[A-Za-z0-9._\/=:+-]{8,}/\1*REDACTED*/g')
