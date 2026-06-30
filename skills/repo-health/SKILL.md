@@ -94,7 +94,7 @@ If stale: `npx gitnexus analyze --force`
 **Step 2.2 — Dead/unused code scan**
 
 ```bash
-# Scripts/detect-dead-code.sh  (see helpers below)
+# skills/repo-health/scripts/detect-dead-code.sh  (see helpers below)
 ./skills/repo-health/scripts/detect-dead-code.sh src/
 ```
 
