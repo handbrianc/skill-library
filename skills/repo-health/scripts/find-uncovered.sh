@@ -61,7 +61,7 @@ elif ls "$COVER_DATA"/*.xml 2>/dev/null | head -1 | grep -q .; then
   done
 
 # -------- Python coverage.py --------
-elif [ -f "$COVER_DATA" ] && grep -q "missing_lines" "$COVER_DATA" 2>/dev/null; then
+elif command -v jq >/dev/null 2>&1 && [ -f "$COVER_DATA" ] && grep -q "missing_lines" "$COVER_DATA" 2>/dev/null; then
   echo "Detected Python coverage.py JSON format" >&2
   jq -r '.[] | select(.missing_lines | length > 0) | .filename, .missing_lines[]' \
     "$COVER_DATA" 2>/dev/null | paste -d: - - | head -30
