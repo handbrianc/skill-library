@@ -133,8 +133,9 @@ PY
   
   # Check if installed packages are actually imported
   for DEP in $DEPENDENCIES; do
-    PEP517_NAME=$(echo "$DEP" | tr '_' '-' | tr 'A-Z' 'a-z')
-    if ! python3 -c "import ${PEP517_NAME//-/_}" 2>/dev/null; then
+    BASE_DEP="${DEP%%[*}"; BASE_DEP="${BASE_DEP%%;*}"
+    MODULE="${BASE_DEP//-/_}"
+    if [[ "$MODULE" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] && ! python3 -c "import $MODULE" 2>/dev/null; then
       echo -e "POSSIBLY_UNUSED\t$DEP" >&2
     fi
   done
