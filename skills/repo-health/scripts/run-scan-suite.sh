@@ -4,7 +4,7 @@
 # Master script — runs all deterministic scans in sequence.
 # Produces a combined artifact bundle.
 #
-# Usage: ./run-scan-suite.sh [--skip-network-checks]
+# Usage: ./run-scan-suite.sh [--skip-secrets-scan]
 # Output: /tmp/repo-health-{timestamp}.zip containing all scan outputs
 #
 
