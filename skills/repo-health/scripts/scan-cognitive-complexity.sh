@@ -94,7 +94,7 @@ done || true
 
 # Early returns in loops (confusing flow): +1
 grep -rn --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
-  -E "for\s*\([^)]+\)[^;]*\{[^}]*return[^}]*\}[^}]*\}\s*;" \
+  -E "for[[:space:]]*\([^)]+\)[^;]*\{[^}]*return[^}]*\}[^}]*\}[[:space:]]*;" \
   "$TARGET" 2>/dev/null | head -20 | while IFS=: read -r f l _; do
   echo "\"$f\",\"$l\",\"EARLY_RETURN_LOOP\",1" >> "$COGNITIVE_FLAGS"
 done || true
