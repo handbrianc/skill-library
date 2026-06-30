@@ -6,8 +6,8 @@ An OpenCode skill distribution template. Packages reusable skill files for agent
 
 | Path | Purpose |
 |------|---------|
-| `.claude/skills/gitnexus/` | Project-local GitNexus skill files (cli, exploring, impact-analysis, debugging, refactoring, guide) |
 | `skills/sarcastic/` | A tone/sarcasm skill for agent use |
+| `skills/repo-health/` | Repo health auditing skill with scripts for secrets, licenses, complexity, coverage, and more |
 | User-installed skills | Located at `~/.config/opencode/skills/` — these take priority over project-local copies |
 
 ## Skill Installation Paths
@@ -15,7 +15,7 @@ An OpenCode skill distribution template. Packages reusable skill files for agent
 OpenCode loads skills from two places:
 
 1. **User-installed** (`~/.config/opencode/skills/`) — shared across all projects
-2. **Project-local** (`.claude/skills/`) — scoped to this repo
+2. **Project-local** (`.claude/skills/`) — scoped to a repo
 
 User-installed skills override project-local ones of the same name.
 
