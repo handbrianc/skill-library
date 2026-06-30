@@ -61,7 +61,14 @@ while IFS= read -r FILE; do
   fi
   
   # Sliding window hashes
-  for START in $(seq 1 $((LINECOUNT - WINDOW_SIZE + 1))); do
+  WINDOWS=$((LINECOUNT - WINDOW_SIZE + 1))
+  MAX_WINDOWS=${MAX_WINDOWS:-5000}
+  if [ "$WINDOWS" -gt "$MAX_WINDOWS" ]; then
+    echo "Skipping $FILE (too many windows: $WINDOWS > $MAX_WINDOWS)" >&2
+    continue
+  fi
+
+  for START in $(seq 1 "$WINDOWS"); do
     CONTENT=$(sed -n "${START},$((START + WINDOW_SIZE - 1))p" "$FILE" \
       | normalize)
     
