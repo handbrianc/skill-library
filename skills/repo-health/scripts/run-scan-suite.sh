@@ -10,11 +10,11 @@
 
 set -euo pipefail
 
-SKIP_NETWORK=false
+SKIP_SECRETS=false
 
 for arg in "$@"; do
   case "$arg" in
-    --skip-network-checks) SKIP_NETWORK=true ;;
+    --skip-secrets-scan) SKIP_SECRETS=true ;;
   esac
 done
 
