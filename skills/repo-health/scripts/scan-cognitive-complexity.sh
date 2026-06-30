@@ -87,7 +87,7 @@ done || true
 
 # Arrow function returning arrow function: +2
 grep -rn --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
-  -E "=>\s*\(.*\)\s*=>\s*\(|=>\s*\([^)]*\)\s*=>\s*\{[^}]*=>" \
+  -E "=>[[:space:]]*\(.*\)[[:space:]]*=>[[:space:]]*\(|=>[[:space:]]*\([^)]*\)[[:space:]]*=>[[:space:]]*\{[^}]*=>" \
   "$TARGET" 2>/dev/null | head -20 | while IFS=: read -r f l _; do
   echo "\"$f\",\"$l\",\"NESTED_ARROW\",2" >> "$COGNITIVE_FLAGS"
 done || true
