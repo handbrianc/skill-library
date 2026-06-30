@@ -41,22 +41,3 @@ This project is indexed by GitNexus as **skill-library** (143 symbols, 139 relat
 | Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
 
 <!-- gitnexus:end -->
-
-When editing `AGENTS.md`, `CLAUDE.md`, or `README.md` — **do not paste GitNexus-generated blocks manually** (e.g., `<!-- gitnexus:start %> … <!-- gitnexus:end -->`). Keep authored prose focused on the project purpose, structure, and conventions.
-
-> **Why it matters:** Manually pasting the `gitnexus:start`…`gitnexus:end` block risks desynchronizing the embedded statistics (symbol counts, relationship counts) from the actual live index. Out-of-date counts mislead readers about repository state. Always regenerate via `gitnexus analyze` rather than copying stale output.
-
-## Skill Loading Precedence
-
-OpenCode resolves skills from two locations (in priority order):
-
-1. **User-installed** (`~/.config/opencode/skills/`) — shared across all projects
-2. **Project-local** (`skills/`) — vendored skill folders in this repository
-
-User-installed skills override project-local copies of the same name. When adding a skill to this repo, also install it locally to `~/.config/opencode/skills/<skill-name>/` to test before contributing.
-
-# Background Task Rules
-- You are using background execution blocks. 
-- DO NOT emit your final summary or exit the process while a background task ID is active.
-- Use `background_output` to explicitly poll task statuses until they return a completed exit code.
-- Implement a task tracking checklist. Mark tasks as complete only after reviewing the background logs.
