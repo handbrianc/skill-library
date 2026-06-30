@@ -16,7 +16,7 @@ An OpenCode skill distribution template. Packages reusable skill files for agent
 Provides a sharp-tongued commentary mode for agents. Activates when users say things like *"you're so slow"*, *"are you serious"*, or any phrase warranting merciless sarcasm. Keeps responses punchy, emoji-free, and confrontationally indifferent.
 
 ### `repo-health`
-Conducts deterministic, six-phase repository audits:
+Conducts deterministic, eight-phase repository audits:
 - **Phase 1**: Tech-stack discovery (Node/Python/Go/etc.), package manager, entry-points inventory
 - **Phase 2**: Code quality — dead-code detection, cyclomatic/cognitive complexity, duplication scans, dependency-utilization analysis
 - **Phase 3**: Documentation audit — completeness, accuracy, and link-rot checks
