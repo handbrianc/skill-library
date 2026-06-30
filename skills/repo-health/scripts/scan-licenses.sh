@@ -38,8 +38,7 @@ COPYLEFT_STRONG=()   # GPL-3.0, AGPL-3.0, EUPL-1.2
 UNKNOWN=()           # Includes proprietary/non-standard licenses; verify manually
 PERMISSIVE_PATTERNS="Apache-2\.0|MIT|BSD-2-Clause|BSD-3-Clause|ISC|CC0-1\.0|Unlicense|BlueOak-1\.0|WTFPL|PHP-3\.0|PostgreSQL"
 WEAK_PATTERNS="LGPL-2\.1|LGPL-3\.0|MPL-1\.1|MPL-2\.0|CDDL-1\.0|EPL-1\.0|EPL-2\.0|OSL-3\.0|AFPL-3\.0|APL-1\.0"
-STRONG_PATTERNS="GPL-2\.0|GPL-3\.0|AGPL-3\.0|EUPL-1\.2|NUnit"
-
+STRONG_PATTERNS="GPL-2\.0|GPL-3\.0|AGPL-3\.0|EUPL-1\.2"
 if command -v jq &>/dev/null; then
   # SPDX JSON: packages[*].licenseConcluded or packages[*].licenseInfoFromFiles
   while IFS= read -r line; do
