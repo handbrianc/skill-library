@@ -62,6 +62,7 @@ do_scan() {
     rest=${hit#*:}; line=${rest%%:*}
     masked='[REDACTED — open file to inspect matched line]'
     printf '%s\t%s\t%s\t%s\t%s\n' "$secret_type" "$file" "$line" "$masked" "$sev"
+  done
 }
 
 for entry in "${PATTERNS[@]}"; do
