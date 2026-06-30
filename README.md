@@ -15,7 +15,7 @@ An OpenCode skill distribution template. Packages reusable skill files for agent
 OpenCode loads skills from two places:
 
 1. **User-installed** (`~/.config/opencode/skills/`) — shared across all projects
-2. **Project-local** (`.claude/skills/`) — scoped to a repo
+2. **Project-local source** (`skills/`) — this repository’s local skill folders
 
 User-installed skills override project-local ones of the same name.
 
