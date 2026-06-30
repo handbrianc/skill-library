@@ -44,6 +44,8 @@ This project is indexed by GitNexus as **skill-library** (129 symbols, 126 relat
 
 When editing `AGENTS.md`, `CLAUDE.md`, or `README.md` — **do not paste GitNexus-generated blocks manually** (e.g., `<!-- gitnexus:start %> … <!-- gitnexus:end -->`). Keep authored prose focused on the project purpose, structure, and conventions.
 
+> **Why it matters:** Manually pasting the `gitnexus:start`…`gitnexus:end` block risks desynchronizing the embedded statistics (symbol counts, relationship counts) from the actual live index. Out-of-date counts mislead readers about repository state. Always regenerate via `gitnexus analyze` rather than copying stale output.
+
 ## Skill Loading Precedence
 
 OpenCode resolves skills from two locations (in priority order):
