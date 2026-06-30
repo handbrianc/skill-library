@@ -41,8 +41,7 @@ elif [ -d "$COVER_DATA" ] && ls "$COVER_DATA"/*.info "$COVER_DATA"/*.lcov 2>/dev
   for INFO in "$COVER_DATA"/*.info "$COVER_DATA"/*.lcov; do
     [ -f "$INFO" ] || continue
     UNCOVERED=$(grep -E "^SF:|^DA:" "$INFO" 2>/dev/null | grep -v "DA:.*,[1-9][0-9]*$" | grep "DA:" || true)
-    ZERO_HITS=$(grep "DA:0" "$INFO" 2>/dev/null | cut -d: -f2 | sort -u | head -20)
-    
+    ZERO_HITS=$(grep -E "^DA:[0-9]+,0$" "$INFO" 2>/dev/null | cut -d: -f2 | cut -d, -f1 | sort -n | uniq | head -20)
     if [ -n "$ZERO_HITS" ]; then
       echo "UNCOVERED:${INFO}: ${ZERO_HITS}" >&2
     fi
