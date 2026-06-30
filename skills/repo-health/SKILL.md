@@ -596,7 +596,7 @@ skills/repo-health/scripts/
 └── run-scan-suite.sh        # Master script — runs all deterministically
 ```
 
-All scripts accept a target directory as `$1` and print machine-parseable output.
+Most scripts accept a target directory as `$1`. Exceptions: `scan-licenses.sh` expects an SBOM file path, `parse-test-results.sh` expects a test output file, and `find-uncovered.sh` expects a coverage report path. See each script's usage header for details.
 
 ---
 

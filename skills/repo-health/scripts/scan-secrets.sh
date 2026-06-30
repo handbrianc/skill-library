@@ -23,7 +23,7 @@ trap 'rm -rf "$TMPDIR"' EXIT
 # High-confidence secrets get HIGH/CRITICAL; common placeholders get LOW.
 declare -a PATTERNS=(
   "AWS_ACCESS_KEY_ID:HIGH:AKIA[0-9A-Z]{16}"
-  "AWS_SECRET_KEY:HIGH:aws_secret[_key]*.*=.*['\"][A-Za-z0-9/+=]{40}"
+  "AWS_SECRET_KEY:HIGH:aws_secret(_access_key|_key)?.*=.*['\"][A-Za-z0-9/+=]{40}"
   "GITHUB_TOKEN:HIGH:ghp_[A-Za-z0-9]{36}"
   "GITHUB_TOKEN:HIGH:github_pat_[A-Za-z0-9_]{22,}"
   "STRIPE_SECRET_KEY:HIGH:sk_live_[0-9a-zA-Z]{24,}"

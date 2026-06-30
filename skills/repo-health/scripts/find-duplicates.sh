@@ -14,6 +14,10 @@ THRESHOLD="${3:-100}"
 echo "=== DUPLICATE CODE SCAN ===" >&2
 echo "Target: $TARGET" >&2
 echo "Min lines: $MIN_LINES, Threshold: $THRESHOLD" >&2
+if [ "$THRESHOLD" != "100" ]; then
+  echo "WARNING: This script only reports exact hash matches (100% similarity)." >&2
+  echo "  Non-100 threshold values are not currently supported." >&2
+fi
 echo "" >&2
 
 TMPDIR=$(mktemp -d)

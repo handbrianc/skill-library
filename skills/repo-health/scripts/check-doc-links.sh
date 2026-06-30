@@ -46,7 +46,9 @@ grep -roEn --include="*.md" --include="*.mdx" '\[([^]]+)\]\(([^)]+)\)' "$TARGET"
     # Relative path — resolve from file's directory
     if [[ "$BASE_URL" != /* ]]; then
       ABS_PATH="$(dirname "$file")/$BASE_URL"
-      ABS_PATH="$(realpath -m "$ABS_PATH" 2>/dev/null || echo "$ABS_PATH")"
+      ABS_PATH="$(python3 -c "import os,sys; print(os.path.normpath(sys.argv[1]))" "$ABS_PATH" 2>/dev/null \
+        || realpath -m "$ABS_PATH" 2>/dev/null \
+        || echo "$ABS_PATH")"
     else
       ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
       ABS_PATH="$ROOT/${BASE_URL#/}"

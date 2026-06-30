@@ -93,10 +93,10 @@ elif [ "$FRAMEWORK" == "pytest" ]; then
   echo "--- SUMMARY ---" >&2
   grep -E "passed|failed|error|skipped|rerun" "$INPUT" | tail -10 >&2
   
-  FAILED=$(grep -oP "(\d+) failed" "$INPUT" | grep -oP '\d+' | tail -1 || echo "0")
-  PASSED=$(grep -oP "(\d+) passed" "$INPUT" | grep -oP '\d+' | tail -1 || echo "0")
-  SKIPPED=$(grep -oP "(\d+) skipped" "$INPUT" | grep -oP '\d+' | tail -1 || echo "0")
-  ERROR_COUNT=$(grep -oP "(\d+) error" "$INPUT" | grep -oP '\d+' | tail -1 || echo "0")
+  FAILED=$(perl -ne 'if (/(\d+) failed/) { $v=$1 } END { print defined($v) ? $v : 0 }' "$INPUT")
+  PASSED=$(perl -ne 'if (/(\d+) passed/) { $v=$1 } END { print defined($v) ? $v : 0 }' "$INPUT")
+  SKIPPED=$(perl -ne 'if (/(\d+) skipped/) { $v=$1 } END { print defined($v) ? $v : 0 }' "$INPUT")
+  ERROR_COUNT=$(perl -ne 'if (/(\d+) error/) { $v=$1 } END { print defined($v) ? $v : 0 }' "$INPUT")
   
   echo "" >&2
   echo "--- SLOWEST ---" >&2

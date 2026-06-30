@@ -46,12 +46,17 @@ if [ "$PKG_MANAGER" == "npm" ] || [ "$PKG_MANAGER" == "pnpm" ] || [ "$PKG_MANAGE
     echo "No package.json found — skipping" >&2
     exit 0
   fi
+
+  if ! command -v jq &>/dev/null; then
+    echo "jq not available — skipping Node dependency audit (install jq to enable)" >&2
+    exit 0
+  fi
   
   NODE_MODULES="./node_modules"
   [ ! -d "$NODE_MODULES" ] && echo "No node_modules/ — run npm install first" >&2
   
   # Parse declared production dependencies
-  DEPENDENCIES=$(jq -r '.dependencies // {} | keys[]' "$PACKAGE_JSON" 2>/dev/null || echo "")
+  DEPENDENCIES=$(jq -r '.dependencies // {} | keys[]' "$PACKAGE_JSON" 2>/dev/null)
   SRC_DIRS=$(find . -type d \( -name "src" -o -name "lib" -o -name "app" -o -name "packages" \) \
     ! -path "*/node_modules/*" ! -path "*/.git/*" ! -path "*/dist/*" 2>/dev/null | head -10)
   
