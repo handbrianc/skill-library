@@ -67,7 +67,7 @@ echo "[Heuristics] Scanning for dead code patterns..." >&2
 
 # a) Empty functions with no side-effects (TS/JS)
 grep -rHn --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
-  -E "^(export )?(const|function|class) \w+[^{]*{\s*(//.*)?\s*}" \
+  -E '^(export[[:space:]]+)?(const|function|class)[[:space:]]+[[:alnum:]_]+[^{]*\{[[:space:]]*(//.*)?[[:space:]]*\}$' \
   "$TARGET" 2>/dev/null \
   | grep -vE "return|_\(" \
   | head -30 || true
