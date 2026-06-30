@@ -118,10 +118,12 @@ echo "" >&2
 echo "=== NETWORK-PROXIMATE SECRET SWEEP ===" >&2
 echo "(Secrets in files that make HTTP/-network calls — easier to exfiltrate)" >&2
 
-readarray -t NETWORK_FILES < <(find "$TARGET" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" \) \
+NETWORK_FILES=()
+while IFS= read -r f; do
+  NETWORK_FILES+=("$f")
+done < <(find "$TARGET" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" \) \
   ! -path "*/node_modules/*" ! -path "*/dist/*" \
   -exec grep -lE "fetch\(|axios\.|requests?\.|\.get\(|\.post\(|\.put\(|\.delete\(|http\.|urllib\.|net/http|RPC|gRPC|graphql" {} \; 2>/dev/null)
-
 HIGH_VALUE_TYPES="AKIA[A-Z0-9]{16}|sk_live_|-----BEGIN PRIVATE KEY-----|mongodb://|postgres://|mysql://|redis://"
 
 for FILE in "${NETWORK_FILES[@]}"; do
