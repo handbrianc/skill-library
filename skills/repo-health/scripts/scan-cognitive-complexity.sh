@@ -80,7 +80,7 @@ fi
 
 # Ternary nesting (chained ternaries): +2
 grep -rn --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
-  -E "\?\s*\w.*\?\s*\w.*\?\s*\w" \
+  -E "\?[[:space:]]*[[:alnum:]_].*\?[[:space:]]*[[:alnum:]_].*\?[[:space:]]*[[:alnum:]_]" \
   "$TARGET" 2>/dev/null | head -20 | while IFS=: read -r f l _; do
   echo "\"$f\",\"$l\",\"CHAINED_TERNARY\",2" >> "$COGNITIVE_FLAGS"
 done || true
