@@ -69,7 +69,11 @@ while IFS= read -r FILE; do
       continue
     fi
     
-    HASH=$(echo "$CONTENT" | sha256sum | cut -d' ' -f1)
+    if command -v sha256sum >/dev/null 2>&1; then
+      HASH=$(printf '%s' "$CONTENT" | sha256sum | awk '{print $1}')
+    else
+      HASH=$(printf '%s' "$CONTENT" | shasum -a 256 | awk '{print $1}')
+    fi
     KEY="${HASH}:${WINDOW_SIZE}"
     
     if [ -z "${HASH_MAP[$KEY]+isset}" ]; then
