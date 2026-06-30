@@ -71,13 +71,15 @@ grep -roEn --include="*.md" --include="*.mdx" '\[([^]]+)\]\(([^)]+)\)' "$TARGET"
 if [ "$EXTERNAL" == "--external" ]; then
   echo "" >&2
   echo "Checking external links (this can be slow)..." >&2
-  
-  grep -rhn --include="*.md" --include="*.mdx" -E '\[([^\]]+)\]\((https?://[^)]+)\)' "$TARGET" 2>/dev/null \
-    | head -50 | while IFS= read -r line; do
-    file=${line%%:*}
-    HTTP_CODE=$(curl -sI --max-time 10 -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000")
-    fi
-  done
+
+  grep -roEn --include="*.md" --include="*.mdx" -E '\\[([^\\]]+)\\]\\((https?://[^)]+)\\)' "$TARGET" 2>/dev/null \
+    | head -50 | while IFS=: read -r file linum match; do
+      url="$(printf '%s\n' "$match" | sed -E 's/^\[[^]]+\]\((https?:\/\/[^)]+)\)$/\1/')"
+      http_code=$(curl -sI --max-time 10 -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000")
+      if [ "$http_code" != "200" ] && [ "$http_code" != "000" ] && [ "$http_code" -ge 400 ] 2>/dev/null; then
+        echo -e "BROKEN_EXTERNAL\t${file}:${linum}\t${url}\t${http_code}" >&2
+      fi
+    done
 else
   echo "(Skipped external link check — use --external to enable)" >&2
 fi
