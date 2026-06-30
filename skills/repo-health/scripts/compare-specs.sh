@@ -36,7 +36,7 @@ trap "rm -rf $TMPDIR" EXIT
 parse_requirements() {
   local SPEC_FILE="$1"
   # Extract requirement-like lines
-  grep -E "^[A-Z].*[.:]|^\s*- \[.\]|^\s*GIVEN|^\s*WHEN|^\s*THEN|^\s*AND|^\s*REQUIREMENT:|^\s*RFP-|^\s*SRS-" \
+  grep -E "^[A-Z].*[.:]|^[[:space:]]*- \[.\]|^[[:space:]]*GIVEN|^[[:space:]]*WHEN|^[[:space:]]*THEN|^[[:space:]]*AND|^[[:space:]]*REQUIREMENT:|^[[:space:]]*RFP-|^[[:space:]]*SRS-" \
     "$SPEC_FILE" 2>/dev/null | wc -l
 }
 
