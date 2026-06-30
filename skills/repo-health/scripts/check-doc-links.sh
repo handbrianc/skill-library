@@ -72,7 +72,7 @@ if [ "$EXTERNAL" == "--external" ]; then
   echo "" >&2
   echo "Checking external links (this can be slow)..." >&2
 
-  grep -roEn --include="*.md" --include="*.mdx" -E '\\[([^\\]]+)\\]\\((https?://[^)]+)\\)' "$TARGET" 2>/dev/null \
+  grep -roEn --include="*.md" --include="*.mdx" -E '\[([^]]+)\]\((https?://[^)]+)\)' "$TARGET" 2>/dev/null \
     | head -50 | while IFS=: read -r file linum match; do
       url="$(printf '%s\n' "$match" | sed -E 's/^\[[^]]+\]\((https?:\/\/[^)]+)\)$/\1/')"
       http_code=$(curl -sI --max-time 10 -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000")
