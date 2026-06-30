@@ -59,10 +59,9 @@ do_scan() {
       -exec grep -Hn -E "$pattern" {} + 2>/dev/null || true
   } | while IFS= read -r hit; do
     file=${hit%%:*}
-    rest=${hit#*:}; line=${rest%%:*}; match=${rest#*:}
-    masked=$(printf '%s' "$match" | sed -E 's/([A-Za-z0-9._\/=:+-]{4})[A-Za-z0-9._\/=:+-]{8,}/\1*REDACTED*/g')
+    rest=${hit#*:}; line=${rest%%:*}
+    masked='[REDACTED — open file to inspect matched line]'
     printf '%s\t%s\t%s\t%s\t%s\n' "$secret_type" "$file" "$line" "$masked" "$sev"
-  done || true
 }
 
 for entry in "${PATTERNS[@]}"; do
