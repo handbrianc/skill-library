@@ -473,7 +473,13 @@ Synthesize all findings into a **prioritized, executable plan**.
 | Security            | 🔴 ISSUES    | 7             | CRITICAL |
 | Supply Chain        | 🟡 WARNINGS  | 3             | MEDIUM   |
 
-**Overall Grade:** D / 100
+### GRADE COMPUTATION
+
+Using the tally counts from the ACTION PLAN, apply the scoring weights from the Grading Rubric section above to arrive at a numeric score, then output:
+
+```
+**Overall Grade:** {GRADE} ({POINTS}/100)
+```
 
 ---
 
@@ -616,12 +622,58 @@ If a finding cannot be deterministically reproduced, mark it `[NON-DETERMINISTIC
 
 ## Grading Rubric
 
-Apply this overall grade after compiling all findings:
+Convert findings into a numeric score, then map to a letter grade.
 
-| Grade | Criteria                                                    |
-| ----- | ----------------------------------------------------------- |
-| **A** | Zero CRITICALs, <=3 HIGHs, coverage >=90%, clean test run   |
-| **B** | Zero CRITICALs, <=5 HIGHs, coverage >=80%, clean test run   |
-| **C** | <=2 CRITICALs, <=10 HIGHs, coverage >=70%                   |
-| **D** | Up to 5 CRITICALs, any coverage, test suite mostly passing   |
-| **F** | More than 5 CRITICALs, or test suite not passing, or SECRETS COMMITTED |
+### Scoring Weights
+
+| Finding Type | Points Deducted |
+|---|---|
+| CRITICAL | -25 |
+| HIGH | -10 |
+| MEDIUM | -3 |
+| LOW | -1 |
+
+| Bonuses | Points Added |
+|---|---|
+| Clean test run (0 failed/errors) | +5 |
+| Line coverage >= 80% | +3 |
+| Line coverage >= 90% | +3 (additional) |
+| Zero CRITICALs | +2 |
+| Zero HIGHs | +2 |
+
+### Grade Computation Steps
+
+1. **Start at 100 points**
+2. **Subtract** point values from all CRITICAL/HIGH/MEDIUM/LOW findings
+3. **Add** applicable bonuses
+4. **Cap** final score at minimum 0 and maximum 100
+
+### Letter Grade Mapping
+
+| Grade | Numeric Score |
+| ----- | ------------- |
+| **A** | 90 – 100 |
+| **B** | 70 – 89 |
+| **C** | 50 – 69 |
+| **D** | 25 – 49 |
+| **F** | 0 – 24 |
+
+### GRADE COMPUTATION
+
+From tally counts, compute:
+
+```
+POINTS = 100
+POINTS -= (CRITICAL × 25) + (HIGH × 10) + (MEDIUM × 3) + (LOW × 1)
+POINTS += BONUSES as applicable
+POINTS = clamp(POINTS, 0, 100)
+
+GRADE =
+  POINTS >= 90 ? "A"
+  POINTS >= 70 ? "B"
+  POINTS >= 50 ? "C"
+  POINTS >= 25 ? "D"
+  : "F"
+
+Output: **Overall Grade:** {GRADE} ({POINTS}/100)
+```

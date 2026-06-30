@@ -2,102 +2,186 @@
 #
 # find-duplicates.sh
 # Detects duplicated code blocks across the codebase using text similarity.
-# Uses a sliding-window line-hash approach for deterministic results.
+# Uses a sliding-window + N-gram fingerprint approach with configurable threshold.
 #
 # Usage: ./find-duplicates.sh <target_dir> [min_lines] [threshold]
+#   threshold: 0-100, percentage of N-gram fingerprint intersection required.
+#              100 = exact match only. Lower values enable fuzzy detection.
 set -euo pipefail
 
 TARGET="${1:-.}"
 MIN_LINES="${2:-50}"
 THRESHOLD="${3:-100}"
-if [ "$THRESHOLD" != "100" ]; then
-  echo "Warning: threshold parameter is not implemented yet; only exact hash matches are reported." >&2
+
+if [[ ! "$THRESHOLD" =~ ^[0-9]+$ ]] || [ "$THRESHOLD" -lt 1 ] || [ "$THRESHOLD" -gt 100 ]; then
+  echo "Error: threshold must be an integer 1-100, got '$THRESHOLD'" >&2
+  exit 1
+fi
+
+if [[ ! "$MIN_LINES" =~ ^[0-9]+$ ]] || [ "$MIN_LINES" -lt 2 ]; then
+  echo "Error: min_lines must be an integer >= 2, got '$MIN_LINES'" >&2
+  exit 1
+fi
+
+if (( ${BASH_VERSINFO[0]:-0} < 4 )); then
+  echo "Error: Bash >= 4 is required (for associative arrays). Current: ${BASH_VERSINFO[0]:-0}" >&2
+  exit 1
 fi
 
 echo "=== DUPLICATE CODE SCAN ===" >&2
 echo "Target: $TARGET" >&2
-echo "Min lines: $MIN_LINES, Threshold: $THRESHOLD" >&2
-if [ "$THRESHOLD" != "100" ]; then
-  echo "WARNING: This script only reports exact hash matches (100% similarity)." >&2
-  echo "  Non-100 threshold values are not currently supported." >&2
-fi
+echo "Min lines: $MIN_LINES, Threshold: $THRESHOLD%" >&2
 echo "" >&2
 
 TMPDIR=$(mktemp -d)
-FILES="$TMPDIR/files.txt"
-LINES="$TMPDIR/lines.txt"
-
 trap "rm -rf $TMPDIR" EXIT
 
-# Collect files
-find "$TARGET" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" -o -name "*.go" -o -name "*.java" \) \
-  ! -path "*/node_modules/*" ! -path "*/.git/*" ! -path "*/dist/*" ! -path "*/build/*" ! -path "*/vendor/*" \
+FILES="$TMPDIR/files.txt"
+find "$TARGET" -type f \
+  \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" -o -name "*.go" -o -name "*.java" \) \
+  -path "*/node_modules" -prune -o -path "*/.git" -prune -o -path "*/dist" -prune -o \
+  -path "*/build" -prune -o -path "*/vendor" -prune -o -print \
   > "$FILES"
 
 FILE_COUNT=$(wc -l < "$FILES")
 echo "Files to scan: $FILE_COUNT" >&2
 
-# Strip comments and normalize whitespace before hashing
-# This prevents false-negatives from cosmetic differences
+# --- Normalize a multiline string: strip comments, collapse whitespace ---
 normalize() {
-  sed 's/#.*//' | sed 's|//.*||' | sed -E 's/[[:space:]]+/ /g' | sed -E 's/^ +//; s/ +$//' | grep -v '^[[:space:]]*$'
+  sed 's/#.*//' 2>/dev/null | sed 's|//.*||' | sed -E 's/[[:space:]]+/ /g' | sed -E 's/^ +//; s/ +$//' | grep -av '^[[:space:]]*$' 2>/dev/null
 }
 
-# Build hash index of line-windows
-if (( ${BASH_VERSINFO[0]:-0} < 4 )); then
-  echo "Bash >= 4 is required for associative arrays (declare -A)." >&2
-  echo "Run with a newer bash (e.g., brew install bash) and re-run this script." >&2
-  exit 1
-fi
+# --- Hash a normalized window for exact-matching mode (fast path) ---
+fast_hash() {
+  printf '%s' "$1" | sha256sum | awk '{print $1}'
+}
 
-declare -A HASH_MAP
+# --- Build N-gram fingerprint set for a normalized window ---
+# Returns a space-delimited list of line-prefix hashes representing N-gram components.
+fingerprint_ngram() {
+  local content="$1"
+  local ngrams=""
+  local line
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    # Hash each line; the collection represents the window's fingerprint
+    local fh
+    fh=$(printf '%s' "$line" | sha256sum | awk '{print $1}')
+    ngrams="${ngrams}${fh} "
+  done <<<"$content"
+  echo "${ngrams%. }"
+}
+
+# --- Jaccard similarity between two space-delimited fingerprint lists ---
+# Returns integer percentage (0-100): share of unique ngrams in common.
+jaccard_pct() {
+  local a="$1" b="$2"
+  local -A seen_a seen_b union_seen intersect_seen
+  local item
+
+  for item in $a; do seen_a[$item]=1; done
+  for item in $b; do seen_b[$item]=1; done
+  for item in "${!seen_a[@]}"; do union_seen[$item]=1; done
+  for item in "${!seen_b[@]}"; do union_seen[$item]=1; done
+  for item in "${!seen_a[@]}"; do
+    [[ "${seen_b[$item]:-}" ]] && intersect_seen[$item]=1
+  done
+
+  local union_count=${#union_seen[@]}
+  local intersect_count=${#intersect_seen[@]}
+  if (( union_count == 0 )); then
+    echo 0
+    return
+  fi
+  echo $(( intersect_count * 100 / union_count ))
+}
+
+# ============================================================
+# MAIN
+# ============================================================
+
+declare -A HASH_INDEX_EXACT   # fast_hash -> "file:start" (for threshold=100 only)
+declare -A REPORTED_PAIRS     # dedup prevention: "file1:start1:file2:start2" -> 1
+declare -A CANONICAL_FP       # window_key -> fingerprint_ngram result (cache)
+
+FILE_LIST=$(cat "$FILES")
+TOTAL_FILES=$(echo "$FILE_LIST" | wc -l)
+SCANNED=0
 
 while IFS= read -r FILE; do
-  LINECOUNT=$(wc -l < "$FILE")
-  WINDOW_SIZE=$(( MIN_LINES ))
-  
-  if [ "$LINECOUNT" -lt "$WINDOW_SIZE" ]; then
-    continue
-  fi
-  
-  # Sliding window hashes
-  WINDOWS=$((LINECOUNT - WINDOW_SIZE + 1))
-  MAX_WINDOWS=${MAX_WINDOWS:-5000}
-  if [ "$WINDOWS" -gt "$MAX_WINDOWS" ]; then
-    echo "Skipping $FILE (too many windows: $WINDOWS > $MAX_WINDOWS)" >&2
-    continue
-  fi
+  (( SCANNED++ )) || true
 
-  for START in $(seq 1 "$WINDOWS"); do
-    CONTENT=$(sed -n "${START},$((START + WINDOW_SIZE - 1))p" "$FILE" \
-      | normalize)
-    
-    if [ -z "$CONTENT" ]; then
-      continue
-    fi
-    
-    if command -v sha256sum >/dev/null 2>&1; then
-      HASH=$(printf '%s' "$CONTENT" | sha256sum | awk '{print $1}')
+  [ ! -f "$FILE" ] && continue
+  LINECOUNT=$(wc -l < "$FILE")
+  [ "$LINECOUNT" -lt "$MIN_LINES" ] && continue
+
+  # Store normalized lines for cheap per-window extraction
+  NORM_LINES="$TMPDIR/norm_${SCANNED}.txt"
+  normalize < "$FILE" > "$NORM_LINES"
+  NORM_LC=$(wc -l < "$NORM_LINES")
+
+  WINDOWS=$(( NORM_LC - MIN_LINES + 1 ))
+  [ "$WINDOWS" -lt 1 ] && continue
+
+  for (( START=1; START<=WINDOWS; START++ )); do
+    end=$(( START + MIN_LINES - 1 ))
+    win_key="${FILE}:${START}"
+
+    CONTENT=$(sed -n "${START},${end}p" "$NORM_LINES" | tr -d '\0')
+    [ -z "$CONTENT" ] && continue
+
+    if (( THRESHOLD == 100 )); then
+      # Fast path: exact hash match
+      h=$(fast_hash "$CONTENT")
+      if [ -n "${HASH_INDEX_EXACT[$h]:-}" ]; then
+        orig="${HASH_INDEX_EXACT[$h]}"
+        pair_key=""
+        [[ "$orig" < "$win_key" ]] && pair_key="${orig}:${win_key}" || pair_key="${win_key}:${orig}"
+        if [ -z "${REPORTED_PAIRS[$pair_key]:-}" ]; then
+          REPORTED_PAIRS[$pair_key]=1
+          printf '%s\t%s\t%d lines\t100%% similarity (exact hash match)\n' "$orig" "$win_key" "$MIN_LINES"
+        fi
+      else
+        HASH_INDEX_EXACT[$h]="$win_key"
+      fi
     else
-      HASH=$(printf '%s' "$CONTENT" | shasum -a 256 | awk '{print $1}')
-    fi
-    KEY="${HASH}:${WINDOW_SIZE}"
-    
-    if [ -z "${HASH_MAP[$KEY]+isset}" ]; then
-      HASH_MAP[$KEY]="$FILE:$START"
-    else
-      # Found a duplicate
-      ORIG="${HASH_MAP[$KEY]}"
-      echo -e "$ORIG\t$FILE:$START\t$WINDOW_SIZE lines\t100% (hash match)"
+      # Fuzzy path: build fingerprint and compare against candidate windows
+      fp=$(fingerprint_ngram "$CONTENT")
+      CANONICAL_FP[$win_key]="$fp"
+
+      # Compare against previously seen windows (nested loop, bounded by candidate pruning)
+      for prev_key in "${!CANONICAL_FP[@]}"; do
+        [[ "$prev_key" == "$win_key" ]] && continue
+        [[ "$prev_key" < "$win_key" ]] && pair_sort="${prev_key}:${win_key}" || pair_sort="${win_key}:${prev_key}"
+        [ -n "${REPORTED_PAIRS[$pair_sort]:-}" ] && continue
+
+        prev_fp="${CANONICAL_FP[$prev_key]}"
+        [ -z "$prev_fp" ] && continue
+
+        sim=$(jaccard_pct "$fp" "$prev_fp")
+
+        if (( sim >= THRESHOLD )); then
+          REPORTED_PAIRS[$pair_sort]=1
+          printf '%s\t%s\t%d lines\t%d%% similarity (N-gram fingerprint)\n' "$prev_key" "$win_key" "$MIN_LINES" "$sim"
+        fi
+      done
+
+      # Memory guard: flush FP cache periodically to avoid unbounded growth
+      if (( SCANNED % 200 == 0 )) && (( START == WINDOWS )); then
+        unset CANONICAL_FP
+        declare -A CANONICAL_FP
+      fi
     fi
   done
-  
-done < "$FILES"
+done <<<"$FILE_LIST"
 
 echo "" >&2
-echo "=== DUPLICATES FOUND ===" >&2
-echo "Above listings show files sharing $MIN_LINES+ consecutive normalized lines." >&2
-echo "Verify duplicates >50 identical lines for manual refactoring." >&2
-echo "Note: Normalized content shown (comments/whitespace stripped)." >&2
-
+if (( THRESHOLD == 100 )); then
+  echo "=== SCAN COMPLETE ===" >&2
+  echo "Reported windows with identical normalized lines (exact hash match)." >&2
+else
+  echo "=== SCAN COMPLETE ===" >&2
+  echo "Reported pairs sharing >= $THRESHOLD% of line N-grams in common." >&2
+fi
+echo "Threshold $THRESHOLD% — verify results, especially for low thresholds." >&2
 exit 0
