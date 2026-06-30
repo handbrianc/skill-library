@@ -46,7 +46,7 @@ if find "$TARGET" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -n
         | [$fp, (.line|tostring), (.column|tostring), (.message|gsub("[\t\r\n]+";" ")), .ruleId]
         | @tsv' 2>/dev/null | \
       while IFS=$'\t' read -r filepath line col msg rule; do
-        echo "$filepath",line=$line,"$msg" >> "$OUT"
+        echo "$filepath",$line,"$msg" >> "$OUT"
       done
   fi
   if [ -s "$OUT" ]; then

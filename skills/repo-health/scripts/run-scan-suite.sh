@@ -85,7 +85,7 @@ dispatch "$SCRIPT_BASE/check-doc-links.sh" "DOC_LINKS" "scan-05-doc-links.log"
 echo "" >&2
 LOG "MAIN" "=== Specification Scans ==="
 if [ -d "specs" ]; then
-  dispatch "$SCRIPT_BASE/compare-specs.sh" "SPEC_ALIGN" "scan-06-spec-align.log" "$WORKDIR/specs" "$WORKDIR/specs/archive"
+  dispatch "$SCRIPT_BASE/compare-specs.sh" "SPEC_ALIGN" "scan-06-spec-align.log" "specs" "specs/archive"
 else
   LOG "SPEC_ALIGN" "SKIPPED (no specs/ directory)"
 fi
