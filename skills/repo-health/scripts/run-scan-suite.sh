@@ -91,11 +91,11 @@ else
 fi
 
 echo "" >&2
-if ! $SKIP_NETWORK; then
+if ! $SKIP_SECRETS; then
   LOG "MAIN" "=== Security Scans ==="
   dispatch "$SCRIPT_BASE/scan-secrets.sh" "SECRETS" "scan-07-secrets.log"
 else
-  LOG "SECRETS" "SKIPPED (--skip-network-checks specified)"
+  LOG "SECRETS" "SKIPPED (--skip-secrets-scan specified)"
 fi
 
 echo "" >&2
