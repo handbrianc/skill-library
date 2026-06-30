@@ -78,7 +78,7 @@ grep -rHn --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" 
 # c) Python: empty function bodies (pass without logic)
 if [ -n "$PYTHON_FILES" ]; then
   grep -rHn --include="*.py" \
-    -E "def \w+\([^)]*\)[^:]*:((\s*pass\s*)$|((\s+#.*))$)" \
+    -E 'def[[:space:]]+[[:alnum:]_]+\([^)]*\)[^:]*:([[:space:]]*pass[[:space:]]*$|[[:space:]]*#[[:space:]]*.*$)' \
     "$TARGET" 2>/dev/null | head -20 || true
 fi
 
