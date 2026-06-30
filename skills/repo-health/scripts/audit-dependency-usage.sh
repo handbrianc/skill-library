@@ -102,7 +102,31 @@ elif [ "$PKG_MANAGER" == "pip" ]; then
   if [ -f "$REQS_FILE" ]; then
     DEPENDENCIES=$(awk -F'[=<>]' '{print $1}' "$REQS_FILE" | xargs)
   elif [ -f "$PYPROJECT_FILE" ]; then
-    DEPENDENCIES=$(grep -E "^[[:alnum:]_]+" "$PYPROJECT_FILE" | head -50 || echo "")
+    DEPENDENCIES=$(
+      python3 - <<'PY' 2>/dev/null
+import re, sys
+try:
+    import tomllib  # py>=3.11
+except Exception:
+    sys.exit(0)
+
+with open("pyproject.toml", "rb") as f:
+    data = tomllib.load(f)
+
+deps = []
+for spec in (data.get("project", {}) or {}).get("dependencies", []) or []:
+    name = re.split(r"[<>=!~ ]", spec.strip(), 1)[0]
+    if name:
+        deps.append(name)
+
+poetry = (((data.get("tool", {}) or {}).get("poetry", {}) or {}).get("dependencies", {}) or {})
+for name in poetry.keys():
+    if name.lower() != "python":
+        deps.append(name)
+
+print(" ".join(sorted(set(deps))))
+PY
+    ) || true
   fi
   
   INSTALLED=$(pip list 2>/dev/null | awk 'NR>2 {print $1}' | head -50)
