@@ -10,6 +10,9 @@ set -euo pipefail
 TARGET="${1:-.}"
 MIN_LINES="${2:-50}"
 THRESHOLD="${3:-100}"
+if [ "$THRESHOLD" != "100" ]; then
+  echo "Warning: threshold parameter is not implemented yet; only exact hash matches are reported." >&2
+fi
 
 echo "=== DUPLICATE CODE SCAN ===" >&2
 echo "Target: $TARGET" >&2
