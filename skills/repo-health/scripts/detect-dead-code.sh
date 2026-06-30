@@ -69,7 +69,7 @@ echo "[Heuristics] Scanning for dead code patterns..." >&2
 grep -rHn --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
   -E "^(export )?(const|function|class) \w+[^{]*{\s*(//.*)?\s*}" \
   "$TARGET" 2>/dev/null \
-  | grep -vE "return\|_(" \
+  | grep -vE "return|_\(" \
   | head -30 || true
 
 # b) Unreachable code is hard to detect reliably with grep alone — rely on compiler/linter output instead.
