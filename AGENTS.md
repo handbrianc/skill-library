@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **skill-library** (122 symbols, 119 relationships, 0 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **skill-library** (123 symbols, 120 relationships, 0 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -42,7 +42,16 @@ This project is indexed by GitNexus as **skill-library** (122 symbols, 119 relat
 
 <!-- gitnexus:end -->
 
-When editing `AGENTS.md`, `CLAUDE.md`, or `README.md` — **do not paste GitNexus-generated blocks manually** (e.g., `<!-- gitnexus:start --> … <!-- gitnexus:end -->`). Keep authored prose focused on the project purpose, structure, and conventions.
+When editing `AGENTS.md`, `CLAUDE.md`, or `README.md` — **do not paste GitNexus-generated blocks manually** (e.g., `<!-- gitnexus:start %> … <!-- gitnexus:end -->`). Keep authored prose focused on the project purpose, structure, and conventions.
+
+## Skill Loading Precedence
+
+OpenCode resolves skills from two locations (in priority order):
+
+1. **User-installed** (`~/.config/opencode/skills/`) — shared across all projects
+2. **Project-local** (`skills/`) — vendored skill folders in this repository
+
+User-installed skills override project-local copies of the same name. When adding a skill to this repo, also install it locally to `~/.config/opencode/skills/<skill-name>/` to test before contributing.
 
 # Background Task Rules
 - You are using background execution blocks. 

@@ -19,6 +19,7 @@ echo "" >&2
 
 TMPDIR=$(mktemp -d)
 OUT="$TMPDIR/complexity_out.csv"
+COGNITIVE_FLAGS="$TMPDIR/cognitive_flags.csv"
 
 trap 'rm -rf "$TMPDIR"' EXIT
 
@@ -59,7 +60,7 @@ fi
 # ------- Cognitive complexity — manual heuristics --------------
 # Since there's no standard free cognitive complexity tool,
 # we use regex-based grep heuristics to find red-flag patterns:
-echo '"file","line","pattern","score"' > "$COGNITIVE_FLAGS"
+echo '"file","line","pattern","score"' > "$COGNITIVE_FLAGS"  # CSV header
 
 find "$TARGET" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" \) \
   ! -path "*/node_modules/*" ! -path "*/dist/*" ! -path "*/build/*" \
