@@ -42,25 +42,21 @@ STRONG_PATTERNS="GPL-2\.0|GPL-3\.0|AGPL-3\.0|EUPL-1\.2|NUnit"
 
 if command -v jq &>/dev/null; then
   # SPDX JSON: packages[*].licenseConcluded or packages[*].licenseInfoFromFiles
-  PACKAGES=$(jq -c '.packages[] | {name: .name, license: (.licenseConcluded // "NOASSERTION")}' "$SBOM" 2>/dev/null || true)
-  
-  if [ -n "$PACKAGES" ]; then
-    while IFS= read -r line; do
-      NAME=$(echo "$line" | jq -r '.name' 2>/dev/null || echo "unknown")
-      LIC=$(echo "$line" | jq -r '.license' 2>/dev/null || echo "NOASSERTION")
-      
-      if echo "$LIC" | grep -qE "$PERMISSIVE_PATTERNS"; then
-        PERMISSIVE+=("$NAME ($LIC)")
-      elif echo "$LIC" | grep -qE "$WEAK_PATTERNS"; then
-        COPYLEFT_WEAK+=("$NAME ($LIC)")
-      elif echo "$LIC" | grep -qE "$STRONG_PATTERNS"; then
-        COPYLEFT_STRONG+=("$NAME ($LIC)")
-      else
-        # Commercial or unusual licenses
-        UNKNOWN+=("$NAME ($LIC) [VERIFY]")
-      fi
-    done <<< "$PACKAGES"
-  fi
+  while IFS= read -r line; do
+    NAME=$(echo "$line" | jq -r '.name' 2>/dev/null || echo "unknown")
+    LIC=$(echo "$line" | jq -r '.license' 2>/dev/null || echo "NOASSERTION")
+
+    if echo "$LIC" | grep -qE "$PERMISSIVE_PATTERNS"; then
+      PERMISSIVE+=("$NAME ($LIC)")
+    elif echo "$LIC" | grep -qE "$WEAK_PATTERNS"; then
+      COPYLEFT_WEAK+=("$NAME ($LIC)")
+    elif echo "$LIC" | grep -qE "$STRONG_PATTERNS"; then
+      COPYLEFT_STRONG+=("$NAME ($LIC)")
+    else
+      # Commercial or unusual licenses
+      UNKNOWN+=("$NAME ($LIC) [VERIFY]")
+    fi
+  done < <(jq -c '.packages[] | {name: .name, license: (.licenseConcluded // "NOASSERTION")}' "$SBOM" 2>/dev/null || true)
 else
   echo "jq not available — falling back to text parsing" >&2
   grep -oE "\"licenseConcluded\":\s*\"[^\"]+\"" "$SBOM" | \
