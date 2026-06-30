@@ -102,7 +102,7 @@ elif [ "$PKG_MANAGER" == "pip" ]; then
   if [ -f "$REQS_FILE" ]; then
     DEPENDENCIES=$(awk -F'[=<>]' '{print $1}' "$REQS_FILE" | xargs)
   elif [ -f "$PYPROJECT_FILE" ]; then
-    DEPENDENCIES=$(grep -E "^\w+" "$PYPROJECT_FILE" | head -50 || echo "")
+    DEPENDENCIES=$(grep -E "^[[:alnum:]_]+" "$PYPROJECT_FILE" | head -50 || echo "")
   fi
   
   INSTALLED=$(pip list 2>/dev/null | awk 'NR>2 {print $1}' | head -50)
