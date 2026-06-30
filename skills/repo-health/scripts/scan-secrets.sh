@@ -94,7 +94,7 @@ for entry in "${PATTERNS[@]}"; do
   do_scan "*.env" "$SECRET_TYPE" "CRITICAL" "$PATTERN"
 done
 
-# ---- GIT HISTORY SCAN (proxy via -S string search) ----
+# ---- GIT HISTORY SCAN (pickaxe regex search via -G) ----
 echo "" >&2
 echo "=== GIT HISTORY SWEEP ===" >&2
 echo "(Detects secrets ever committed — even if subsequently removed)" >&2
