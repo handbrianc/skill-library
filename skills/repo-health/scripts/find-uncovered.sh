@@ -16,8 +16,7 @@ echo "Coverage data: $COVER_DATA" >&2
 echo "" >&2
 
 TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
-
+trap 'rm -rf "$TMPDIR"' EXIT
 # -------- Istanbul/Jest JSON coverage format --------
 # coverage-final.json format: {"/abs/path/file.js": { s: {"1": 0, ...}, ... }, ...}
 if [ -f "$COVER_DATA" ] && command -v jq >/dev/null 2>&1 && jq -e 'type=="object" and (to_entries[0].value | has("s"))' "$COVER_DATA" >/dev/null 2>&1; then
