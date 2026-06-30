@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **skill-library** (31 symbols, 27 relationships, 0 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **skill-library** (122 symbols, 119 relationships, 0 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -43,3 +43,9 @@ This project is indexed by GitNexus as **skill-library** (31 symbols, 27 relatio
 <!-- gitnexus:end -->
 
 When editing `AGENTS.md`, `CLAUDE.md`, or `README.md` — **do not paste GitNexus-generated blocks manually** (e.g., `<!-- gitnexus:start --> … <!-- gitnexus:end -->`). Keep authored prose focused on the project purpose, structure, and conventions.
+
+# Background Task Rules
+- You are using background execution blocks. 
+- DO NOT emit your final summary or exit the process while a background task ID is active.
+- Use `background_output` to explicitly poll task statuses until they return a completed exit code.
+- Implement a task tracking checklist. Mark tasks as complete only after reviewing the background logs.

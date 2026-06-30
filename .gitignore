@@ -182,11 +182,13 @@ node_modules/
 
 .gitnexus/
 !.gitnexus/cache/
+.gitnexus/lbug
 
 
 # !== OpenCode / Claude Code ===
 
 .omo/                     # OpenCode todo/task state
+.claude/                  # Claude Code workspace directory
 .claude/projects/         # Claude project memories
 .claude/sessions/         # Session transcripts
 claudecode_history        # Legacy claude code history
