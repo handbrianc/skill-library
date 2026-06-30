@@ -81,9 +81,8 @@ if [ "$PKG_MANAGER" == "npm" ] || [ "$PKG_MANAGER" == "pnpm" ] || [ "$PKG_MANAGE
   for DEPK in $DEPENDENCIES; do
     # Dependency keys from package.json are already package names (no version suffix)
     BASENAME="$DEPK"
-    if ! grep -qF "$BASENAME" "$SRC_INDEX" 2>/dev/null; then
+    if ! grep -qE "['\"]${BASENAME}(['\"/]|$)" "$SRC_INDEX" 2>/dev/null; then
       echo -e "DEAD_INSTALL\t$DEPK" >&2
-      
       # Check if it's actually used dynamically
       find . -type f \( -name "*.ts" -o -name "*.js" -o -name "*.json" -o -name "*.config.*" \) \
         ! -path "*/node_modules/*" ! -path "*/dist/*" \
