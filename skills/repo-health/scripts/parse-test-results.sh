@@ -79,7 +79,7 @@ if [ "$FRAMEWORK" == "jest" ] || [ "$FRAMEWORK" == "vitest" ]; then
   
   echo "" >&2
   echo "--- ERRORS ---" >&2
-  grep -B2 -A 5 "ERR_TIMEOUT\|Uncaught \|SyntaxError\|ReferenceError\|TypeError.*at " "$INPUT" 2>/dev/null | head -40 >&2
+  grep -B2 -A 5 -E "ERR_TIMEOUT|Uncaught|SyntaxError|ReferenceError|TypeError.*at " "$INPUT" 2>/dev/null | head -40 >&2
   
   echo "" >&2
   echo "--- SKIPPED ---" >&2
