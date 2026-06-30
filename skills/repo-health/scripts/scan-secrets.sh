@@ -100,7 +100,7 @@ echo "=== GIT HISTORY SWEEP ===" >&2
 echo "(Detects secrets ever committed — even if subsequently removed)" >&2
 
 # Keys worth searching history for
-HISTORY_PATTERNS="AKIA[A-Z0-9]{16}|sk_live_[a-z0-9]{24}|-----BEGIN PRIVATE KEY-----"
+HISTORY_PATTERNS="AKIA[A-Z0-9]\{16\}|sk_live_[a-z0-9]\{24\}|-----BEGIN PRIVATE KEY-----"
 # Emit only commit metadata and affected filenames — never print patch lines that contain the secret value.
 git log --all --full-history --format="COMMIT:%H %as %s" --name-only -G "$HISTORY_PATTERNS" --pickaxe-regex \
   -- "*.js" "*.ts" "*.json" "*.yaml" "*.env*" 2>/dev/null | \
