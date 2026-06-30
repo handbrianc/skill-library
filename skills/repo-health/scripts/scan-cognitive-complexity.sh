@@ -46,12 +46,12 @@ if find "$TARGET" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -n
         | [$fp, (.line|tostring), (.column|tostring), (.message|gsub("[\t\r\n]+";" ")), .ruleId]
         | @tsv' 2>/dev/null | \
       while IFS=$'\t' read -r filepath line col msg rule; do
-        echo "$filepath",$line,"$msg" >> "$OUT"
+        printf '%s,%s,%s\n' "$filepath" "$line" "$msg" >> "$OUT"
       done
   fi
   if [ -s "$OUT" ]; then
     echo "Cyclomatic Complexity Violations:" >&2
-    sort -t, -k2 -n "$OUT" | uniq >&2
+    sort -t, -k1,1 -k2,2n "$OUT" | uniq >&2
     echo "" >&2
   fi
 fi
