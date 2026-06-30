@@ -12,6 +12,9 @@
 
 set -euo pipefail
 
+TMPDIR=$(mktemp -d)
+trap 'rm -rf "$TMPDIR"' EXIT
+
 echo "=== DEPENDENCY USAGE AUDIT ===" >&2
 echo "" >&2
 
@@ -52,10 +55,12 @@ if [ "$PKG_MANAGER" == "npm" ] || [ "$PKG_MANAGER" == "pnpm" ] || [ "$PKG_MANAGE
   SRC_DIRS=$(find . -type d \( -name "src" -o -name "lib" -o -name "app" -o -name "packages" \) \
     ! -path "*/node_modules/*" ! -path "*/.git/*" ! -path "*/dist/*" 2>/dev/null | head -10)
   
-  TOTAL_SRC=""
+  SRC_INDEX="$TMPDIR/src_imports.txt"
+  touch "$SRC_INDEX"
   for DIR in $SRC_DIRS; do
-    # Count import/require usages
-    TOTAL_SRC="$TOTAL_SRC $(grep -rh --include=\"*.ts\" --include=\"*.tsx\" --include=\"*.js\" --include=\"*.jsx\" -E \"require\\(|import[[:space:]].*from\" \"$DIR\" 2>/dev/null)"
+    # Collect import/require usages into a temp file to avoid large in-memory variable
+    grep -rh --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
+      -E "require\(|import[[:space:]].*from" "$DIR" 2>/dev/null >> "$SRC_INDEX" || true
   done
   
   echo "" >&2
@@ -66,7 +71,7 @@ if [ "$PKG_MANAGER" == "npm" ] || [ "$PKG_MANAGER" == "pnpm" ] || [ "$PKG_MANAGE
   for DEPK in $DEPENDENCIES; do
     # Dependency keys from package.json are already package names (no version suffix)
     BASENAME="$DEPK"
-    if ! echo "$TOTAL_SRC" | grep -qF "$BASENAME" 2>/dev/null; then
+    if ! grep -qF "$BASENAME" "$SRC_INDEX" 2>/dev/null; then
       echo -e "DEAD_INSTALL\t$DEPK" >&2
       
       # Check if it's actually used dynamically

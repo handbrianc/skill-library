@@ -67,12 +67,11 @@ if [ "$FRAMEWORK" == "jest" ] || [ "$FRAMEWORK" == "vitest" ]; then
   # Vitest: "✓ my-test [123ms]"
   # Jest verbose: " PASS  src/foo.test.ts (5 s)"
   grep -E "^  (✓|✗|○|●|[√×✕]) " "$INPUT" \
-    | grep -oE '\\[[0-9]+(\\.[0-9]+)?(ms|s|m)\\]' \
-    | tr -d '[]' \
-    | awk 'match($0, /^([0-9.]+)(ms|s|m)$/, a) { num=a[1]; unit=a[2]; ms=(unit=="ms")?num:(unit=="s")?num*1000:num*60000; printf "%.0f\t%s\n", ms, $0 }' \
+    | grep -E '\[[0-9]+(\.[0-9]+)?(ms|s|m)\]' \
+    | awk 'match($0, /\[([0-9.]+)(ms|s|m)\]/, a) { num=a[1]; unit=a[2]; ms=(unit=="ms")?num:(unit=="s")?num*1000:num*60000; printf "%.0f\t%s\n", ms, $0 }' \
     | sort -nr | head -20 | cut -f2- \
-    | while IFS= read -r timing; do
-        echo "  SLOW: ${timing}" >&2
+    | while IFS= read -r line; do
+        echo "  SLOW: ${line}" >&2
       done
   
   echo "" >&2
