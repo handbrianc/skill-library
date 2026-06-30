@@ -20,8 +20,7 @@ if [ ! -f "$INPUT" ]; then
 fi
 
 TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
-
+trap 'rm -rf "$TMPDIR"' EXIT
 # -------- Detect test framework --------
 if grep -q "vitest" "$INPUT" 2>/dev/null; then
   FRAMEWORK="vitest"
