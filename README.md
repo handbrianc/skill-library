@@ -12,7 +12,7 @@ An OpenCode skill distribution template. Packages reusable skill files for agent
 
 ## Skill Installation Paths
 
-OpenCode loads skills from two places:
+OpenCode loads skills from two places (this repo vendors skill folders under `./skills/` for you to copy/symlink into one of these):
 
 1. **User-installed** (`~/.config/opencode/skills/`) — shared across all projects
 2. **Project-local source** (`skills/`) — this repository’s local skill folders
