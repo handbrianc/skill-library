@@ -188,7 +188,7 @@ node_modules/
 # !== OpenCode / Claude Code ===
 
 .omo/                     # OpenCode todo/task state
-!.omo/project-memory.md   # Track project memory, ignore run-continuation et al
+!.omo/project-memory.md   # Track project memory, ignore everything else in .omo/
 .claude/                  # Claude Code workspace directory
 .claude/projects/         # Claude project memories
 .claude/sessions/         # Session transcripts

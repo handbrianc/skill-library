@@ -1,6 +1,6 @@
 # Contributing to Skill Library
 
-This repo distributes reusable OpenCode skill markdown files. No production code, no build system, no tests needed.
+This repo distributes reusable OpenCode skill markdown files. No production code, no build system, no tests needed. There is no CI/CD pipeline — PRs are reviewed manually by maintainers.
 
 ## Skill Location
 

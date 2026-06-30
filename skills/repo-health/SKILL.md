@@ -9,6 +9,22 @@ A rigorous, deterministic repository audit covering six dimensions. Produces a p
 
 > **Prerequisite:** Run `node .gitnexus/run.cjs analyze --force` on the target repo before starting (fallback: `npx gitnexus analyze --force` if the local runner doesn't exist). This ensures the knowledge graph reflects current state.
 
+## Critical Constraints
+
+### MUST DO
+- Produce a prioritized, actionable plan before considering the audit complete
+- Flag as CRITICAL any finding that is security-relevant or blocking release
+- Run actual scanners/tool commands — do not speculate about outcomes
+- Preserve the original commit (operate on HEAD, never mixed working tree + staging)
+
+### MUST NOT DO
+- Never suppress type errors with `as any`, `@ts-ignore`, or `@ts-expect-error`
+- Never delete failing tests to make a build pass — fix the underlying code
+- Never commit changes without running `gitnexus_detect_changes()` to verify affected scope
+- Never edit any symbol without first running `gitnexus_impact(target, direction: "upstream")`
+- Never use find-and-replace for renames — use `gitnexus_rename` which respects the call graph
+- Never treat an N/A dimension as a failure — document the rationale (e.g., "no test suite — intentional for this project type")
+
 ## Scope & Preconditions
 
 **In scope:**
@@ -23,6 +39,7 @@ A rigorous, deterministic repository audit covering six dimensions. Produces a p
 
 **Required environment:**
 - Node.js >= 18 (for `npx`)
+- Bash >= 4.0 (for associative-array support in `find-duplicates.sh`)
 - Git installed and accessible
 - For security scan: `npm audit`, `Grype` or `Syft` (container/jar projects)
 - For coverage: project's test runner with coverage reporter (vitest, jest, etc.)
