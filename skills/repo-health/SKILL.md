@@ -118,8 +118,7 @@ npx --yes --no-install gitnexus --version >/dev/null 2>&1 && echo "gitnexus: ava
   | Tool | Status | Install Command |
   | ---- | ------ | --------------- |
   | bash | MISSING | (system package manager) |
-  | semgrep | SYNTAX ERROR in ./skills/repo-health/scripts/scan-secrets.sh | fix script |
-  ```
+  | ./skills/repo-health/scripts/scan-secrets.sh | SYNTAX ERROR (bash -n) | fix script |
 - The user must resolve all gaps before the audit can proceed.
 
 ---
