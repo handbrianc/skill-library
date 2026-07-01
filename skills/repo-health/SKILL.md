@@ -196,8 +196,13 @@ find . -maxdepth 4 -name "*.log" ! -path "./openspec/*" ! -path "./opencode/*" !
 find . -maxdepth 3 \( \
   -name ".Spotlight-V100" -o \
   -name ".Trashes" -o \
-  -name ".fseventsd"
-\) 2>/dev/null
+  -name ".fseventsd"\
+\) \
+  ! -path "./openspec/*" \
+  ! -path "./opencode/*" \
+  ! -path "./.claude/*" \
+  ! -path "./.git/*" \
+  2>/dev/null
 
 # Determine files that are truly transient (safe to remove):
 #   - Generated files that can be regenerated (lock files, caches)
