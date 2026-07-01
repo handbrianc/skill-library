@@ -3,7 +3,7 @@
 # extract-requirements.sh — Parse a spec file and extract all requirements
 #
 # Extracts requirements from markdown, text, or spec-format files using
-# pattern matching: Gherkin, checkboxes, requirement markers, prose, numbered.
+# pattern matching: Gherkin, checkboxes, requirement markers, prose, quoted, numbered.
 #
 # Usage:
 #   ./extract-requirements.sh <spec_file> [spec_file...]
@@ -19,6 +19,7 @@
 #   CHECKBOX_X — Checkbox marked [x] (checked/done)
 #   CHECKBOX_SPACE — Checkbox marked [ ] (unchecked/pending)
 #   PROSE      — Capitalized prose sentence (min 20 chars, ends . or :)
+#   QUOTED     — Quoted directive or requirement text
 #   NUMBERED   — Numbered item: 1. or (a) style
 #
 
@@ -85,6 +86,7 @@ extract_file() {
         [CHECKBOX_X]=0
         [CHECKBOX_SPACE]=0
         [PROSE]=0
+        [QUOTED]=0
         [NUMBERED]=0
     )
 
@@ -96,7 +98,7 @@ extract_file() {
     # Matches: REQUIREMENT:, RFP-, SRS-, USER STORY:, TICKET:
     while IFS=: read -r ln text; do
         # Strip leading whitespace and requirement keyword
-        cleaned=$(echo "$text" | sed -E "s/^${marker_pattern}:[[:space:]]+//")
+        cleaned=$(echo "$text" | sed -E "s/^.*${marker_pattern}:[[:space:]]+//")
         echo "$ln|MARKER|$cleaned" >> "$tmp_file"
         pattern_counts[MARKER]=$((pattern_counts[MARKER] + 1))
     done < <(grep -n -E "${marker_pattern}:[[:space:]]+" "$filepath" 2>/dev/null || true)
@@ -151,12 +153,21 @@ extract_file() {
         if echo "$text" | grep -qE '^#{1,6}\s'; then
             continue
         fi
+        if echo "$text" | grep -qE '^[[:space:]]*(\||>|[-*][[:space:]]|[[:digit:]]+[.)][[:space:]]|\([[:lower:]]+\)[[:space:]]|```)' ; then
+            continue
+        fi
         echo "$ln|PROSE|$text" >> "$tmp_file"
         pattern_counts[PROSE]=$((pattern_counts[PROSE] + 1))
-    done < <(grep -n -E '^[^#].*[[:upper:]][[:space:]].[[:space:][:alnum:]]{15,}[.:]$' "$filepath" 2>/dev/null \
-        | grep -vE '(^#|```|<http|>|\*\*|^\s*-|\|)' || true)
+    done < <(grep -n -E '^[[:space:]]*[A-Z].{18,}[.:]$' "$filepath" 2>/dev/null || true)
 
-    # ── Pattern 5: Numbered items ─────────────────────────────────────────
+    # ── Pattern 5: Quoted directives ────────────────────────────────────────
+    # Matches: "Quoted requirement text" or 'Quoted requirement text'
+    while IFS=: read -r ln text; do
+        echo "$ln|QUOTED|$text" >> "$tmp_file"
+        pattern_counts[QUOTED]=$((pattern_counts[QUOTED] + 1))
+    done < <(grep -n -E "^[[:space:]]*[\"'].{15,}[\"'][[:space:]]*$" "$filepath" 2>/dev/null || true)
+
+    # ── Pattern 6: Numbered items ─────────────────────────────────────────
     # Matches: 1. or (a) or 1) style
     while IFS=: read -r ln text; do
         echo "$ln|NUMBERED|$text" >> "$tmp_file"
@@ -196,6 +207,9 @@ extract_file() {
                 PROSE)
                     echo -e "  ${YELLOW}›${RESET} [$ln] ${YELLOW}PROSE${RESET}: $content"
                     ;;
+                QUOTED)
+                    echo -e "  ${YELLOW}”${RESET} [$ln] ${YELLOW}QUOTED${RESET}: $content"
+                    ;;
                 NUMBERED)
                     echo -e "  ${YELLOW}·${RESET} [$ln] ${YELLOW}NUMBERED${RESET}: $content"
                     ;;
@@ -220,6 +234,7 @@ extract_file() {
     [[ ${pattern_counts[CHECKBOX_X]} -gt 0 ]] && echo -e "${DIM}  ├─ CHECKED:   ${pattern_counts[CHECKBOX_X]}${RESET}"
     [[ ${pattern_counts[CHECKBOX_SPACE]} -gt 0 ]] && echo -e "${DIM}  ├─ PENDING:   ${pattern_counts[CHECKBOX_SPACE]}${RESET}"
     [[ ${pattern_counts[PROSE]} -gt 0 ]] && echo -e "${DIM}  ├─ PROSE:     ${pattern_counts[PROSE]}${RESET}"
+    [[ ${pattern_counts[QUOTED]} -gt 0 ]] && echo -e "${DIM}  ├─ QUOTED:    ${pattern_counts[QUOTED]}${RESET}"
     [[ ${pattern_counts[NUMBERED]} -gt 0 ]] && echo -e "${DIM}  └─ NUMBERED:  ${pattern_counts[NUMBERED]}${RESET}"
 
     rm -f "$tmp_file"

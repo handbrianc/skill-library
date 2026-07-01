@@ -68,6 +68,11 @@ requires_bash_4() {
 
 requires_bash_4
 
+format_match_output() {
+    local pattern_type="$1"
+    sed -E "s/^([0-9]+):(.*)$/\1|${pattern_type}|\2/"
+}
+
 # Extract requirements from a single spec file
 # Returns: line_number|pattern_type|extracted_text
 extract_from_file() {
@@ -77,23 +82,23 @@ extract_from_file() {
 
     # Gherkin: SCENARIO, GIVEN, WHEN, THEN, AND, BACKGROUND blocks
     grep -n -E '^[[:space:]]*(SCENARIO|GIVEN|WHEN|THEN|AND|BACKGROUND)[[:space:]]+' "$file" 2>/dev/null \
-        | awk -F: '{print $1"|GHERKIN|"$2}' >> "$tmp_file" || true
+        | format_match_output "GHERKIN" >> "$tmp_file" || true
 
     # Checkbox items: - [x] or - [ ]
     grep -n -E '^[[:space:]]*-[[:space:]]+\[[ xX]\]' "$file" 2>/dev/null \
-        | awk -F: '{print $1"|CHECKBOX|"$2}' >> "$tmp_file" || true
+        | format_match_output "CHECKBOX" >> "$tmp_file" || true
 
     # Explicit requirement markers
     grep -n -E '(REQUIREMENT|RFP-|SRS-|USER STORY|TICKET):[[:space:]]+' "$file" 2>/dev/null \
-        | awk -F: '{print $1"|MARKER|"$2}' >> "$tmp_file" || true
+        | format_match_output "MARKER" >> "$tmp_file" || true
 
     # Capital-prose sentences (min 20 chars, starts capital, ends . or :)
     grep -n -E '^[A-Z][A-Za-z0-9\s]{18,}[.:]$' "$file" 2>/dev/null \
-        | awk -F: '{print $1"|PROSE|"$2}' >> "$tmp_file" || true
+        | format_match_output "PROSE" >> "$tmp_file" || true
 
     # Numbered items: 1. or (a) style
     grep -n -E '^[[:space:]]*([[:digit:]]+[.)]|\([[:lower:]]+\))[[:space:]]' "$file" 2>/dev/null \
-        | awk -F: '{print $1"|NUMBERED|"$2}' >> "$tmp_file" || true
+        | format_match_output "NUMBERED" >> "$tmp_file" || true
 
     sort -n "$tmp_file" | head -200
     rm -f "$tmp_file"
@@ -143,16 +148,15 @@ total_found=0
 
 # ── Process each current spec ───────────────────────────────────────────────
 declare -A archive_counts
-declare -A archive_files
+declare -A archive_paths
 
 # Pre-load archive counts if available
 if [[ -n "$ARCHIVE_DIR" && -d "$ARCHIVE_DIR" ]]; then
     while IFS= read -r afile; do
         acount=$(count_requirements "$afile")
-        archive_files["$afile"]=1
-        # Try to match by basename
-        bname=$(basename "$afile")
-        archive_counts["$bname"]=$acount
+        rel_path="${afile#"$ARCHIVE_DIR"/}"
+        archive_paths["$rel_path"]="$afile"
+        archive_counts["$rel_path"]=$acount
     done < <(list_spec_files "$ARCHIVE_DIR")
 fi
 
@@ -161,6 +165,7 @@ while IFS= read -r cfile; do
     cur_count=$(count_requirements "$cfile")
     total_current=$((total_current + cur_count))
 
+    rel_path="${cfile#"$CURRENT_DIR"/}"
     bname=$(basename "$cfile")
 
     # Determine if archived version exists
@@ -169,8 +174,8 @@ while IFS= read -r cfile; do
     has_archive="—"
     status="NEW"
 
-    if [[ -n "${archive_counts[$bname]+x}" ]]; then
-        arc_count="${archive_counts[$bname]}"
+    if [[ -n "${archive_counts[$rel_path]+x}" ]]; then
+        arc_count="${archive_counts[$rel_path]}"
         arc_label="$arc_count"
         has_archive="📦"
         total_archive=$((total_archive + arc_count))
@@ -197,7 +202,7 @@ while IFS= read -r cfile; do
 
     # Emit row
     printf "│ %-35s │ %5s │ %5s │ %6s │ %-10s │${RESET}\n" \
-        "${bname:0:35}" "$arc_label" "$cur_count" "$has_archive" "$status"
+        "${rel_path:0:35}" "$arc_label" "$cur_count" "$has_archive" "$status"
 
 done < <(list_spec_files "$CURRENT_DIR")
 
@@ -217,11 +222,14 @@ if [[ -d "$ARCHIVE_DIR" ]]; then
     echo -e "${BOLD}${BLUE}━━━ Divergence Analysis ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 
     while IFS= read -r cfile; do
+        rel_path="${cfile#"$CURRENT_DIR"/}"
         bname=$(basename "$cfile")
         cur_reqs=$(extract_from_file "$cfile")
 
         # Find corresponding archived version
-        matching_arc=$(find "$ARCHIVE_DIR" -type f \( -name "*.md" -o -name "*.txt" -o -name "*.spec" \) 2>/dev/null \
+        matching_arc="${archive_paths[$rel_path]-}"
+        if [[ -z "$matching_arc" ]]; then
+            matching_arc=$(find "$ARCHIVE_DIR" -type f \( -name "*.md" -o -name "*.txt" -o -name "*.spec" \) 2>/dev/null \
             | head -20 \
             | while IFS= read -r af; do
                 abname=$(basename "$af")
@@ -230,6 +238,7 @@ if [[ -d "$ARCHIVE_DIR" ]]; then
                     break
                 fi
             done)
+        fi
 
         if [[ -z "$matching_arc" ]]; then
             # No archived counterpart — could be NEW feature (not a regression)

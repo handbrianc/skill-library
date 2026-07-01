@@ -56,11 +56,12 @@ ls openspec/ 2>/dev/null
 ls specs/ 2>/dev/null
 find . -maxdepth 4 \( -name "*.spec" -o -name "*spec*.md" -o -name "SPEC*" -o -name "*requirement*" -o -name "*.frs" \) ! -path "./node_modules/*" ! -path "./.git/*" -type f 2>/dev/null
 
-# Archive discovery (specs older than 6 months or in explicit archive dirs)
+# Archive discovery (explicit archive dirs plus an age-based scan)
 ls openspec/archive/ 2>/dev/null
 ls specs/archive/ 2>/dev/null
 ls specs/v0.*/ 2>/dev/null
 ls specs/old/ 2>/dev/null
+find . -maxdepth 4 -type f \( -name "*.md" -o -name "*.txt" -o -name "*.spec" -o -name "*.frs" \) -mtime +180 2>/dev/null
 
 # Alternative naming conventions
 find . -maxdepth 4 -type d \( -name "archive" -o -name "legacy" -o -name "deprecated" \) 2>/dev/null | head -10
