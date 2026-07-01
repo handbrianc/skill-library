@@ -198,8 +198,8 @@ find . -maxdepth 3 \( \
 #   - Binary artifacts (compiled output, not source)
 #   - Empty directories left behind
 
-echo "=== TRANSIENT FILES MARKED FOR REMOVAL ==="
-# Print but do NOT remove — review list first
+echo "=== TRANSIENT FILE INVENTORY (REVIEW ONLY) ==="
+echo "Review the lists above; do NOT remove anything automatically."
 ```
 
 **Decision rule — ALWAYS KEEP:**
