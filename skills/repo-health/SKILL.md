@@ -165,8 +165,13 @@ find . -maxdepth 5 -type d \( \
   -name "tmp" -o \
   -name "temp" -o \
   -name "*.egg-info" -o \
-  -name ".tox"
-\) ! -path "./.git/*" 2>/dev/null | head -50
+  -name ".tox"\
+\) \
+  ! -path "./openspec/*" \
+  ! -path "./opencode/*" \
+  ! -path "./.claude/*" \
+  ! -path "./.git/*" \
+  2>/dev/null | head -50
 
 # Editor/IDE noise
 find . -maxdepth 3 \( \
