@@ -92,7 +92,7 @@ extract_from_file() {
         | awk -F: '{print $1"|PROSE|"$2}' >> "$tmp_file" || true
 
     # Numbered items: 1. or (a) style
-    grep -n -E '^[[:space:]]*([[:digit:]]+[.)]|[[:lower:]]+\))[[:space:]]' "$file" 2>/dev/null \
+    grep -n -E '^[[:space:]]*([[:digit:]]+[.)]|\([[:lower:]]+\))[[:space:]]' "$file" 2>/dev/null \
         | awk -F: '{print $1"|NUMBERED|"$2}' >> "$tmp_file" || true
 
     sort -n "$tmp_file" | head -200

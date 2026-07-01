@@ -96,7 +96,7 @@ find . -maxdepth 4 -type d \( -name "archive" -o -name "legacy" -o -name "deprec
 | 2 | Gherkin BDD | `^\s*(GIVEN|WHEN|THEN|AND|BACKGROUND|SCENARIO)\s+(.+)$` | Scenario step |
 | 3 | Checkbox item | `^\s*-\s+\[(x| )\]\s*(.+)$` | Checklist item (checked or unchecked) |
 | 4 | Capital sentence | `^[A-Z][A-Za-z0-9\s]{20,}[.:]$` | Prose requirement (min 20 chars, ends . or :) |
-| 5 | Numbered item | `^(?:\d+[.)]|\([a-z]\))\s*(.+)$` | Numbered sequence item |
+| 5 | Numbered item | `^\s*(\d+[.)]|\([a-z]+\))\s+(.+)$` | Numbered sequence item |
 | 6 | Quoted directive | `^["'].{15,}["']\s*$` | Longer quoted requirement |
 
 **Extraction Commands:**

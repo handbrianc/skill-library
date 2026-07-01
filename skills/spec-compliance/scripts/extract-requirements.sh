@@ -156,7 +156,7 @@ extract_file() {
     while IFS=: read -r ln text; do
         echo "$ln|NUMBERED|$text" >> "$tmp_file"
         pattern_counts[NUMBERED]=$((pattern_counts[NUMBERED] + 1))
-    done < <(grep -n -E '^[[:space:]]*([[:digit:]]+[.)]|[[:lower:]]+\))[[:space:]]' "$filepath" 2>/dev/null || true)
+    done < <(grep -n -E '^[[:space:]]*([[:digit:]]+[.)]|\([[:lower:]]+\))[[:space:]]' "$filepath" 2>/dev/null || true)
 
     # Sort by line number and display
     if [[ -s "$tmp_file" ]]; then
