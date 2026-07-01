@@ -198,9 +198,9 @@ echo "=== TRANSIENT FILES MARKED FOR REMOVAL ==="
 ```
 
 **Decision rule — ALWAYS KEEP:**
-- Anything under `./openspec/` (OpenSpec specifications)
-- Anything under `./opencode/` (OpenCode configuration, skills, agents)
-- Anything under `./claude/` (Claude configuration and memory)
+- Anything under `./openspec/` (OpenSpec specifications, if present)
+- Anything under `./opencode/` (OpenCode configuration/skills, if present)
+- Anything under `./.claude/` (Claude Code configuration and memory)
 - Anything under `.git/` (never touch)
 - Source files matching common extensions: `.js`, `.ts`, `.jsx`, `.tsx`, `.py`, `.go`, `.rs`, `.java`, `.rb`, `.php`, `.cs`, `.cpp`, `.c`, `.h`, `.hpp`, `.sql`, `.sh`, `.bash`, `.zsh`, `.fish`, `.ps1`, `.yaml`, `.yml`, `.toml`, `.json`, `.xml`, `.html`, `.htm`, `.css`, `.scss`, `.sass`, `.less`, `.svg`, `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.ico`, `.pdf`, `.md`, `.rst`, `.txt`
 
