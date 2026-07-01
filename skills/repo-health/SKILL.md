@@ -80,7 +80,8 @@ for script in \
   parse-test-results.sh \
   find-uncovered.sh \
   scan-secrets.sh \
-  scan-licenses.sh
+  scan-licenses.sh \
+  run-scan-suite.sh
 do
   path="./skills/repo-health/scripts/$script"
   if [[ -f "$path" ]]; then
