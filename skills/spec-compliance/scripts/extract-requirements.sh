@@ -24,6 +24,10 @@
 
 set -euo pipefail
 
+if (( BASH_VERSINFO[0] < 4 )); then
+    echo "ERROR: Bash >= 4.0 is required (associative arrays are used)." >&2
+    exit 1
+fi
 # Color coding
 RED='\033[0;31m'
 GREEN='\033[0;32m'
