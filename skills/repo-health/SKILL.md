@@ -65,7 +65,8 @@ command -v find >/dev/null 2>&1 && echo "find: available"
 
 # Language runtimes
 command -v python3 >/dev/null 2>&1 && echo "python3: $(python3 --version)"
-command -v pip3    >/dev/null 2>&1 && echo "pip3: available"
+command -v pip     >/dev/null 2>&1 && echo "pip: $(pip --version 2>/dev/null)"
+command -v pip3    >/dev/null 2>&1 && echo "pip3: $(pip3 --version 2>/dev/null)"
 command -v go      >/dev/null 2>&1 && echo "go: $(go version 2>/dev/null | awk '{print $3}')"
 command -v cargo   >/dev/null 2>&1 && echo "cargo: $(cargo --version 2>/dev/null)"
 
