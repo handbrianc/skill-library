@@ -56,7 +56,7 @@ A rigorous, deterministic repository audit covering six dimensions. Produces a p
 
 ```bash
 # Core utilities
-command -v bash >/dev/null 2>&1 && bash --version >/dev/null 2>&1 && echo "bash: $(bash --version | head -1)" || echo "bash: MISSING/BROKEN"
+command -v bash >/dev/null 2>&1 && bash --version >/dev/null 2>&1 && bash -c 'exit $((BASH_VERSINFO[0] < 4))' >/dev/null 2>&1 && echo "bash: $(bash --version | head -1)" || echo "bash: MISSING/BROKEN (need bash >= 4.0)"
 command -v node >/dev/null 2>&1 && node --version >/dev/null 2>&1 && echo "node: $(node --version)" || echo "node: MISSING/BROKEN"
 command -v npm  >/dev/null 2>&1 && npm --version >/dev/null 2>&1 && echo "npm: $(npm --version)" || echo "npm: MISSING/BROKEN"
 command -v npx  >/dev/null 2>&1 && npx --version >/dev/null 2>&1 && echo "npx: $(npx --version)" || echo "npx: MISSING/BROKEN"
