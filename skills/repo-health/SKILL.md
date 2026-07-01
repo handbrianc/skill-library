@@ -52,7 +52,7 @@ A rigorous, deterministic repository audit covering six dimensions. Produces a p
 
 ### PHASE 0 — Environment Readiness (Gate)
 
-**Goal:** Validate that all required tools are present and functional before running any audit phase. If any tool is missing, **abort immediately** and report the gaps.
+**Goal:** Validate baseline tools required for all audits (bash, git, node/npm, jq, find) and report language/project-specific tools as informational. If any required baseline tool is missing, **abort immediately** and report the gaps.
 
 ```bash
 # Core utilities
