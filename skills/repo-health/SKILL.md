@@ -16,6 +16,7 @@ A rigorous, deterministic repository audit covering six dimensions. Produces a p
 - Flag as CRITICAL any finding that is security-relevant or blocking release
 - Run actual scanners/tool commands — do not speculate about outcomes
 - Preserve the original commit (operate on HEAD, never mixed working tree + staging)
+- **Run PHASE 0 (Environment Readiness) before all other phases** — stop immediately if any required tool is missing and report the gap
 
 ### MUST NOT DO
 - Never suppress type errors with `as any`, `@ts-ignore`, or `@ts-expect-error`
@@ -41,6 +42,8 @@ A rigorous, deterministic repository audit covering six dimensions. Produces a p
 - Node.js >= 18 (for `npx`)
 - Bash >= 4.0 (for associative-array support in `find-duplicates.sh`)
 - Git installed and accessible
+- `jq` (for JSON parsing in PHASE 1 discovery)
+- GNU `find` with `-maxdepth` support (for PHASE 0.5 inventory commands; macOS ships BSD find — install GNU findutils and ensure it is available as `find`)
 - For security scan: `npm audit`, `Grype` or `Syft` (container/jar projects)
 - For coverage: project's test runner with coverage reporter (vitest, jest, etc.)
 - For complexity metrics: `eslint --quiet` with `complexity` rule, or `tsq` for TS
@@ -49,8 +52,205 @@ A rigorous, deterministic repository audit covering six dimensions. Produces a p
 
 ---
 
-### PHASE 1 — Setup & Discovery
+### PHASE 0 — Environment Readiness (Gate)
 
+**Goal:** Validate baseline tools required for all audits (bash, git, node/npm, jq, find) and report language/project-specific tools as informational. If any required baseline tool is missing, **abort immediately** and report the gaps.
+
+```bash
+# Core utilities
+command -v bash >/dev/null 2>&1 && bash --version >/dev/null 2>&1 && bash -c 'exit $((BASH_VERSINFO[0] < 4))' >/dev/null 2>&1 && echo "bash: $(bash --version | head -1)" || echo "bash: MISSING/BROKEN (need bash >= 4.0)"
+command -v node >/dev/null 2>&1 && node --version >/dev/null 2>&1 && echo "node: $(node --version)" || echo "node: MISSING/BROKEN"
+command -v npm  >/dev/null 2>&1 && npm --version >/dev/null 2>&1 && echo "npm: $(npm --version)" || echo "npm: MISSING/BROKEN"
+command -v npx  >/dev/null 2>&1 && npx --version >/dev/null 2>&1 && echo "npx: $(npx --version)" || echo "npx: MISSING/BROKEN"
+command -v git  >/dev/null 2>&1 && git --version >/dev/null 2>&1 && echo "git: $(git --version)" || echo "git: MISSING/BROKEN"
+command -v jq   >/dev/null 2>&1 && jq --version >/dev/null 2>&1 && echo "jq: $(jq --version)" || echo "jq: MISSING/BROKEN"
+command -v find >/dev/null 2>&1 && find . -maxdepth 1 -type d >/dev/null 2>&1 && echo "find: available (supports -maxdepth)" || echo "find: MISSING/BROKEN (needs GNU find supporting -maxdepth available as 'find'; on macOS: brew install findutils then add to PATH: export PATH=\"\$(brew --prefix findutils)/libexec/gnubin:\$PATH\")"
+
+# Language runtimes (informational; only gate if the repo requires them)
+command -v python3 >/dev/null 2>&1 && python3 --version >/dev/null 2>&1 && echo "python3: $(python3 --version)" || echo "python3: MISSING (optional)"
+command -v pip3    >/dev/null 2>&1 && pip3 --version >/dev/null 2>&1 && echo "pip3: $(pip3 --version 2>/dev/null)" || echo "pip3: MISSING (optional)"
+command -v go      >/dev/null 2>&1 && go version >/dev/null 2>&1 && echo "go: $(go env GOVERSION 2>/dev/null)" || echo "go: MISSING (optional)"
+command -v cargo   >/dev/null 2>&1 && cargo --version >/dev/null 2>&1 && echo "cargo: $(cargo --version 2>/dev/null)" || echo "cargo: MISSING (optional)"
+
+# Repo-health helper scripts
+for script in \
+  detect-dead-code.sh \
+  find-duplicates.sh \
+  scan-cognitive-complexity.sh \
+  audit-dependency-usage.sh \
+  check-doc-links.sh \
+  compare-specs.sh \
+  parse-test-results.sh \
+  find-uncovered.sh \
+  scan-secrets.sh \
+  scan-licenses.sh \
+  run-scan-suite.sh
+do
+  path="./skills/repo-health/scripts/$script"
+  if [[ -f "$path" ]]; then
+    # Verify script is syntactically valid (bash -n = syntax check only)
+    bash -n "$path" 2>/dev/null && echo "SKILL_OK: $script" || echo "SKILL_ERR: $script (syntax error)"
+  else
+    echo "SKILL_MISSING: $script not found at $path"
+  fi
+done
+
+# Project-type specific tools (informational; only gate if the repo requires them)
+command -v vitest  >/dev/null 2>&1 && echo "vitest: $(vitest --version 2>/dev/null)" || echo "vitest: MISSING (optional)"
+command -v jest    >/dev/null 2>&1 && echo "jest: $(jest --version 2>/dev/null)" || echo "jest: MISSING (optional)"
+command -v pytest  >/dev/null 2>&1 && echo "pytest: $(pytest --version 2>/dev/null | head -1)" || echo "pytest: MISSING (optional)"
+command -v eslint  >/dev/null 2>&1 && echo "eslint: $(eslint --version 2>/dev/null)" || echo "eslint: MISSING (optional)"
+command -v jscpd   >/dev/null 2>&1 && echo "jscpd: $(jscpd --version 2>/dev/null)" || echo "jscpd: MISSING (optional)"
+command -v semgrep >/dev/null 2>&1 && echo "semgrep: $(semgrep --version 2>/dev/null)" || echo "semgrep: MISSING (optional)"
+command -v syft    >/dev/null 2>&1 && echo "syft: $(syft version 2>/dev/null)" || echo "syft: MISSING (optional)"
+command -v grype   >/dev/null 2>&1 && echo "grype: $(grype version 2>/dev/null | head -1)" || echo "grype: MISSING (optional)"
+# GitNexus
+command -v gitnexus >/dev/null 2>&1 && echo "gitnexus: available via PATH" || echo "gitnexus: MISSING (PATH)"
+npx --yes --no-install gitnexus --version >/dev/null 2>&1 && echo "gitnexus: available via npx (local)" || echo "gitnexus: MISSING (npx local)"
+```
+
+**If any core utility prints `MISSING/BROKEN`, or any helper script prints `SKILL_ERR` / `SKILL_MISSING`:**
+- Collect all missing/malformed items into a single block
+- **ABORT — do not proceed to PHASE 1**
+
+> Optional language/test/security tools may print `MISSING (optional)`; only treat them as blocking if the repo’s stack requires them.
+>
+> ```markdown
+> ## 🚫 ENVIRONMENT GAP — Cannot Proceed
+>
+> The following tools are missing or broken. Install them before re-running the audit:
+>
+> | Tool | Status | Install Command |
+> | ---- | ------ | --------------- |
+> | bash | MISSING | (system package manager) |
+> | ./skills/repo-health/scripts/scan-secrets.sh | SYNTAX ERROR (bash -n) | fix script |
+> ```
+- The user must resolve all gaps before the audit can proceed.
+
+---
+
+### PHASE 0.5 — Transient File Cleanup (Pre-Audit)
+
+**Goal:** Inventory transient/generated/no-value files before auditing so scans operate only on meaningful source material; remove items only after explicit review. Keeps all `openspec/`, `opencode/`, and `.claude/` files intact.
+
+```bash
+# Identify transient artifacts that can be safely removed
+# (not tracked as valuable source; removal will not break builds)
+
+# Build artifacts
+find . \
+  \( -path "./openspec" -o -path "./opencode" -o -path "./.claude" -o -path "./.git" \) -prune -o \
+  -type d \( \
+    -name "node_modules" -o \
+    -name "__pycache__" -o \
+    -name ".pytest_cache" -o \
+    -name ".next" -o \
+    -name "dist" -o \
+    -name "build" -o \
+    -name "target" -o \
+    -name "vendor" -o \
+    -name ".venv" -o \
+    -name "venv" \
+  \) -prune -print \
+  2>/dev/null | head -50
+
+# Lock files (inventory only — usually keep; removing changes dependency resolution)
+find . -maxdepth 3 \( \
+  -name "package-lock.json" -o \
+  -name "pnpm-lock.yaml" -o \
+  -name "yarn.lock" -o \
+  -name "poetry.lock" -o \
+  -name "Cargo.lock"
+\) ! -path "./node_modules/*" ! -path "./.git/*" 2>/dev/null
+
+# Cache directories
+find . -maxdepth 5 -type d \( \
+  -name ".cache" -o \
+  -name "tmp" -o \
+  -name "temp" -o \
+  -name "*.egg-info" -o \
+  -name ".tox"\
+\) \
+  ! -path "./openspec/*" \
+  ! -path "./opencode/*" \
+  ! -path "./.claude/*" \
+  ! -path "./.git/*" \
+  2>/dev/null | head -50
+
+# Editor/IDE noise
+find . -maxdepth 3 \( \
+  -name "*.swp" -o \
+  -name "*.swo" -o \
+  -name ".DS_Store" -o \
+  -name "Thumbs.db" -o \
+  -name ".idea" -o \
+  -name ".vscode/settings.json" -o \
+  -name "*.orig" -o \
+  -name "*~"\
+\) \
+  ! -path "./openspec/*" \
+  ! -path "./opencode/*" \
+  ! -path "./.claude/*" \
+  ! -path "./.git/*" \
+  2>/dev/null
+
+find . -maxdepth 4 -name "*.log" ! -path "./openspec/*" ! -path "./opencode/*" ! -path "./.claude/*" ! -path "./.git/*" 2>/dev/null | head -20
+
+# OS artifacts
+find . -maxdepth 3 \( \
+  -name ".Spotlight-V100" -o \
+  -name ".Trashes" -o \
+  -name ".fseventsd"\
+\) \
+  ! -path "./openspec/*" \
+  ! -path "./opencode/*" \
+  ! -path "./.claude/*" \
+  ! -path "./.git/*" \
+  2>/dev/null
+
+# Determine files that are truly transient (safe to remove):
+#   - Generated files that can be regenerated (lock files, caches)
+#   - Editor backup files
+#   - Binary artifacts (compiled output, not source)
+#   - Empty directories left behind
+
+echo "=== TRANSIENT FILE INVENTORY (REVIEW ONLY) ==="
+echo "Review the lists above; do NOT remove anything automatically."
+```
+
+**Decision rule — ALWAYS KEEP:**
+- Anything under `./openspec/` (OpenSpec specifications, if present)
+- Anything under `./opencode/` (OpenCode configuration/skills, if present)
+- Anything under `./.claude/` (Claude Code configuration and memory)
+- Anything under `.git/` (never touch)
+- Source files matching common extensions: `.js`, `.ts`, `.jsx`, `.tsx`, `.py`, `.go`, `.rs`, `.java`, `.rb`, `.php`, `.cs`, `.cpp`, `.c`, `.h`, `.hpp`, `.sql`, `.sh`, `.bash`, `.zsh`, `.fish`, `.ps1`, `.yaml`, `.yml`, `.toml`, `.json`, `.xml`, `.html`, `.htm`, `.css`, `.scss`, `.sass`, `.less`, `.svg`, `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.ico`, `.pdf`, `.md`, `.rst`, `.txt`
+
+**Decision rule — SAFE TO REMOVE:**
+- `node_modules/`, `__pycache__/`, `.pytest_cache/`, `.next/`, `dist/`, `build/`, `target/`, `.venv/`, `venv/`
+- `vendor/` — REVIEW; keep if tracked or required for builds (e.g., Go `go mod vendor`)
+- Lock files (`package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `poetry.lock`, `Cargo.lock`) — KEEP if tracked; remove only if explicitly untracked and safe for this repo
+- `.cache/`, `tmp/`, `temp/` directories
+- `*.log` files
+- `*.swp`, `*.swo`, `*~`, `.DS_Store` (editor/OS noise)
+- Empty directories left after removing above
+
+**Report:**
+```
+## Transient File Summary
+
+| Category            | Count | Action  |
+| -------------------- | ----- | ------- |
+| node_modules         | N     | Review  |
+| lock files           | N     | Keep    |
+| cache dirs           | N     | Remove  |
+| editor noise         | N     | Remove  |
+| empty dirs           | N     | Remove  |
+```
+> **Note:** If in doubt about any file, err on the side of keeping it. The audit must never destroy valuable files.
+
+---
+
+### PHASE 1 — Setup & Discovery
 **Goal:** Understand project structure, tech stack, package manager, and which audit dimensions actually apply.
 
 Run these discovery commands in parallel:
@@ -474,9 +674,9 @@ Synthesize all findings into a **prioritized, executable plan**.
 ```markdown
 ## Repository Health Audit — Action Plan
 
-**Audited:** `{repo}`  
-**Date:** `{YYYY-MM-DD}`  
-**Auditors:** Human (repo-health skill) + automated scanners  
+**Audited:** `{repo}`
+**Date:** `{YYYY-MM-DD}`
+**Auditors:** Human (repo-health skill) + automated scanners
 ---
 
 ### SUMMARY
