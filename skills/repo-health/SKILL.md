@@ -107,7 +107,7 @@ command -v gitnexus >/dev/null 2>&1 && echo "gitnexus: available via PATH" || ec
 npx --yes gitnexus --version >/dev/null 2>&1 && echo "gitnexus: available via npx" || echo "gitnexus: MISSING (npx)"
 ```
 
-**If any required tool check produces no output (tool missing) or exits non-zero, or any helper script prints SKILL_ERR:**
+**If any required tool prints `MISSING`, or any helper script prints `SKILL_ERR` / `SKILL_MISSING`:**
 - Collect all missing/malformed items into a single block
 - **ABORT — do not proceed to PHASE 1**
 - Report:
