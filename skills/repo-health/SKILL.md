@@ -92,7 +92,7 @@ do
   fi
 done
 
-# Project-type specific tools
+# Project-type specific tools (informational; only gate if the repo requires them)
 command -v vitest >/dev/null 2>&1 && echo "vitest: $(vitest --version 2>/dev/null)" || echo "vitest: MISSING"
 command -v jest   >/dev/null 2>&1 && echo "jest: $(jest --version 2>/dev/null)" || echo "jest: MISSING"
 command -v pytest >/dev/null 2>&1 && echo "pytest: $(pytest --version 2>/dev/null | head -1)" || echo "pytest: MISSING"
