@@ -104,7 +104,7 @@ command -v grype  >/dev/null 2>&1 && echo "grype: $(grype version 2>/dev/null | 
 
 # GitNexus
 command -v gitnexus >/dev/null 2>&1 && echo "gitnexus: available via PATH" || echo "gitnexus: MISSING (PATH)"
-npx --yes gitnexus --version >/dev/null 2>&1 && echo "gitnexus: available via npx" || echo "gitnexus: MISSING (npx)"
+npx --yes --no-install gitnexus --version >/dev/null 2>&1 && echo "gitnexus: available via npx (local)" || echo "gitnexus: MISSING (npx local)"
 ```
 
 **If any required tool prints `MISSING`, or any helper script prints `SKILL_ERR` / `SKILL_MISSING`:**
