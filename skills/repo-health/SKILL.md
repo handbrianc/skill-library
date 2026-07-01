@@ -217,7 +217,7 @@ echo "=== TRANSIENT FILES MARKED FOR REMOVAL ==="
 
 | Category            | Count | Action  |
 | -------------------- | ----- | ------- |
-| node_modules         | N     | Keep    |
+| node_modules         | N     | Review  |
 | lock files           | N     | Keep    |
 | cache dirs           | N     | Remove  |
 | editor noise         | N     | Remove  |
