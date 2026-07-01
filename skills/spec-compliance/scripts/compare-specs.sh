@@ -122,6 +122,17 @@ comparison_status() {
     fi
 }
 
+is_fuzzy_archive_match() {
+    local current_name="$1"
+    local archive_name="$2"
+    local current_stem="${current_name%%.*}"
+    local archive_stem="${archive_name%%.*}"
+
+    [[ "$archive_stem" == "$current_stem" ]] \
+        || [[ "$archive_stem" == "$current_stem"-* ]] \
+        || [[ "$current_stem" == "$archive_stem"-* ]]
+}
+
 list_spec_files() {
     local dir="$1"
     find "$dir" -type f \( -name "*.md" -o -name "*.txt" -o -name "*.spec" -o -name "*.frs" \) 2>/dev/null | sort
@@ -185,8 +196,7 @@ while IFS= read -r cfile; do
         matching_arc=$(find "$ARCHIVE_DIR" -type f \( -name "*.md" -o -name "*.txt" -o -name "*.spec" \) 2>/dev/null \
             | while IFS= read -r af; do
                 abname=$(basename "$af")
-                # Simple Levenshtein-ish match (basename contains or common prefix)
-                if [[ "$abname" == *"${bname%%.*}"* ]] || [[ "${bname%%.*}" == *"$abname"* ]]; then
+                if is_fuzzy_archive_match "$bname" "$abname"; then
                     echo "$(basename "$af"):$(count_requirements "$af")"
                     break
                 fi
@@ -233,7 +243,7 @@ if [[ -d "$ARCHIVE_DIR" ]]; then
             | head -20 \
             | while IFS= read -r af; do
                 abname=$(basename "$af")
-                if [[ "$abname" == *"${bname%%.*}"* ]] || [[ "${bname%%.*}" == *"$abname"* ]]; then
+                if is_fuzzy_archive_match "$bname" "$abname"; then
                     echo "$af"
                     break
                 fi
