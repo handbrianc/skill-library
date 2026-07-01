@@ -190,8 +190,7 @@ find . -maxdepth 3 \( \
   ! -path "./.git/*" \
   2>/dev/null
 
-# Log files
-find . -maxdepth 4 -name "*.log" ! -path "./.git/*" 2>/dev/null | head -20
+find . -maxdepth 4 -name "*.log" ! -path "./openspec/*" ! -path "./opencode/*" ! -path "./.claude/*" ! -path "./.git/*" 2>/dev/null | head -20
 
 # OS artifacts
 find . -maxdepth 3 \( \
