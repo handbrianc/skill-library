@@ -17,7 +17,7 @@
 #   MARKER     — Contains explicit REQUIREMENT:, RFP-, SRS-, USER STORY:, TICKET:
 #   GHERKIN    — Given/When/Then/And scenario steps
 #   CHECKBOX_X — Checkbox marked [x] (checked/done)
-#   CHECKBOX_- — Checkbox marked [ ] (unchecked/pending)
+#   CHECKBOX_SPACE — Checkbox marked [ ] (unchecked/pending)
 #   PROSE      — Capitalized prose sentence (min 20 chars, ends . or :)
 #   NUMBERED   — Numbered item: 1. or (a) style
 #
@@ -134,7 +134,7 @@ extract_file() {
 
     while IFS=: read -r ln text; do
         cleaned=$(echo "$text" | sed -E 's/^[[:space:]]*-[[:space:]]+\[ \][[:space:]]+//')
-        echo "$ln|CHECKBOX_|${cleaned}" >> "$tmp_file"
+        echo "$ln|CHECKBOX_SPACE|${cleaned}" >> "$tmp_file"
         pattern_counts[CHECKBOX_SPACE]=$((pattern_counts[CHECKBOX_SPACE] + 1))
     done < <(grep -n -E '^[[:space:]]*-[[:space:]]+\[ \]' "$filepath" 2>/dev/null || true)
 
@@ -185,7 +185,7 @@ extract_file() {
                 CHECKBOX_X)
                     echo -e "  ${GREEN}☑${RESET} [$ln] ${GREEN}CHECKED${RESET}: $content"
                     ;;
-                CHECKBOX_)
+                CHECKBOX_SPACE)
                     echo -e "  ${DIM}☐${RESET} [$ln] ${DIM}PENDING${RESET}: $content"
                     ;;
                 PROSE)
