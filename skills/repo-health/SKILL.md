@@ -106,10 +106,11 @@ command -v gitnexus >/dev/null 2>&1 && echo "gitnexus: available via PATH" || ec
 npx --yes --no-install gitnexus --version >/dev/null 2>&1 && echo "gitnexus: available via npx (local)" || echo "gitnexus: MISSING (npx local)"
 ```
 
-**If any required tool prints `MISSING`, or any helper script prints `SKILL_ERR` / `SKILL_MISSING`:**
+**If any core utility prints `MISSING/BROKEN`, or any helper script prints `SKILL_ERR` / `SKILL_MISSING`:**
 - Collect all missing/malformed items into a single block
 - **ABORT — do not proceed to PHASE 1**
-- Report:
+
+> Optional language/test/security tools may print `MISSING (optional)`; only treat them as blocking if the repo’s stack requires them.
   ```
   ## 🚫 ENVIRONMENT GAP — Cannot Proceed
 
