@@ -457,7 +457,6 @@ openspec/api-req.md (8 requirements)
 ```
 
 </details>
-```
 
 ---
 
@@ -475,7 +474,7 @@ skills/spec-compliance/scripts/
 
 ```bash
 ./skills/spec-compliance/scripts/compare-specs.sh openspec/ specs/archive/
-# Output: CSV of (spec_file, archived_req_count, impl_evidence_found, divergence_flag)
+# Output: formatted table of spec_file, archived/current requirement counts, archive presence, and comparison status
 ```
 
 ### extract-requirements.sh Usage

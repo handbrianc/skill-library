@@ -33,6 +33,13 @@ BOLD='\033[1m'
 DIM='\033[2m'
 RESET='\033[0m'
 
+requires_bash_4() {
+    if (( BASH_VERSINFO[0] < 4 )); then
+        echo -e "${RED}ERROR: $0 requires Bash 4+ (associative arrays are used).${RESET}" >&2
+        exit 1
+    fi
+}
+
 # ── Usage ───────────────────────────────────────────────────────────────────
 usage() {
     echo "Usage: $0 <spec_file> [spec_file...]"
@@ -41,6 +48,7 @@ usage() {
 }
 
 [[ $# -eq 0 ]] && usage
+requires_bash_4
 
 # ── Per-file extraction ─────────────────────────────────────────────────────
 extract_file() {
@@ -76,92 +84,83 @@ extract_file() {
     )
 
     # Temporary file to accumulate results
-    local tmp咎=$(mktemp)
+    local tmp_file
+    tmp_file=$(mktemp)
 
     # ── Pattern 1: Explicit requirement markers ───────────────────────────
     # Matches: REQUIREMENT:, RFP-, SRS-, USER STORY:, TICKET:
-    grep -n -E '(REQUIREMENT|RFP-|SRS-|USER STORY|TICKET):[[:space:]]+' "$filepath" 2>/dev/null \
-        | while IFS=: read -r ln text; do
-            # Strip leading whitespace and requirement keyword
-            cleaned=$(echo "$text" | sed -E 's/^(REQUIREMENT|RFP-|SRS-|USER STORY|TICKET):[[:space:]]+//')
-            echo "$ln|MARKER|$cleaned" >> "$tmp咎"
-            pattern_counts[MARKER]=$((pattern_counts[MARKER] + 1))
-        done
+    while IFS=: read -r ln text; do
+        # Strip leading whitespace and requirement keyword
+        cleaned=$(echo "$text" | sed -E 's/^(REQUIREMENT|RFP-|SRS-|USER STORY|TICKET):[[:space:]]+//')
+        echo "$ln|MARKER|$cleaned" >> "$tmp_file"
+        pattern_counts[MARKER]=$((pattern_counts[MARKER] + 1))
+    done < <(grep -n -E '(REQUIREMENT|RFP-|SRS-|USER STORY|TICKET):[[:space:]]+' "$filepath" 2>/dev/null || true)
 
     # ── Pattern 2: Gherkin BDD language ─────────────────────────────────
     # Matches: GIVEN, WHEN, THEN, AND at line start (with optional indentation)
-    grep -n -E '^[[:space:]]*(GIVEN)[[:space:]]+' "$filepath" 2>/dev/null \
-        | while IFS=: read -r ln text; do
-            echo "$ln|GHERKIN_GIVEN|${text#"${text%%[![:space:]]*}"}" >> "$tmp咎"
-            pattern_counts[GHERKIN_GIVEN]=$((pattern_counts[GHERKIN_GIVEN] + 1))
-        done
+    while IFS=: read -r ln text; do
+        echo "$ln|GHERKIN_GIVEN|${text#"${text%%[![:space:]]*}"}" >> "$tmp_file"
+        pattern_counts[GHERKIN_GIVEN]=$((pattern_counts[GHERKIN_GIVEN] + 1))
+    done < <(grep -n -E '^[[:space:]]*(GIVEN)[[:space:]]+' "$filepath" 2>/dev/null || true)
 
-    grep -n -E '^[[:space:]]*(WHEN)[[:space:]]+' "$filepath" 2>/dev/null \
-        | while IFS=: read -r ln text; do
-            echo "$ln|GHERKIN_WHEN|${text#"${text%%[![:space:]]*}"}" >> "$tmp咎"
-            pattern_counts[GHERKIN_WHEN]=$((pattern_counts[GHERKIN_WHEN] + 1))
-        done
+    while IFS=: read -r ln text; do
+        echo "$ln|GHERKIN_WHEN|${text#"${text%%[![:space:]]*}"}" >> "$tmp_file"
+        pattern_counts[GHERKIN_WHEN]=$((pattern_counts[GHERKIN_WHEN] + 1))
+    done < <(grep -n -E '^[[:space:]]*(WHEN)[[:space:]]+' "$filepath" 2>/dev/null || true)
 
-    grep -n -E '^[[:space:]]*(THEN)[[:space:]]+' "$filepath" 2>/dev/null \
-        | while IFS=: read -r ln text; do
-            echo "$ln|GHERKIN_THEN|${text#"${text%%[![:space:]]*}"}" >> "$tmp咎"
-            pattern_counts[GHERKIN_THEN]=$((pattern_counts[GHERKIN_THEN] + 1))
-        done
+    while IFS=: read -r ln text; do
+        echo "$ln|GHERKIN_THEN|${text#"${text%%[![:space:]]*}"}" >> "$tmp_file"
+        pattern_counts[GHERKIN_THEN]=$((pattern_counts[GHERKIN_THEN] + 1))
+    done < <(grep -n -E '^[[:space:]]*(THEN)[[:space:]]+' "$filepath" 2>/dev/null || true)
 
-    grep -n -E '^[[:space:]]*(AND)[[:space:]]+' "$filepath" 2>/dev/null \
-        | while IFS=: read -r ln text; do
-            echo "$ln|GHERKIN_AND|${text#"${text%%[![:space:]]*}"}" >> "$tmp咎"
-            pattern_counts[GHERKIN_AND]=$((pattern_counts[GHERKIN_AND] + 1))
-        done
+    while IFS=: read -r ln text; do
+        echo "$ln|GHERKIN_AND|${text#"${text%%[![:space:]]*}"}" >> "$tmp_file"
+        pattern_counts[GHERKIN_AND]=$((pattern_counts[GHERKIN_AND] + 1))
+    done < <(grep -n -E '^[[:space:]]*(AND)[[:space:]]+' "$filepath" 2>/dev/null || true)
 
-    grep -n -E '^[[:space:]]*(BACKGROUND|SCENARIO|EXAMPLE|FEATURE)\>' "$filepath" 2>/dev/null \
-        | while IFS=: read -r ln text; do
-            echo "$ln|GHERKIN_BLOCK|${text#"${text%%[![:space:]]*}"}" >> "$tmp咎"
-            pattern_counts[GHERKIN_OTHER]=$((pattern_counts[GHERKIN_OTHER] + 1))
-        done
+    while IFS=: read -r ln text; do
+        echo "$ln|GHERKIN_BLOCK|${text#"${text%%[![:space:]]*}"}" >> "$tmp_file"
+        pattern_counts[GHERKIN_OTHER]=$((pattern_counts[GHERKIN_OTHER] + 1))
+    done < <(grep -n -E '^[[:space:]]*(BACKGROUND|SCENARIO|EXAMPLE|FEATURE)\>' "$filepath" 2>/dev/null || true)
 
     # ── Pattern 3: Checkbox items ─────────────────────────────────────────
     # Matches: - [x] (checked) and - [ ] (unchecked)
-    grep -n -E '^[[:space:]]*-[[:space:]]+\[x\]' "$filepath" 2>/dev/null \
-        | while IFS=: read -r ln text; do
-            # Remove the '- [x]' prefix
-            cleaned=$(echo "$text" | sed -E 's/^[[:space:]]*-[[:space:]]+\[x\][[:space:]]+//')
-            echo "$ln|CHECKBOX_X|$cleaned" >> "$tmp咎"
-            pattern_counts[CHECKBOX_X]=$((pattern_counts[CHECKBOX_X] + 1))
-        done
+    while IFS=: read -r ln text; do
+        # Remove the '- [x]' prefix
+        cleaned=$(echo "$text" | sed -E 's/^[[:space:]]*-[[:space:]]+\[[xX]\][[:space:]]+//')
+        echo "$ln|CHECKBOX_X|$cleaned" >> "$tmp_file"
+        pattern_counts[CHECKBOX_X]=$((pattern_counts[CHECKBOX_X] + 1))
+    done < <(grep -n -E '^[[:space:]]*-[[:space:]]+\[[xX]\]' "$filepath" 2>/dev/null || true)
 
-    grep -n -E '^[[:space:]]*-[[:space:]]+\[\]' "$filepath" 2>/dev/null \
-        | while IFS=: read -r ln text; do
-            cleaned=$(echo "$text" | sed -E 's/^[[:space:]]*-[[:space:]]+\[\][[:space:]]+//')
-            echo "$ln|CHECKBOX_|${cleaned}" >> "$tmp咎"
-            pattern_counts[CHECKBOX_SPACE]=$((pattern_counts[CHECKBOX_SPACE] + 1))
-        done
+    while IFS=: read -r ln text; do
+        cleaned=$(echo "$text" | sed -E 's/^[[:space:]]*-[[:space:]]+\[ \][[:space:]]+//')
+        echo "$ln|CHECKBOX_|${cleaned}" >> "$tmp_file"
+        pattern_counts[CHECKBOX_SPACE]=$((pattern_counts[CHECKBOX_SPACE] + 1))
+    done < <(grep -n -E '^[[:space:]]*-[[:space:]]+\[ \]' "$filepath" 2>/dev/null || true)
 
     # ── Pattern 4: Prose requirements ─────────────────────────────────────
     # Matches: Lines beginning with capital letter, ≥20 chars, ending in . or :
     # Excludes code blocks, headings (#), and short lines
-    grep -n -E '^[^#].*[[:upper:]][[:space:]].[[:space:][:alnum:]]{15,}[.:]$' "$filepath" 2>/dev/null \
-        | grep -vE '(^#|```|<http|>|\*\*|^\s*-|\|)' \
-        | while IFS=: read -r ln text; do
-            # Skip if it looks like a heading or table row
-            if echo "$text" | grep -qE '^#{1,6}\s'; then
-                return
-            fi
-            echo "$ln|PROSE|$text" >> "$tmp咎"
-            pattern_counts[PROSE]=$((pattern_counts[PROSE] + 1))
-        done
+    while IFS=: read -r ln text; do
+        # Skip if it looks like a heading or table row
+        if echo "$text" | grep -qE '^#{1,6}\s'; then
+            continue
+        fi
+        echo "$ln|PROSE|$text" >> "$tmp_file"
+        pattern_counts[PROSE]=$((pattern_counts[PROSE] + 1))
+    done < <(grep -n -E '^[^#].*[[:upper:]][[:space:]].[[:space:][:alnum:]]{15,}[.:]$' "$filepath" 2>/dev/null \
+        | grep -vE '(^#|```|<http|>|\*\*|^\s*-|\|)' || true)
 
     # ── Pattern 5: Numbered items ─────────────────────────────────────────
     # Matches: 1. or (a) or 1) style
-    grep -n -E '^[[:space:]]*([[:digit:]]+[.)]|[[:lower:]]+\))[[:space:]]' "$filepath" 2>/dev/null \
-        | while IFS=: read -r ln text; do
-            echo "$ln|NUMBERED|$text" >> "$tmp咎"
-            pattern_counts[NUMBERED]=$((pattern_counts[NUMBERED] + 1))
-        done
+    while IFS=: read -r ln text; do
+        echo "$ln|NUMBERED|$text" >> "$tmp_file"
+        pattern_counts[NUMBERED]=$((pattern_counts[NUMBERED] + 1))
+    done < <(grep -n -E '^[[:space:]]*([[:digit:]]+[.)]|[[:lower:]]+\))[[:space:]]' "$filepath" 2>/dev/null || true)
 
     # Sort by line number and display
-    if [[ -s "$tmp咎" ]]; then
-        sort -t'|' -k1 -n "$tmp咎" | while IFS='|' read -r ln ptype content; do
+    if [[ -s "$tmp_file" ]]; then
+        while IFS='|' read -r ln ptype content; do
             req_count=$((req_count + 1))
             # Pretty-print with color
             case "$ptype" in
@@ -199,7 +198,7 @@ extract_file() {
                     echo "  • [$ln] $ptype: $content"
                     ;;
             esac
-        done
+        done < <(sort -t'|' -k1 -n "$tmp_file")
     else
         echo -e "  ${DIM}(no requirements detected)${RESET}"
     fi
@@ -218,7 +217,7 @@ extract_file() {
     [[ ${pattern_counts[PROSE]} -gt 0 ]] && echo -e "${DIM}  ├─ PROSE:     ${pattern_counts[PROSE]}${RESET}"
     [[ ${pattern_counts[NUMBERED]} -gt 0 ]] && echo -e "${DIM}  └─ NUMBERED:  ${pattern_counts[NUMBERED]}${RESET}"
 
-    rm -f "$tmp咎"
+    rm -f "$tmp_file"
 }
 
 # ── Process all input files ─────────────────────────────────────────────────

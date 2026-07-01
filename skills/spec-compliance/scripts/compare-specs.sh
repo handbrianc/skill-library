@@ -14,7 +14,7 @@
 #   ./compare-specs.sh specs/ archive/
 #
 # Output:
-#   CSV: SPEC_FILE,ARCHIVED_REQ_COUNT,CURRENT_REQ_COUNT,CODE_EVIDENCE_FOUND,DIVERGENCE_FLAG
+#   TABLE: SPEC_FILE | ARCHIVED_REQ_COUNT | CURRENT_REQ_COUNT | FOUND | STATUS
 #
 
 set -euo pipefail
@@ -60,42 +60,61 @@ fi
 # ── Helpers ────────────────────────────────────────────────────────────────
 
 requires_bash_4() {
-    bash -c 'exit $((BASH_VERSINFO[0] < 4))' 2>/dev/null
+    if (( BASH_VERSINFO[0] < 4 )); then
+        echo "ERROR: $0 requires Bash 4+ (associative arrays are used)" >&2
+        exit 1
+    fi
 }
+
+requires_bash_4
 
 # Extract requirements from a single spec file
 # Returns: line_number|pattern_type|extracted_text
 extract_from_file() {
     local file="$1"
-    local tmp咎=$(mktemp)
+    local tmp_file
+    tmp_file=$(mktemp)
 
     # Gherkin: SCENARIO, GIVEN, WHEN, THEN, AND, BACKGROUND blocks
     grep -n -E '^[[:space:]]*(SCENARIO|GIVEN|WHEN|THEN|AND|BACKGROUND)[[:space:]]+' "$file" 2>/dev/null \
-        | awk -F: '{print $1"|GHERKIN|"$2}' >> "$tmp咎"
+        | awk -F: '{print $1"|GHERKIN|"$2}' >> "$tmp_file" || true
 
     # Checkbox items: - [x] or - [ ]
-    grep -n -E '^[[:space:]]*-[[:space:]]+\[[ x]\]' "$file" 2>/dev/null \
-        | awk -F: '{print $1"|CHECKBOX|"$2}' >> "$tmp咎"
+    grep -n -E '^[[:space:]]*-[[:space:]]+\[[ xX]\]' "$file" 2>/dev/null \
+        | awk -F: '{print $1"|CHECKBOX|"$2}' >> "$tmp_file" || true
 
     # Explicit requirement markers
     grep -n -E '(REQUIREMENT|RFP-|SRS-|USER STORY|TICKET):[[:space:]]+' "$file" 2>/dev/null \
-        | awk -F: '{print $1"|MARKER|"$2}' >> "$tmp咎"
+        | awk -F: '{print $1"|MARKER|"$2}' >> "$tmp_file" || true
 
     # Capital-prose sentences (min 20 chars, starts capital, ends . or :)
     grep -n -E '^[A-Z][A-Za-z0-9\s]{18,}[.:]$' "$file" 2>/dev/null \
-        | awk -F: '{print $1"|PROSE|"$2}' >> "$tmp咎"
+        | awk -F: '{print $1"|PROSE|"$2}' >> "$tmp_file" || true
 
     # Numbered items: 1. or (a) style
-    grep -n -E '^[[:space:]]*([[:digit:]]+[.)]|[[:lower:]]+\)[[:space:]]' "$file" 2>/dev/null \
-        | awk -F: '{print $1"|NUMBERED|"$2}' >> "$tmp咎"
+    grep -n -E '^[[:space:]]*([[:digit:]]+[.)]|[[:lower:]]+\))[[:space:]]' "$file" 2>/dev/null \
+        | awk -F: '{print $1"|NUMBERED|"$2}' >> "$tmp_file" || true
 
-    sort -n "$tmp咎" | head -200
-    rm -f "$tmp咎"
+    sort -n "$tmp_file" | head -200
+    rm -f "$tmp_file"
 }
 
 count_requirements() {
     local file="$1"
     extract_from_file "$file" | wc -l
+}
+
+comparison_status() {
+    local current_count="$1"
+    local archived_count="$2"
+
+    if (( archived_count > current_count )); then
+        echo "REGRESSION"
+    elif (( current_count > archived_count )); then
+        echo "GROWTH"
+    else
+        echo "BALANCED"
+    fi
 }
 
 list_spec_files() {
@@ -111,7 +130,7 @@ else
 fi
 echo ""
 
-# ── Main CSV Header ─────────────────────────────────────────────────────────
+# ── Main Report Header ──────────────────────────────────────────────────────
 echo -e "${BOLD}┌─────────────────────────────────────────────────────────────┐${RESET}"
 printf "${BOLD}│ %-35s │ %5s │ %5s │ %6s │ %10s │${RESET}\n" \
     "SPEC FILE" "ARC_R" "CUR_R" "FOUND" "STATUS"
@@ -145,14 +164,17 @@ while IFS= read -r cfile; do
     bname=$(basename "$cfile")
 
     # Determine if archived version exists
-    arc_count="${archive_counts[$bname]:-}"
+    arc_count=""
     arc_label="—"
     has_archive="—"
+    status="NEW"
 
-    if [[ -n "$arc_count" && "$arc_count" != "0" ]]; then
+    if [[ -n "${archive_counts[$bname]+x}" ]]; then
+        arc_count="${archive_counts[$bname]}"
         arc_label="$arc_count"
         has_archive="📦"
         total_archive=$((total_archive + arc_count))
+        status=$(comparison_status "$cur_count" "$arc_count")
     elif [[ -d "$ARCHIVE_DIR" ]]; then
         # Look for any archived version of this spec by fuzzy matching
         matching_arc=$(find "$ARCHIVE_DIR" -type f \( -name "*.md" -o -name "*.txt" -o -name "*.spec" \) 2>/dev/null \
@@ -166,15 +188,16 @@ while IFS= read -r cfile; do
             done | head -1)
         if [[ -n "$matching_arc" ]]; then
             arc_count_real="${matching_arc##*:}"
-            arc_label="$arc_count_real ($has_archive fuzzy)"
-            total_archive=$((total_archive + arc_count_real))
+            arc_label="$arc_count_real"
             has_archive="🔶"
+            total_archive=$((total_archive + arc_count_real))
+            status=$(comparison_status "$cur_count" "$arc_count_real")
         fi
     fi
 
     # Emit row
     printf "│ %-35s │ %5s │ %5s │ %6s │ %-10s │${RESET}\n" \
-        "${bname:0:35}" "$arc_label" "$cur_count" "" ""
+        "${bname:0:35}" "$arc_label" "$cur_count" "$has_archive" "$status"
 
 done < <(list_spec_files "$CURRENT_DIR")
 
