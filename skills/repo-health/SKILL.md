@@ -205,7 +205,8 @@ echo "=== TRANSIENT FILES MARKED FOR REMOVAL ==="
 - Source files matching common extensions: `.js`, `.ts`, `.jsx`, `.tsx`, `.py`, `.go`, `.rs`, `.java`, `.rb`, `.php`, `.cs`, `.cpp`, `.c`, `.h`, `.hpp`, `.sql`, `.sh`, `.bash`, `.zsh`, `.fish`, `.ps1`, `.yaml`, `.yml`, `.toml`, `.json`, `.xml`, `.html`, `.htm`, `.css`, `.scss`, `.sass`, `.less`, `.svg`, `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.ico`, `.pdf`, `.md`, `.rst`, `.txt`
 
 **Decision rule — SAFE TO REMOVE:**
-- `node_modules/`, `__pycache__/`, `.pytest_cache/`, `.next/`, `dist/`, `build/`, `target/`, `vendor/`, `.venv/`, `venv/`
+- `node_modules/`, `__pycache__/`, `.pytest_cache/`, `.next/`, `dist/`, `build/`, `target/`, `.venv/`, `venv/`
+- `vendor/` — REVIEW; keep if tracked or required for builds (e.g., Go `go mod vendor`)
 - Lock files (`package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `poetry.lock`, `Cargo.lock`) — KEEP if tracked; remove only if explicitly untracked and safe for this repo
 - `.cache/`, `tmp/`, `temp/` directories
 - `*.log` files
