@@ -125,7 +125,7 @@ done
 - `GHERKIN_GIVEN` / `GHERKIN_WHEN` / `GHERKIN_THEN` / `GHERKIN_AND` — Individual Gherkin lines extracted separately
 - `GHERKIN_BLOCK` — SCENARIO/BACKGROUND/FEATURE block headers
 - `CHECKBOX_X` — Checkbox item marked `[x]` (requirement satisfied in spec)
-- `CHECKBOX_` — Checkbox item marked `[ ]` (future/dropped requirement)
+- `CHECKBOX_SPACE` — Checkbox item marked `[ ]` (future/dropped requirement)
 - `PROSE` — Capital-sentence prose requirements (≥20 chars, ends in `.` or `:`)
 - `MARKER` — Explicit REQUIREMENT:/RFP-/SRS- prefixed items (highest confidence)
 - `NUMBERED` — Numbered sequence items (`1.` or `(a)` style)
