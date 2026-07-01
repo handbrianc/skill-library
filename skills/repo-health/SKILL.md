@@ -126,7 +126,7 @@ npx --yes gitnexus --version 2>/dev/null && echo "gitnexus: available via npx"
 
 ### PHASE 0.5 — Transient File Cleanup (Pre-Audit)
 
-**Goal:** Remove transient/generated/no-value files before auditing, so scans operate only on meaningful source material. Keeps all `openspec/`, `opencode/`, and `claude/` files intact.
+**Goal:** Inventory transient/generated/no-value files before auditing so scans operate only on meaningful source material; remove items only after explicit review. Keeps all `openspec/`, `opencode/`, and `claude/` files intact.
 
 ```bash
 # Identify transient artifacts that can be safely removed
