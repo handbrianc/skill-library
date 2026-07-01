@@ -103,7 +103,7 @@ command -v grype  >/dev/null 2>&1 && echo "grype: $(grype version 2>/dev/null | 
 
 # GitNexus
 command -v gitnexus >/dev/null 2>&1 && echo "gitnexus: available via PATH"
-npx gitnexus --version 2>/dev/null && echo "gitnexus: available via npx"
+npx --yes gitnexus --version 2>/dev/null && echo "gitnexus: available via npx"
 ```
 
 **If any required tool check does not print a version line (tool missing) or any helper script prints SKILL_ERR:**
