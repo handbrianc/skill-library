@@ -64,7 +64,7 @@ command -v npm  >/dev/null 2>&1 && npm --version >/dev/null 2>&1 && echo "npm: $
 command -v npx  >/dev/null 2>&1 && npx --version >/dev/null 2>&1 && echo "npx: $(npx --version)" || echo "npx: MISSING/BROKEN"
 command -v git  >/dev/null 2>&1 && git --version >/dev/null 2>&1 && echo "git: $(git --version)" || echo "git: MISSING/BROKEN"
 command -v jq   >/dev/null 2>&1 && jq --version >/dev/null 2>&1 && echo "jq: $(jq --version)" || echo "jq: MISSING/BROKEN"
-command -v find >/dev/null 2>&1 && find . -maxdepth 1 -type d >/dev/null 2>&1 && echo "find: available (supports -maxdepth)" || echo "find: MISSING/BROKEN (needs GNU find supporting -maxdepth available as 'find'; on macOS: brew install findutils then make gfind available as find)"
+command -v find >/dev/null 2>&1 && find . -maxdepth 1 -type d >/dev/null 2>&1 && echo "find: available (supports -maxdepth)" || echo "find: MISSING/BROKEN (needs GNU find supporting -maxdepth available as 'find'; on macOS: brew install findutils then add to PATH: export PATH=\"\$(brew --prefix findutils)/libexec/gnubin:\$PATH\")"
 
 # Language runtimes (informational; only gate if the repo requires them)
 command -v python3 >/dev/null 2>&1 && python3 --version >/dev/null 2>&1 && echo "python3: $(python3 --version)" || echo "python3: MISSING (optional)"
