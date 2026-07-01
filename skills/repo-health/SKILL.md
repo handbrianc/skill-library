@@ -61,7 +61,7 @@ command -v node >/dev/null 2>&1 && node --version >/dev/null 2>&1 && echo "node:
 command -v npm  >/dev/null 2>&1 && npm --version >/dev/null 2>&1 && echo "npm: $(npm --version)" || echo "npm: MISSING/BROKEN"
 command -v git  >/dev/null 2>&1 && git --version >/dev/null 2>&1 && echo "git: $(git --version)" || echo "git: MISSING/BROKEN"
 command -v jq   >/dev/null 2>&1 && jq --version >/dev/null 2>&1 && echo "jq: $(jq --version)" || echo "jq: MISSING/BROKEN"
-command -v find >/dev/null 2>&1 && echo "find: available" || echo "find: MISSING/BROKEN"
+command -v find >/dev/null 2>&1 && find . -maxdepth 1 -type d >/dev/null 2>&1 && echo "find: available (supports -maxdepth)" || echo "find: MISSING/BROKEN (needs GNU find for -maxdepth; install findutils and use gfind)"
 
 # Language runtimes (informational; only gate if the repo requires them)
 command -v python3 >/dev/null 2>&1 && python3 --version >/dev/null 2>&1 && echo "python3: $(python3 --version)" || echo "python3: MISSING (optional)"
