@@ -182,8 +182,13 @@ find . -maxdepth 3 \( \
   -name ".idea" -o \
   -name ".vscode/settings.json" -o \
   -name "*.orig" -o \
-  -name "*~"
-\) ! -path "./.git/*" 2>/dev/null
+  -name "*~"\
+\) \
+  ! -path "./openspec/*" \
+  ! -path "./opencode/*" \
+  ! -path "./.claude/*" \
+  ! -path "./.git/*" \
+  2>/dev/null
 
 # Log files
 find . -maxdepth 4 -name "*.log" ! -path "./.git/*" 2>/dev/null | head -20
