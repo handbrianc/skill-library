@@ -63,12 +63,11 @@ command -v git  >/dev/null 2>&1 && git --version >/dev/null 2>&1 && echo "git: $
 command -v jq   >/dev/null 2>&1 && jq --version >/dev/null 2>&1 && echo "jq: $(jq --version)" || echo "jq: MISSING/BROKEN"
 command -v find >/dev/null 2>&1 && echo "find: available" || echo "find: MISSING/BROKEN"
 
-# Language runtimes
-command -v python3 >/dev/null 2>&1 && python3 --version >/dev/null 2>&1 && echo "python3: $(python3 --version)" || echo "python3: MISSING/BROKEN"
-command -v pip     >/dev/null 2>&1 && pip --version >/dev/null 2>&1 && echo "pip: $(pip --version 2>/dev/null)" || echo "pip: MISSING/BROKEN"
-command -v pip3    >/dev/null 2>&1 && pip3 --version >/dev/null 2>&1 && echo "pip3: $(pip3 --version 2>/dev/null)" || echo "pip3: MISSING/BROKEN"
-command -v go      >/dev/null 2>&1 && go version >/dev/null 2>&1 && echo "go: $(go version 2>/dev/null | awk '{print $3}')" || echo "go: MISSING/BROKEN"
-command -v cargo   >/dev/null 2>&1 && cargo --version >/dev/null 2>&1 && echo "cargo: $(cargo --version 2>/dev/null)" || echo "cargo: MISSING/BROKEN"
+# Language runtimes (informational; only gate if the repo requires them)
+command -v python3 >/dev/null 2>&1 && python3 --version >/dev/null 2>&1 && echo "python3: $(python3 --version)" || echo "python3: MISSING (optional)"
+command -v pip3    >/dev/null 2>&1 && pip3 --version >/dev/null 2>&1 && echo "pip3: $(pip3 --version 2>/dev/null)" || echo "pip3: MISSING (optional)"
+command -v go      >/dev/null 2>&1 && go version >/dev/null 2>&1 && echo "go: $(go env GOVERSION 2>/dev/null)" || echo "go: MISSING (optional)"
+command -v cargo   >/dev/null 2>&1 && cargo --version >/dev/null 2>&1 && echo "cargo: $(cargo --version 2>/dev/null)" || echo "cargo: MISSING (optional)"
 
 # Repo-health helper scripts
 for script in \
