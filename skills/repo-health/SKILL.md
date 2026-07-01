@@ -42,6 +42,8 @@ A rigorous, deterministic repository audit covering six dimensions. Produces a p
 - Node.js >= 18 (for `npx`)
 - Bash >= 4.0 (for associative-array support in `find-duplicates.sh`)
 - Git installed and accessible
+- `jq` (for JSON parsing in PHASE 1 discovery)
+- GNU `find` with `-maxdepth` support (for PHASE 0.5 inventory commands; macOS ships BSD find — install GNU findutils and ensure it is available as `find`)
 - For security scan: `npm audit`, `Grype` or `Syft` (container/jar projects)
 - For coverage: project's test runner with coverage reporter (vitest, jest, etc.)
 - For complexity metrics: `eslint --quiet` with `complexity` rule, or `tsq` for TS
@@ -62,7 +64,7 @@ command -v npm  >/dev/null 2>&1 && npm --version >/dev/null 2>&1 && echo "npm: $
 command -v npx  >/dev/null 2>&1 && npx --version >/dev/null 2>&1 && echo "npx: $(npx --version)" || echo "npx: MISSING/BROKEN"
 command -v git  >/dev/null 2>&1 && git --version >/dev/null 2>&1 && echo "git: $(git --version)" || echo "git: MISSING/BROKEN"
 command -v jq   >/dev/null 2>&1 && jq --version >/dev/null 2>&1 && echo "jq: $(jq --version)" || echo "jq: MISSING/BROKEN"
-command -v find >/dev/null 2>&1 && find . -maxdepth 1 -type d >/dev/null 2>&1 && echo "find: available (supports -maxdepth)" || echo "find: MISSING/BROKEN (needs GNU find for -maxdepth; install findutils and use gfind)"
+command -v find >/dev/null 2>&1 && find . -maxdepth 1 -type d >/dev/null 2>&1 && echo "find: available (supports -maxdepth)" || echo "find: MISSING/BROKEN (needs GNU find supporting -maxdepth available as 'find'; on macOS: brew install findutils then make gfind available as find)"
 
 # Language runtimes (informational; only gate if the repo requires them)
 command -v python3 >/dev/null 2>&1 && python3 --version >/dev/null 2>&1 && echo "python3: $(python3 --version)" || echo "python3: MISSING (optional)"
@@ -112,16 +114,17 @@ npx --yes --no-install gitnexus --version >/dev/null 2>&1 && echo "gitnexus: ava
 - **ABORT — do not proceed to PHASE 1**
 
 > Optional language/test/security tools may print `MISSING (optional)`; only treat them as blocking if the repo’s stack requires them.
-  ```
-  ## 🚫 ENVIRONMENT GAP — Cannot Proceed
-
-  The following tools are missing or broken. Install them before re-running the audit:
-
-  | Tool | Status | Install Command |
-  | ---- | ------ | --------------- |
-  | bash | MISSING | (system package manager) |
-  | ./skills/repo-health/scripts/scan-secrets.sh | SYNTAX ERROR (bash -n) | fix script |
-  ```
+>
+> ```markdown
+> ## 🚫 ENVIRONMENT GAP — Cannot Proceed
+>
+> The following tools are missing or broken. Install them before re-running the audit:
+>
+> | Tool | Status | Install Command |
+> | ---- | ------ | --------------- |
+> | bash | MISSING | (system package manager) |
+> | ./skills/repo-health/scripts/scan-secrets.sh | SYNTAX ERROR (bash -n) | fix script |
+> ```
 - The user must resolve all gaps before the audit can proceed.
 
 ---
@@ -135,22 +138,20 @@ npx --yes --no-install gitnexus --version >/dev/null 2>&1 && echo "gitnexus: ava
 # (not tracked as valuable source; removal will not break builds)
 
 # Build artifacts
-find . -maxdepth 4 -type d \( \
-  -name "node_modules" -o \
-  -name "__pycache__" -o \
-  -name ".pytest_cache" -o \
-  -name ".next" -o \
-  -name "dist" -o \
-  -name "build" -o \
-  -name "target" -o \
-  -name "vendor" -o \
-  -name ".venv" -o \
-  -name "venv"\
-\) \
-  ! -path "./openspec/*" \
-  ! -path "./opencode/*" \
-  ! -path "./.claude/*" \
-  ! -path "./.git/*" \
+find . \
+  \( -path "./openspec" -o -path "./opencode" -o -path "./.claude" -o -path "./.git" \) -prune -o \
+  -type d \( \
+    -name "node_modules" -o \
+    -name "__pycache__" -o \
+    -name ".pytest_cache" -o \
+    -name ".next" -o \
+    -name "dist" -o \
+    -name "build" -o \
+    -name "target" -o \
+    -name "vendor" -o \
+    -name ".venv" -o \
+    -name "venv" \
+  \) -prune -print \
   2>/dev/null | head -50
 
 # Lock files (inventory only — usually keep; removing changes dependency resolution)
