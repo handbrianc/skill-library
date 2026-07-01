@@ -223,7 +223,7 @@ echo "=== TRANSIENT FILES MARKED FOR REMOVAL ==="
 | editor noise         | N     | Remove  |
 | empty dirs           | N     | Remove  |
 ```
-> **Note:** If in doubt about any file, err on the side of keeping it. The audit must never destroy有价值的东西.
+> **Note:** If in doubt about any file, err on the side of keeping it. The audit must never destroy valuable files.
 
 ---
 
