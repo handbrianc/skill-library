@@ -205,7 +205,7 @@ echo "=== TRANSIENT FILES MARKED FOR REMOVAL ==="
 
 **Decision rule — SAFE TO REMOVE:**
 - `node_modules/`, `__pycache__/`, `.pytest_cache/`, `.next/`, `dist/`, `build/`, `target/`, `vendor/`, `.venv/`, `venv/`
-- `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `poetry.lock`, `Cargo.lock`
+- Lock files (`package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `poetry.lock`, `Cargo.lock`) — KEEP if tracked; remove only if explicitly untracked and safe for this repo
 - `.cache/`, `tmp/`, `temp/` directories
 - `*.log` files
 - `*.swp`, `*.swo`, `*~`, `.DS_Store` (editor/OS noise)
