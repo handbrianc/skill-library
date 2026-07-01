@@ -59,6 +59,7 @@ A rigorous, deterministic repository audit covering six dimensions. Produces a p
 command -v bash >/dev/null 2>&1 && bash --version >/dev/null 2>&1 && echo "bash: $(bash --version | head -1)" || echo "bash: MISSING/BROKEN"
 command -v node >/dev/null 2>&1 && node --version >/dev/null 2>&1 && echo "node: $(node --version)" || echo "node: MISSING/BROKEN"
 command -v npm  >/dev/null 2>&1 && npm --version >/dev/null 2>&1 && echo "npm: $(npm --version)" || echo "npm: MISSING/BROKEN"
+command -v npx  >/dev/null 2>&1 && npx --version >/dev/null 2>&1 && echo "npx: $(npx --version)" || echo "npx: MISSING/BROKEN"
 command -v git  >/dev/null 2>&1 && git --version >/dev/null 2>&1 && echo "git: $(git --version)" || echo "git: MISSING/BROKEN"
 command -v jq   >/dev/null 2>&1 && jq --version >/dev/null 2>&1 && echo "jq: $(jq --version)" || echo "jq: MISSING/BROKEN"
 command -v find >/dev/null 2>&1 && find . -maxdepth 1 -type d >/dev/null 2>&1 && echo "find: available (supports -maxdepth)" || echo "find: MISSING/BROKEN (needs GNU find for -maxdepth; install findutils and use gfind)"
