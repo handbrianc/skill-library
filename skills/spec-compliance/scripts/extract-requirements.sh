@@ -169,6 +169,14 @@ extract_file() {
         pattern_counts[NUMBERED]=$((pattern_counts[NUMBERED] + 1))
     done < <(grep -n -E '^[[:space:]]*([[:digit:]]+[.)]|\([[:lower:]]+\))[[:space:]]' "$filepath" 2>/dev/null || true)
 
+    # ── Pattern 6: Quoted directives ──────────────────────────────────────
+    # Matches: "..." or '...' lines (min 15 chars)
+    while IFS=: read -r ln text; do
+        local cleaned
+        cleaned=$(echo "$text" | sed -E "s/^[[:space:]]*['\\\"](.*)['\\\"][[:space:]]*$/\\1/")
+        echo "$ln|QUOTED_DIRECTIVE|$cleaned" >> "$tmp_file"
+    done < <(grep -n -E "^[[:space:]]*['\\\"].{15,}['\\\"][[:space:]]*$" "$filepath" 2>/dev/null || true)
+
     # Sort by line number and display
     if [[ -s "$tmp_file" ]]; then
         while IFS='|' read -r ln ptype content; do
