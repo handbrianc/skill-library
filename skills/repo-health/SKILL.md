@@ -56,19 +56,19 @@ A rigorous, deterministic repository audit covering six dimensions. Produces a p
 
 ```bash
 # Core utilities
-command -v bash >/dev/null 2>&1 && echo "bash: $(bash --version | head -1)"
-command -v node >/dev/null 2>&1 && echo "node: $(node --version)"
-command -v npm  >/dev/null 2>&1 && echo "npm: $(npm --version)"
-command -v git  >/dev/null 2>&1 && echo "git: $(git --version)"
-command -v jq   >/dev/null 2>&1 && echo "jq: $(jq --version)"
-command -v find >/dev/null 2>&1 && echo "find: available"
+command -v bash >/dev/null 2>&1 && bash --version >/dev/null 2>&1 && echo "bash: $(bash --version | head -1)" || echo "bash: MISSING/BROKEN"
+command -v node >/dev/null 2>&1 && node --version >/dev/null 2>&1 && echo "node: $(node --version)" || echo "node: MISSING/BROKEN"
+command -v npm  >/dev/null 2>&1 && npm --version >/dev/null 2>&1 && echo "npm: $(npm --version)" || echo "npm: MISSING/BROKEN"
+command -v git  >/dev/null 2>&1 && git --version >/dev/null 2>&1 && echo "git: $(git --version)" || echo "git: MISSING/BROKEN"
+command -v jq   >/dev/null 2>&1 && jq --version >/dev/null 2>&1 && echo "jq: $(jq --version)" || echo "jq: MISSING/BROKEN"
+command -v find >/dev/null 2>&1 && echo "find: available" || echo "find: MISSING/BROKEN"
 
 # Language runtimes
-command -v python3 >/dev/null 2>&1 && echo "python3: $(python3 --version)"
-command -v pip     >/dev/null 2>&1 && echo "pip: $(pip --version 2>/dev/null)"
-command -v pip3    >/dev/null 2>&1 && echo "pip3: $(pip3 --version 2>/dev/null)"
-command -v go      >/dev/null 2>&1 && echo "go: $(go version 2>/dev/null | awk '{print $3}')"
-command -v cargo   >/dev/null 2>&1 && echo "cargo: $(cargo --version 2>/dev/null)"
+command -v python3 >/dev/null 2>&1 && python3 --version >/dev/null 2>&1 && echo "python3: $(python3 --version)" || echo "python3: MISSING/BROKEN"
+command -v pip     >/dev/null 2>&1 && pip --version >/dev/null 2>&1 && echo "pip: $(pip --version 2>/dev/null)" || echo "pip: MISSING/BROKEN"
+command -v pip3    >/dev/null 2>&1 && pip3 --version >/dev/null 2>&1 && echo "pip3: $(pip3 --version 2>/dev/null)" || echo "pip3: MISSING/BROKEN"
+command -v go      >/dev/null 2>&1 && go version >/dev/null 2>&1 && echo "go: $(go version 2>/dev/null | awk '{print $3}')" || echo "go: MISSING/BROKEN"
+command -v cargo   >/dev/null 2>&1 && cargo --version >/dev/null 2>&1 && echo "cargo: $(cargo --version 2>/dev/null)" || echo "cargo: MISSING/BROKEN"
 
 # Repo-health helper scripts
 for script in \
