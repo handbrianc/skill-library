@@ -86,7 +86,7 @@ extract_file() {
 
     # Temporary file to accumulate results
     local tmp_file
-    tmp_file=$(mktemp -t extract-requirements.XXXXXX)
+    tmp_file=$(mktemp "${TMPDIR:-/tmp}/extract-requirements.XXXXXX")
 
     # ── Pattern 1: Explicit requirement markers ───────────────────────────
     # Matches: REQUIREMENT:, RFP-, SRS-, USER STORY:, TICKET:

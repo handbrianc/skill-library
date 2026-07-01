@@ -124,7 +124,7 @@ done
 **Categorization (internal `PATTERN_TYPE` values; terminal output renders checkbox entries as `CHECKED`/`PENDING`):**
 - `GHERKIN_GIVEN` / `GHERKIN_WHEN` / `GHERKIN_THEN` / `GHERKIN_AND` — Individual Gherkin lines extracted separately
 - `GHERKIN_BLOCK` — SCENARIO/BACKGROUND/FEATURE block headers
-- `CHECKBOX_X` — Checkbox item marked `[x]` (requirement satisfied in spec)
+- `CHECKBOX_X` — Checkbox item marked `[x]` or `[X]` (requirement satisfied in spec)
 - `CHECKBOX_SPACE` — Checkbox item marked `[ ]` (future/dropped requirement)
 - `PROSE` — Capital-sentence prose requirements (≥20 chars, ends in `.` or `:`)
 - `MARKER` — Explicit REQUIREMENT:/RFP-/SRS- prefixed items (highest confidence)
