@@ -144,8 +144,13 @@ find . -maxdepth 4 -type d \( \
   -name "target" -o \
   -name "vendor" -o \
   -name ".venv" -o \
-  -name "venv"
-\) 2>/dev/null | head -50
+  -name "venv"\
+\) \
+  ! -path "./openspec/*" \
+  ! -path "./opencode/*" \
+  ! -path "./.claude/*" \
+  ! -path "./.git/*" \
+  2>/dev/null | head -50
 
 # Lock files (inventory only — usually keep; removing changes dependency resolution)
 find . -maxdepth 3 \( \
