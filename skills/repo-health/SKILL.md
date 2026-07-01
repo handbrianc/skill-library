@@ -147,7 +147,7 @@ find . -maxdepth 4 -type d \( \
   -name "venv"
 \) 2>/dev/null | head -50
 
-# Lock files that can regenerate
+# Lock files (inventory only — usually keep; removing changes dependency resolution)
 find . -maxdepth 3 \( \
   -name "package-lock.json" -o \
   -name "pnpm-lock.yaml" -o \
