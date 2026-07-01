@@ -121,7 +121,7 @@ done
 103|NUMBERED|1. All inputs must be validated before processing.|
 ```
 
-**Categorization:**
+**Categorization (internal `PATTERN_TYPE` values; terminal output renders checkbox entries as `CHECKED`/`PENDING`):**
 - `GHERKIN_GIVEN` / `GHERKIN_WHEN` / `GHERKIN_THEN` / `GHERKIN_AND` — Individual Gherkin lines extracted separately
 - `GHERKIN_BLOCK` — SCENARIO/BACKGROUND/FEATURE block headers
 - `CHECKBOX_X` — Checkbox item marked `[x]` (requirement satisfied in spec)
