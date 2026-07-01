@@ -93,15 +93,14 @@ do
 done
 
 # Project-type specific tools (informational; only gate if the repo requires them)
-command -v vitest >/dev/null 2>&1 && echo "vitest: $(vitest --version 2>/dev/null)" || echo "vitest: MISSING"
-command -v jest   >/dev/null 2>&1 && echo "jest: $(jest --version 2>/dev/null)" || echo "jest: MISSING"
-command -v pytest >/dev/null 2>&1 && echo "pytest: $(pytest --version 2>/dev/null | head -1)" || echo "pytest: MISSING"
-command -v eslint >/dev/null 2>&1 && echo "eslint: $(eslint --version 2>/dev/null)" || echo "eslint: MISSING"
-command -v jscpd  >/dev/null 2>&1 && echo "jscpd: $(jscpd --version 2>/dev/null)" || echo "jscpd: MISSING"
-command -v semgrep >/dev/null 2>&1 && echo "semgrep: $(semgrep --version 2>/dev/null)" || echo "semgrep: MISSING"
-command -v syft   >/dev/null 2>&1 && echo "syft: $(syft version 2>/dev/null)" || echo "syft: MISSING"
-command -v grype  >/dev/null 2>&1 && echo "grype: $(grype version 2>/dev/null | head -1)" || echo "grype: MISSING"
-
+command -v vitest  >/dev/null 2>&1 && echo "vitest: $(vitest --version 2>/dev/null)" || echo "vitest: MISSING (optional)"
+command -v jest    >/dev/null 2>&1 && echo "jest: $(jest --version 2>/dev/null)" || echo "jest: MISSING (optional)"
+command -v pytest  >/dev/null 2>&1 && echo "pytest: $(pytest --version 2>/dev/null | head -1)" || echo "pytest: MISSING (optional)"
+command -v eslint  >/dev/null 2>&1 && echo "eslint: $(eslint --version 2>/dev/null)" || echo "eslint: MISSING (optional)"
+command -v jscpd   >/dev/null 2>&1 && echo "jscpd: $(jscpd --version 2>/dev/null)" || echo "jscpd: MISSING (optional)"
+command -v semgrep >/dev/null 2>&1 && echo "semgrep: $(semgrep --version 2>/dev/null)" || echo "semgrep: MISSING (optional)"
+command -v syft    >/dev/null 2>&1 && echo "syft: $(syft version 2>/dev/null)" || echo "syft: MISSING (optional)"
+command -v grype   >/dev/null 2>&1 && echo "grype: $(grype version 2>/dev/null | head -1)" || echo "grype: MISSING (optional)"
 # GitNexus
 command -v gitnexus >/dev/null 2>&1 && echo "gitnexus: available via PATH" || echo "gitnexus: MISSING (PATH)"
 npx --yes --no-install gitnexus --version >/dev/null 2>&1 && echo "gitnexus: available via npx (local)" || echo "gitnexus: MISSING (npx local)"
