@@ -55,6 +55,7 @@ extract_file() {
     local filepath="$1"
     local filename
     filename=$(basename "$filepath")
+    local marker_pattern='(REQUIREMENT|RFP-|SRS-|USER STORY|TICKET)'
 
     if [[ ! -f "$filepath" ]]; then
         echo -e "${RED}ERROR: File not found: $filepath${RESET}" >&2
@@ -85,16 +86,16 @@ extract_file() {
 
     # Temporary file to accumulate results
     local tmp_file
-    tmp_file=$(mktemp)
+    tmp_file=$(mktemp -t extract-requirements.XXXXXX)
 
     # ── Pattern 1: Explicit requirement markers ───────────────────────────
     # Matches: REQUIREMENT:, RFP-, SRS-, USER STORY:, TICKET:
     while IFS=: read -r ln text; do
         # Strip leading whitespace and requirement keyword
-        cleaned=$(echo "$text" | sed -E 's/^(REQUIREMENT|RFP-|SRS-|USER STORY|TICKET):[[:space:]]+//')
+        cleaned=$(echo "$text" | sed -E "s/^${marker_pattern}:[[:space:]]+//")
         echo "$ln|MARKER|$cleaned" >> "$tmp_file"
         pattern_counts[MARKER]=$((pattern_counts[MARKER] + 1))
-    done < <(grep -n -E '(REQUIREMENT|RFP-|SRS-|USER STORY|TICKET):[[:space:]]+' "$filepath" 2>/dev/null || true)
+    done < <(grep -n -E "${marker_pattern}:[[:space:]]+" "$filepath" 2>/dev/null || true)
 
     # ── Pattern 2: Gherkin BDD language ─────────────────────────────────
     # Matches: GIVEN, WHEN, THEN, AND at line start (with optional indentation)

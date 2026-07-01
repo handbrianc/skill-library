@@ -73,7 +73,7 @@ requires_bash_4
 extract_from_file() {
     local file="$1"
     local tmp_file
-    tmp_file=$(mktemp)
+    tmp_file=$(mktemp -t compare-specs.XXXXXX)
 
     # Gherkin: SCENARIO, GIVEN, WHEN, THEN, AND, BACKGROUND blocks
     grep -n -E '^[[:space:]]*(SCENARIO|GIVEN|WHEN|THEN|AND|BACKGROUND)[[:space:]]+' "$file" 2>/dev/null \

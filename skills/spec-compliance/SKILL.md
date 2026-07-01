@@ -474,7 +474,7 @@ skills/spec-compliance/scripts/
 
 ```bash
 ./skills/spec-compliance/scripts/compare-specs.sh openspec/ specs/archive/
-# Output: formatted table of SPEC_FILE, archived/current requirement counts, FOUND markers, and STATUS values
+# Output: formatted table of SPEC_FILE, archived/current requirement counts, FOUND markers, and STATUS comparison values (NEW/GROWTH/REGRESSION/BALANCED)
 ```
 
 ### extract-requirements.sh Usage
