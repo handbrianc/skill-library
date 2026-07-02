@@ -20,125 +20,83 @@ set -euo pipefail
 
 META_JSON=".gitnexus/meta.json"
 
-# ── Guard: skip if no meta.json (not a gitnexus-enabled repo) ─────────────────
-if [[ ! -f "$META_JSON" ]]; then
+guard_skip() {
+  local reason="$1"
+  echo "info: $reason — skipping staleness check" >&2
   exit 0
-fi
+}
+
+[[ -f "$META_JSON" ]] || guard_skip "no .gitnexus/meta.json"
+[[ -s "$META_JSON" ]] || guard_skip "meta.json is empty"
+
+python3 << 'PYEOF'
+import json, os, re, sys
 
 # ── Read reference values from meta.json ──────────────────────────────────────
-# Using Python3 for reliable cross-platform JSON parsing (jq may not be available)
-nodes_meta=$(python3 -c "
-import json, sys
-with open('$META_JSON') as f:
-    d = json.load(f)
-print(d.get('stats', {}).get('nodes', ''))
-" 2>/dev/null || echo "")
+meta_path = os.path.join(os.environ.get('GIT_PREFIX', '.'), '.gitnexus', 'meta.json')
+try:
+    with open(meta_path) as f:
+        d = json.load(f)
+    nodes_meta = str(d['stats']['nodes'])
+    edges_meta = str(d['stats']['edges'])
+except Exception as e:
+    print(f"warn: Could not parse {meta_path}: {e} — skipping", file=sys.stderr)
+    sys.exit(0)
 
-edges_meta=$(python3 -c "
-import json, sys
-with open('$META_JSON') as f:
-    d = json.load(f)
-print(d.get('stats', {}).get('edges', ''))
-" 2>/dev/null || echo "")
+if not nodes_meta or not edges_meta:
+    print(f"warn: stats missing from {meta_path} — skipping", file=sys.stderr)
+    sys.exit(0)
 
-if [[ -z "$nodes_meta" || -z "$edges_meta" ]]; then
-  # Malformed meta.json — warn but don't block
-  echo "warn: Could not parse stats from $META_JSON — skipping staleness check" >&2
-  exit 0
-fi
+# ── Extract stats from a file's gitnexus block ────────────────────────────────
+REPO = 'skill-library'
+BLOCK_PAT = re.compile(r'<!-- gitnexus:start -->(.*?)<!-- gitnexus:end -->', re.DOTALL)
+STATS_PAT = re.compile(r'\*\*' + REPO + r'\*\*.*?\((\d+) symbols,\s*(\d+) relationships')
+#                                                    ^^^ captures node count ^^^^^^^^^^^^^^^^
+#                                                                        ^captures edge count
 
-# ── Extract stats line from a file's gitnexus block ────────────────────────────
-extract_stats_line() {
-  local file="$1"
-  if [[ ! -f "$file" ]]; then
-    echo ""
-    return
-  fi
+def extract_stats(file_path):
+    try:
+        with open(file_path) as f:
+            content = f.read()
+    except (IOError, OSError):
+        return None, None
 
-  # Grab lines between <!-- gitnexus:start --> and <!-- gitnexus:end -->
-  local in_block=false
-  while IFS= read -r line || [[ -n "$line" ]]; do
-    if [[ "$line" == *"<!-- gitnexus:start -->"* ]]; then
-      in_block=true
-      continue
-    fi
-    if [[ "$line" == *"<!-- gitnexus:end -->"* ]]; then
-      in_block=false
-      break
-    fi
-    if "$in_block" && [[ "$line" == *"(("* && *") relationships"* ]]; then
-      echo "$line"
-      return
-    fi
-  done < "$file"
-  echo ""
-}
+    m = BLOCK_PAT.search(content)
+    if not m:
+        return None, None   # no block → nothing to check
 
-# ── Parse symbol + relationship counts from a stats line ───────────────────────
-# Input line looks like: "... (**repo-name** (NUM symbols, NUM relationships, ...)"
-# Returns: "nodes|edges" on stdout, empty if unparseable
-parse_stats() {
-  local line="$1"
-  if [[ -z "$line" ]]; then
-    echo "|"
-    return
-  fi
-  # Extract first number (symbols)
-  nodes_file=$(echo "$line" | sed -n 's/.*(\([0-9]\+\) symbols.*/\1/p')
-  # Extract second number (relationships — before the comma after it)
-  edges_file=$(echo "$line" | sed -n 's/.*[0-9] symbols[,]\?[ ]*\([0-9]\+\) relationships.*/\1/p')
+    sm = STATS_PAT.search(m.group(1))
+    if not sm:
+        return None, None   # no stats line → nothing to check
 
-  if [[ -z "$nodes_file" || -z "$edges_file" ]]; then
-    echo "|"
-  else
-    echo "${nodes_file}|${edges_file}"
-  fi
-}
+    return int(sm.group(1)), int(sm.group(2))
 
 # ── Check one file ──────────────────────────────────────────────────────────────
-check_file() {
-  local file="$1"
-  if [[ ! -f "$file" ]]; then
-    return 0  # skip absent files quietly
-  fi
+def check_file(path):
+    nodes, edges = extract_stats(path)
+    if nodes is None and edges is None:
+        return True  # no block / no stats line — nothing to check, pass
 
-  local stats_line
-  stats_line=$(extract_stats_line "$file")
-  if [[ -z "$stats_line" ]]; then
-    return 0  # no block found, nothing to check
-  fi
-
-  local parsed
-  parsed=$(parse_stats "$stats_line")
-  if [[ "$parsed" == "|" ]]; then
-    echo "warn: Could not parse gitnexus stats line in $file — skipping" >&2
-    return 0
-  fi
-
-  local nodes_file="${parsed%%|*}"
-  local edges_file="${parsed##*|}"
-
-  if [[ "$nodes_file" != "$nodes_meta" || "$edges_file" != "$edges_meta" ]]; then
-    echo "STALE GITNEXUS BLOCK in $file:"
-    echo "  File claims:   $nodes_file symbols, $edges_file relationships"
-    echo "  meta.json has: $nodes_meta symbols, $edges_meta relationships"
-    echo ""
-    echo "  Fix: run 'npx gitnexus analyze --force' then re-commit"
-    return 1
-  fi
-}
+    if nodes != int(nodes_meta) or edges != int(edges_meta):
+        print(f"STALE GITNEXUS BLOCK in {path}:", file=sys.stderr)
+        print(f"  File:       {nodes} symbols, {edges} relationships", file=sys.stderr)
+        print(f"  meta.json:  {nodes_meta} symbols, {edges_meta} relationships", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("  Fix: run 'npx gitnexus analyze --force' then re-commit", file=sys.stderr)
+        return False
+    return True
 
 # ── Main ────────────────────────────────────────────────────────────────────────
-FAIL=0
+files = ['AGENTS.md', 'CLAUDE.md']
+all_pass = True
+for f in files:
+    if not check_file(f):
+        all_pass = False
 
-for file in AGENTS.md CLAUDE.md; do
-  check_file "$file" || FAIL=1
-done
+if not all_pass:
+    print("", file=sys.stderr)
+    print("error: Commit blocked — stale GitNexus block(s) detected above.", file=sys.stderr)
+    sys.exit(1)
 
-if [[ "$FAIL" -eq 1 ]]; then
-  echo ""
-  echo "error: Commit blocked — stale GitNexus block(s) detected above." >&2
-  exit 1
-fi
-
-exit 0
+sys.exit(0)
+PYEOF
