@@ -67,7 +67,7 @@ extract_file() {
     echo -e "${DIM}Full path: $filepath${RESET}"
     echo ""
 
-    local line_num=0
+    local _line_num=0
     local req_count=0
 
     # Track unique pattern types found
@@ -211,6 +211,7 @@ extract_file() {
                     echo -e "  ${YELLOW}›${RESET} [$ln] ${YELLOW}PROSE${RESET}: $content"
                     ;;
                 QUOTED)
+                    # shellcheck disable=SC1111  # typographic unicode quote
                     echo -e "  ${YELLOW}”${RESET} [$ln] ${YELLOW}QUOTED${RESET}: $content"
                     ;;
                 NUMBERED)

@@ -16,9 +16,9 @@ MODE="normal"  # normal | aggressive
 if [[ "${2:-}" == "--aggressive" || "${2:-}" == "aggressive" ]]; then
   MODE="aggressive"
 fi
-WORKDIR=$(pwd)
+_WORKDIR=$(pwd)
 TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
+trap 'rm -rf "$TMPDIR"' EXIT
 
 echo "=== DEAD CODE SCAN ===" >&2
 echo "Target: $TARGET" >&2

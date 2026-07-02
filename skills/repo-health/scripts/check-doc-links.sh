@@ -18,7 +18,7 @@ echo "Checking externals: $EXTERNAL" >&2
 echo "" >&2
 
 TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
+trap 'rm -rf "$TMPDIR"' EXIT
 
 # -------- Internal link checker --------
 # Find all markdown links in markdown files

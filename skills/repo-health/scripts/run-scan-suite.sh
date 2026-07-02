@@ -60,13 +60,15 @@ dispatch() {
     return
   fi
 
-  local START=$(date +%s.%N)
+  local START
+  START=$(date +%s.%N)
   if bash "$SCRIPT" "$@" 2>&1 | tee "$ARTIFACT_DIR/$OUTFILE"; then
     LOG "$LABEL" "Done."
   else
     LOG "$LABEL" "Warning: exited non-zero."
   fi
-  local ELAPSED=$(echo "$(date +%s.%N) - $START" | bc 2>/dev/null || echo "N/A")
+  local ELAPSED
+  ELAPSED=$(echo "$(date +%s.%N) - $START" | bc 2>/dev/null || echo "N/A")
   LOG "$LABEL" "Elapsed: ${ELAPSED}s"
 }
 

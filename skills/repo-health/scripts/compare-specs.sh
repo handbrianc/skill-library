@@ -28,7 +28,7 @@ if [ ! -d "$ARCHIVE" ]; then
 fi
 
 TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
+trap 'rm -rf "$TMPDIR"' EXIT
 
 # -------- Parse requirements from spec files --------
 # OpenSpec typically uses Given/When/Then or bullet requirements
