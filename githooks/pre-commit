@@ -33,7 +33,7 @@ python3 << 'PYEOF'
 import json, os, re, sys
 
 # ── Read reference values from meta.json ──────────────────────────────────────
-meta_path = '.gitnexus/meta.json'
+meta_path = os.path.join(os.environ.get('GIT_PREFIX', '.'), '.gitnexus', 'meta.json')
 try:
     with open(meta_path) as f:
         d = json.load(f)
