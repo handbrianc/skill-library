@@ -136,7 +136,7 @@ PY
     ) || true
   fi
   
-  INSTALLED=$(pip list 2>/dev/null | awk 'NR>2 {print $1}' | head -50)
+  _INSTALLED=$(pip list 2>/dev/null | awk 'NR>2 {print $1}' | head -50)
   
   # Check if installed packages are actually imported
   for DEP in $DEPENDENCIES; do

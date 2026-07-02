@@ -15,7 +15,7 @@ Entries use [Keep a Changelog](https://keepachangelog.com/) conventions: Added, 
 
 ---
 
-## [2.0.0] — 2025-XX-XX (future)
+## [2.0.0] — tbd (blocked on: open issue to finalize feature scope)
 
 ### Added
 - `skills/repo-health/` with full 11-script helper suite:

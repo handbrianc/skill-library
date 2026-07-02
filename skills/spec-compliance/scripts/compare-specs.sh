@@ -155,7 +155,7 @@ echo -e "${BOLD}├────────────────────�
 # Track totals
 total_current=0
 total_archive=0
-total_found=0
+_total_found=0
 
 # ── Process each current spec ───────────────────────────────────────────────
 declare -A archive_counts

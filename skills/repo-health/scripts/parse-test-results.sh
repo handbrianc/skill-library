@@ -58,7 +58,7 @@ if [ "$FRAMEWORK" == "jest" ] || [ "$FRAMEWORK" == "vitest" ]; then
   FAILED=$(perl -ne 'if (/Tests?:.*?\b(\d+)\s+failed\b/i) { $v=$1 } END { print defined($v) ? $v : 0 }' "$INPUT")
   SKIPPED=$(perl -ne 'if (/Tests?:.*?\b(\d+)\s+skipped\b/i) { $v=$1 } END { print defined($v) ? $v : 0 }' "$INPUT")
   ERROR_COUNT=$(perl -ne 'if (/Tests?:.*?\b(\d+)\s+errors?\b/i) { $v=$1 } END { print defined($v) ? $v : 0 }' "$INPUT")
-  TOTAL=$(perl -ne 'if (/Tests?:.*?\b(\d+)\s+total\b/i) { $v=$1 } END { print defined($v) ? $v : 0 }' "$INPUT")
+  _TOTAL=$(perl -ne 'if (/Tests?:.*?\b(\d+)\s+total\b/i) { $v=$1 } END { print defined($v) ? $v : 0 }' "$INPUT")
   RETRIED=$(grep -ciE 'Retry\(|retry' "$INPUT" 2>/dev/null || true)
   
   echo "" >&2

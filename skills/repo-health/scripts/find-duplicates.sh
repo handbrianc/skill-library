@@ -34,7 +34,7 @@ echo "Min lines: $MIN_LINES, Threshold: $THRESHOLD%" >&2
 echo "" >&2
 
 TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
+trap 'rm -rf "$TMPDIR"' EXIT
 
 FILES="$TMPDIR/files.txt"
 find "$TARGET" -type f \
@@ -105,7 +105,7 @@ declare -A REPORTED_PAIRS     # dedup prevention: "file1:start1:file2:start2" ->
 declare -A CANONICAL_FP       # window_key -> fingerprint_ngram result (cache)
 
 FILE_LIST=$(cat "$FILES")
-TOTAL_FILES=$(echo "$FILE_LIST" | wc -l)
+_TOTAL_FILES=$(echo "$FILE_LIST" | wc -l)
 SCANNED=0
 
 while IFS= read -r FILE; do

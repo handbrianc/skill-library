@@ -289,7 +289,7 @@ ls specs/ SPEC.md OPENSPEC* .spec/ spec/ arch/ 2>/dev/null | head -30
 | Has Specs Dir?    | YES         | ./specs/           |
 | Has Docs Dir?     | PARTIAL     | ./docs/ partial   |
 | Test Runner       | vitest      | vitest run --coverage |
-| Coverage Tool     | @vitest/coverage-v8 |             |
+| Coverage Tool     | —                   |             |
 ```
 
 Mark any dimension as **NOT APPLICABLE** if the project type makes it irrelevant (e.g., no test runner found for a pure-config repo).

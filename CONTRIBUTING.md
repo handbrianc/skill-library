@@ -62,6 +62,7 @@ Before opening a PR, verify:
 - [ ] No credentials, secrets, or project-specific paths hardcoded
 - [ ] Installs cleanly: `ln -s skills/my-skill ~/.config/opencode/skills/my-skill`
 - [ ] Loads without errors when OpenCode activates the skill
+- [ ] If editing `AGENTS.md`, `CLAUDE.md`, or `README.md`, run `npx gitnexus analyze` afterward and regenerate the `<!-- gitnexus:start -->…<!-- gitnexus:end -->` block with fresh statistics (never paste stale counts)
 
 ## Testing Locally
 
