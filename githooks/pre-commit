@@ -1,0 +1,144 @@
+#!/usr/bin/env bash
+#
+# pre-commit — GitNexus block staleness detector
+#
+# Runs before every `git commit`. Fails (blocks the commit) if the
+# GitNexus stats embedded in AGENTS.md or CLAUDE.md don't match the
+# current .gitnexus/meta.json index statistics.
+#
+# Installation (one-time):
+#   git config core.hooksPath githooks
+#
+# Rationale: The gitnexus block in AGENTS.md / CLAUDE.md embeds a live
+# snapshot of the knowledge-graph stats (symbol count, relationship count).
+# Stale stats mislead anyone reading those files. Contributors are supposed
+# to run `npx gitnexus analyze --force` before committing if they edited
+# any file, but this hook enforces that automatically.
+#
+
+set -euo pipefail
+
+META_JSON=".gitnexus/meta.json"
+
+# ── Guard: skip if no meta.json (not a gitnexus-enabled repo) ─────────────────
+if [[ ! -f "$META_JSON" ]]; then
+  exit 0
+fi
+
+# ── Read reference values from meta.json ──────────────────────────────────────
+# Using Python3 for reliable cross-platform JSON parsing (jq may not be available)
+nodes_meta=$(python3 -c "
+import json, sys
+with open('$META_JSON') as f:
+    d = json.load(f)
+print(d.get('stats', {}).get('nodes', ''))
+" 2>/dev/null || echo "")
+
+edges_meta=$(python3 -c "
+import json, sys
+with open('$META_JSON') as f:
+    d = json.load(f)
+print(d.get('stats', {}).get('edges', ''))
+" 2>/dev/null || echo "")
+
+if [[ -z "$nodes_meta" || -z "$edges_meta" ]]; then
+  # Malformed meta.json — warn but don't block
+  echo "warn: Could not parse stats from $META_JSON — skipping staleness check" >&2
+  exit 0
+fi
+
+# ── Extract stats line from a file's gitnexus block ────────────────────────────
+extract_stats_line() {
+  local file="$1"
+  if [[ ! -f "$file" ]]; then
+    echo ""
+    return
+  fi
+
+  # Grab lines between <!-- gitnexus:start --> and <!-- gitnexus:end -->
+  local in_block=false
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ "$line" == *"<!-- gitnexus:start -->"* ]]; then
+      in_block=true
+      continue
+    fi
+    if [[ "$line" == *"<!-- gitnexus:end -->"* ]]; then
+      in_block=false
+      break
+    fi
+    if "$in_block" && [[ "$line" == *"(("* && *") relationships"* ]]; then
+      echo "$line"
+      return
+    fi
+  done < "$file"
+  echo ""
+}
+
+# ── Parse symbol + relationship counts from a stats line ───────────────────────
+# Input line looks like: "... (**repo-name** (NUM symbols, NUM relationships, ...)"
+# Returns: "nodes|edges" on stdout, empty if unparseable
+parse_stats() {
+  local line="$1"
+  if [[ -z "$line" ]]; then
+    echo "|"
+    return
+  fi
+  # Extract first number (symbols)
+  nodes_file=$(echo "$line" | sed -n 's/.*(\([0-9]\+\) symbols.*/\1/p')
+  # Extract second number (relationships — before the comma after it)
+  edges_file=$(echo "$line" | sed -n 's/.*[0-9] symbols[,]\?[ ]*\([0-9]\+\) relationships.*/\1/p')
+
+  if [[ -z "$nodes_file" || -z "$edges_file" ]]; then
+    echo "|"
+  else
+    echo "${nodes_file}|${edges_file}"
+  fi
+}
+
+# ── Check one file ──────────────────────────────────────────────────────────────
+check_file() {
+  local file="$1"
+  if [[ ! -f "$file" ]]; then
+    return 0  # skip absent files quietly
+  fi
+
+  local stats_line
+  stats_line=$(extract_stats_line "$file")
+  if [[ -z "$stats_line" ]]; then
+    return 0  # no block found, nothing to check
+  fi
+
+  local parsed
+  parsed=$(parse_stats "$stats_line")
+  if [[ "$parsed" == "|" ]]; then
+    echo "warn: Could not parse gitnexus stats line in $file — skipping" >&2
+    return 0
+  fi
+
+  local nodes_file="${parsed%%|*}"
+  local edges_file="${parsed##*|}"
+
+  if [[ "$nodes_file" != "$nodes_meta" || "$edges_file" != "$edges_meta" ]]; then
+    echo "STALE GITNEXUS BLOCK in $file:"
+    echo "  File claims:   $nodes_file symbols, $edges_file relationships"
+    echo "  meta.json has: $nodes_meta symbols, $edges_meta relationships"
+    echo ""
+    echo "  Fix: run 'npx gitnexus analyze --force' then re-commit"
+    return 1
+  fi
+}
+
+# ── Main ────────────────────────────────────────────────────────────────────────
+FAIL=0
+
+for file in AGENTS.md CLAUDE.md; do
+  check_file "$file" || FAIL=1
+done
+
+if [[ "$FAIL" -eq 1 ]]; then
+  echo ""
+  echo "error: Commit blocked — stale GitNexus block(s) detected above." >&2
+  exit 1
+fi
+
+exit 0
