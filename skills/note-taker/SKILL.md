@@ -48,7 +48,7 @@ Comprehensively extract every distinct idea, topic, and key point. If the speake
 
 - Extract specific tasks, recommendations, or homework the speaker suggested
 - List every recommended tool, resource, technique, concept, paper, person, or book — with a one-line note on why
-- Separate **explicit recommendations** ("you should do X") from **implied opportunities** [Inferred]
+- Separate **explicit recommendations** ("you should do X") from **implied opportunities** — mark as **[Inferred]**
 
 ### 5. Q&A Summary
 
