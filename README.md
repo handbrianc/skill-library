@@ -6,8 +6,10 @@ An OpenCode skill distribution template. Packages reusable skill files for agent
 
 | Path | Purpose |
 |------|---------|
+| `skills/note-taker/` | Conference note-taking and synthesis skill for transforming transcripts into structured summaries |
 | `skills/sarcastic/` | A tone/sarcasm skill for agent use |
 | `skills/repo-health/` | Repo health auditing skill with scripts for secrets, licenses, complexity, coverage, and more |
+| `skills/spec-compliance/` | Specification compliance verification skill |
 | User-installed skills | Located at `~/.config/opencode/skills/` — these take priority over project-local copies |
 
 ## Features
