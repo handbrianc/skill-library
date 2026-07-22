@@ -78,11 +78,24 @@ echo "" >&2
 LOG "MAIN" "=== Code Quality Scans ===" 
 dispatch "$SCRIPT_BASE/detect-dead-code.sh" "DEAD_CODE" "scan-01-dead-code.log" "$WORKDIR"
 dispatch "$SCRIPT_BASE/scan-cognitive-complexity.sh" "COMPLEXITY" "scan-02-complexity.log" "$WORKDIR"
-dispatch "$SCRIPT_BASE/find-duplicates.sh" "DUPLICATES" "scan-03-duplicates.log" "$WORKDIR"
+dispatch "$SCRIPT_BASE/scan-complexity.sh" "DUPLICATES" "scan-03-duplicates.log" "$WORKDIR"
 dispatch "$SCRIPT_BASE/audit-dependency-usage.sh" "DEPS_USAGE" "scan-04-deps-usage.log"
+dispatch "$SCRIPT_BASE/scan-linters.sh" "LINTERS" "scan-04b-linters.log"
+echo "" >&2
+LOG "MAIN" "=== Setup & Discovery ==="
+dispatch "$SCRIPT_BASE/scan-setup.sh" "SETUP" "scan-04d-setup.log"
+echo "" >&2
+LOG "MAIN" "=== Technical Debt Scans ==="
+dispatch "$SCRIPT_BASE/scan-tech-debt.sh" "TECH_DEBT" "scan-04c-tech-debt.log"
+echo "" >&2
+LOG "MAIN" "=== Environment Checks ==="
+dispatch "$SCRIPT_BASE/scan-environment.sh" "ENV" "scan-00-environment.log"
+echo "" >&2
+LOG "MAIN" "=== Test Suite Scans ==="
+dispatch "$SCRIPT_BASE/scan-tests.sh" "TESTS" "scan-05b-tests.log"
 echo "" >&2
 LOG "MAIN" "=== Documentation Scans ==="
-dispatch "$SCRIPT_BASE/check-doc-links.sh" "DOC_LINKS" "scan-05-doc-links.log"
+dispatch "$SCRIPT_BASE/scan-docs.sh" "DOCS" "scan-05-docs.log"
 
 echo "" >&2
 LOG "MAIN" "=== Specification Scans ==="
@@ -95,21 +108,18 @@ fi
 echo "" >&2
 if ! $SKIP_SECRETS; then
   LOG "MAIN" "=== Security Scans ==="
-  dispatch "$SCRIPT_BASE/scan-secrets.sh" "SECRETS" "scan-07-secrets.log"
+  dispatch "$SCRIPT_BASE/scan-security.sh" "SECURITY" "scan-07-security.log"
 else
-  LOG "SECRETS" "SKIPPED (--skip-secrets-scan specified)"
+  LOG "SECURITY" "SKIPPED (--skip-secrets-scan specified)"
 fi
 
 echo "" >&2
-LOG "MAIN" "=== License Scans ==="
-# Generate SBOM first if we have syft
-if command -v syft &>/dev/null; then
-  LOG "SBOM" "Generating SBOM with syft..."
-  syft . -o spdx-json > "$ARTIFACT_DIR/sbom.spdx.json" 2>&1 && LOG "SBOM" "Generated." || LOG "SBOM" "Warning: syft failed."
-  dispatch "$SCRIPT_BASE/scan-licenses.sh" "LICENSES" "scan-08-licenses.log" "$ARTIFACT_DIR/sbom.spdx.json"
-else
-  LOG "SBOM+LICENSE" "SKIPPED (syft not available)"
-fi
+LOG "MAIN" "=== SBOM + License Scans ==="
+dispatch "$SCRIPT_BASE/scan-sbom.sh" "SBOM" "scan-08-sbom.log"
+
+echo "" >&2
+LOG "MAIN" "=== 12-Factor Compliance ==="
+dispatch "$SCRIPT_BASE/scan-12factor.sh" "12FACTOR" "scan-09-12factor.log"
 
 # ---- GitNexus contextual analysis (if available) ----
 echo "" >&2

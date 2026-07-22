@@ -1,11 +1,11 @@
 ---
 name: repo-health
-description: "Comprehensive repository health audit — code quality, docs, specs, tests, security, and SBOM. Use when user says 'review this repo', 'audit this project', 'health check', 'quality gate', or requests a full codebase analysis. NOT for PR-scoped or incremental reviews. Examples: 'Conduct a full repository audit', 'Comprehensive code quality review of this project', 'Health check on the codebase'"
+description: "Comprehensive repository health audit — code quality, linting, docs, specs, tests, security, SBOM, 12-Factor App compliance, and technical debt review. Use when user says 'review this repo', 'audit this project', 'health check', 'quality gate', or requests a full codebase analysis. NOT for PR-scoped or incremental reviews. Examples: 'Conduct a full repository audit', 'Comprehensive code quality review of this project', 'Health check on the codebase'"
 ---
 
 # Repository Health Audit
 
-A rigorous, deterministic repository audit covering six dimensions. Produces a prioritized, actionable plan when complete.
+A rigorous, deterministic repository audit covering nine dimensions. Produces a prioritized, actionable plan when complete.
 
 > **Prerequisite:** Run `node .gitnexus/run.cjs analyze --force` on the target repo before starting (fallback: `npx gitnexus analyze --force` if the local runner doesn't exist). This ensures the knowledge graph reflects current state.
 
@@ -29,12 +29,15 @@ A rigorous, deterministic repository audit covering six dimensions. Produces a p
 ## Scope & Preconditions
 
 **In scope:**
-1. Application code quality (smells, architecture, complexity, duplications, dead code)
+1. Application code quality (smells, architecture, complexity, duplications, dead code, linting)
 2. Documentation completeness and accuracy
 3. OpenSpec specification alignment (specs, archived specs)
 4. Test suite health (coverage, pass/fail, flakiness, performance)
 5. Security posture (CVEs, vulnerable code patterns, secrets exposure)
 6. Supply-chain health (SBOM, licenses, outdated dependencies)
+7. Twelve-Factor App methodology compliance (SaaS/cloud-native architecture patterns)
+8. Linter configuration and violation count (per-language static analysis tools)
+9. Technical debt profile (TODO/FIXME inventory, architecture erosion, technology currency, test debt, API surface stability, error handling debt)
 
 **Out of scope:** Infrastructure-as-code, CI/CD pipelines themselves, external services.
 
@@ -44,6 +47,8 @@ A rigorous, deterministic repository audit covering six dimensions. Produces a p
 - Git installed and accessible
 - `jq` (for JSON parsing in PHASE 1 discovery)
 - GNU `find` with `-maxdepth` support (for PHASE 0.5 inventory commands; macOS ships BSD find — install GNU findutils and ensure it is available as `find`)
+- GNU `grep` with BRE alternation support (for PHASE 9 12-factor grep commands; macOS ships BSD grep — install GNU grep via `brew install grep`)
+- `timeout`/`gtimeout` (for PHASE 9 disposability startup timing; macOS: `brew install coreutils` provides `gtimeout`)
 - For security scan: `npm audit`, `Grype` or `Syft` (container/jar projects)
 - For coverage: project's test runner with coverage reporter (vitest, jest, etc.)
 - For complexity metrics: `eslint --quiet` with `complexity` rule, or `tsq` for TS
@@ -57,56 +62,7 @@ A rigorous, deterministic repository audit covering six dimensions. Produces a p
 **Goal:** Validate baseline tools required for all audits (bash, git, node/npm, jq, find) and report language/project-specific tools as informational. If any required baseline tool is missing, **abort immediately** and report the gaps.
 
 ```bash
-# Core utilities
-command -v bash >/dev/null 2>&1 && bash --version >/dev/null 2>&1 && bash -c 'exit $((BASH_VERSINFO[0] < 4))' >/dev/null 2>&1 && echo "bash: $(bash --version | head -1)" || echo "bash: MISSING/BROKEN (need bash >= 4.0)"
-command -v node >/dev/null 2>&1 && node --version >/dev/null 2>&1 && echo "node: $(node --version)" || echo "node: MISSING/BROKEN"
-command -v npm  >/dev/null 2>&1 && npm --version >/dev/null 2>&1 && echo "npm: $(npm --version)" || echo "npm: MISSING/BROKEN"
-command -v npx  >/dev/null 2>&1 && npx --version >/dev/null 2>&1 && echo "npx: $(npx --version)" || echo "npx: MISSING/BROKEN"
-command -v git  >/dev/null 2>&1 && git --version >/dev/null 2>&1 && echo "git: $(git --version)" || echo "git: MISSING/BROKEN"
-command -v jq   >/dev/null 2>&1 && jq --version >/dev/null 2>&1 && echo "jq: $(jq --version)" || echo "jq: MISSING/BROKEN"
-command -v find >/dev/null 2>&1 && find . -maxdepth 1 -type d >/dev/null 2>&1 && echo "find: available (supports -maxdepth)" || echo "find: MISSING/BROKEN (needs GNU find supporting -maxdepth available as 'find'; on macOS: brew install findutils then add to PATH: export PATH=\"\$(brew --prefix findutils)/libexec/gnubin:\$PATH\")"
-
-# Language runtimes (informational; only gate if the repo requires them)
-command -v python3 >/dev/null 2>&1 && python3 --version >/dev/null 2>&1 && echo "python3: $(python3 --version)" || echo "python3: MISSING (optional)"
-command -v pip3    >/dev/null 2>&1 && pip3 --version >/dev/null 2>&1 && echo "pip3: $(pip3 --version 2>/dev/null)" || echo "pip3: MISSING (optional)"
-command -v go      >/dev/null 2>&1 && go version >/dev/null 2>&1 && echo "go: $(go env GOVERSION 2>/dev/null)" || echo "go: MISSING (optional)"
-command -v cargo   >/dev/null 2>&1 && cargo --version >/dev/null 2>&1 && echo "cargo: $(cargo --version 2>/dev/null)" || echo "cargo: MISSING (optional)"
-
-# Repo-health helper scripts
-for script in \
-  detect-dead-code.sh \
-  find-duplicates.sh \
-  scan-cognitive-complexity.sh \
-  audit-dependency-usage.sh \
-  check-doc-links.sh \
-  compare-specs.sh \
-  parse-test-results.sh \
-  find-uncovered.sh \
-  scan-secrets.sh \
-  scan-licenses.sh \
-  run-scan-suite.sh
-do
-  path="./skills/repo-health/scripts/$script"
-  if [[ -f "$path" ]]; then
-    # Verify script is syntactically valid (bash -n = syntax check only)
-    bash -n "$path" 2>/dev/null && echo "SKILL_OK: $script" || echo "SKILL_ERR: $script (syntax error)"
-  else
-    echo "SKILL_MISSING: $script not found at $path"
-  fi
-done
-
-# Project-type specific tools (informational; only gate if the repo requires them)
-command -v vitest  >/dev/null 2>&1 && echo "vitest: $(vitest --version 2>/dev/null)" || echo "vitest: MISSING (optional)"
-command -v jest    >/dev/null 2>&1 && echo "jest: $(jest --version 2>/dev/null)" || echo "jest: MISSING (optional)"
-command -v pytest  >/dev/null 2>&1 && echo "pytest: $(pytest --version 2>/dev/null | head -1)" || echo "pytest: MISSING (optional)"
-command -v eslint  >/dev/null 2>&1 && echo "eslint: $(eslint --version 2>/dev/null)" || echo "eslint: MISSING (optional)"
-command -v jscpd   >/dev/null 2>&1 && echo "jscpd: $(jscpd --version 2>/dev/null)" || echo "jscpd: MISSING (optional)"
-command -v semgrep >/dev/null 2>&1 && echo "semgrep: $(semgrep --version 2>/dev/null)" || echo "semgrep: MISSING (optional)"
-command -v syft    >/dev/null 2>&1 && echo "syft: $(syft version 2>/dev/null)" || echo "syft: MISSING (optional)"
-command -v grype   >/dev/null 2>&1 && echo "grype: $(grype version 2>/dev/null | head -1)" || echo "grype: MISSING (optional)"
-# GitNexus
-command -v gitnexus >/dev/null 2>&1 && echo "gitnexus: available via PATH" || echo "gitnexus: MISSING (PATH)"
-npx --yes --no-install gitnexus --version >/dev/null 2>&1 && echo "gitnexus: available via npx (local)" || echo "gitnexus: MISSING (npx local)"
+./skills/repo-health/scripts/scan-environment.sh --check-tools
 ```
 
 **If any core utility prints `MISSING/BROKEN`, or any helper script prints `SKILL_ERR` / `SKILL_MISSING`:**
@@ -134,88 +90,7 @@ npx --yes --no-install gitnexus --version >/dev/null 2>&1 && echo "gitnexus: ava
 **Goal:** Inventory transient/generated/no-value files before auditing so scans operate only on meaningful source material; remove items only after explicit review. Keeps all `openspec/`, `opencode/`, and `.claude/` files intact.
 
 ```bash
-# Identify transient artifacts that can be safely removed
-# (not tracked as valuable source; removal will not break builds)
-
-# Build artifacts
-find . \
-  \( -path "./openspec" -o -path "./opencode" -o -path "./.claude" -o -path "./.git" \) -prune -o \
-  -type d \( \
-    -name "node_modules" -o \
-    -name "__pycache__" -o \
-    -name ".pytest_cache" -o \
-    -name ".next" -o \
-    -name "dist" -o \
-    -name "build" -o \
-    -name "target" -o \
-    -name "vendor" -o \
-    -name ".venv" -o \
-    -name "venv" \
-  \) -prune -print \
-  2>/dev/null | head -50
-
-# Lock files (inventory only — usually keep; removing changes dependency resolution)
-find . -maxdepth 3 \( \
-  -name "package-lock.json" -o \
-  -name "pnpm-lock.yaml" -o \
-  -name "yarn.lock" -o \
-  -name "poetry.lock" -o \
-  -name "Cargo.lock"
-\) ! -path "./node_modules/*" ! -path "./.git/*" 2>/dev/null
-
-# Cache directories
-find . -maxdepth 5 -type d \( \
-  -name ".cache" -o \
-  -name "tmp" -o \
-  -name "temp" -o \
-  -name "*.egg-info" -o \
-  -name ".tox"\
-\) \
-  ! -path "./openspec/*" \
-  ! -path "./opencode/*" \
-  ! -path "./.claude/*" \
-  ! -path "./.git/*" \
-  2>/dev/null | head -50
-
-# Editor/IDE noise
-find . -maxdepth 3 \( \
-  -name "*.swp" -o \
-  -name "*.swo" -o \
-  -name ".DS_Store" -o \
-  -name "Thumbs.db" -o \
-  -name ".idea" -o \
-  -name ".vscode/settings.json" -o \
-  -name "*.orig" -o \
-  -name "*~"\
-\) \
-  ! -path "./openspec/*" \
-  ! -path "./opencode/*" \
-  ! -path "./.claude/*" \
-  ! -path "./.git/*" \
-  2>/dev/null
-
-find . -maxdepth 4 -name "*.log" ! -path "./openspec/*" ! -path "./opencode/*" ! -path "./.claude/*" ! -path "./.git/*" 2>/dev/null | head -20
-
-# OS artifacts
-find . -maxdepth 3 \( \
-  -name ".Spotlight-V100" -o \
-  -name ".Trashes" -o \
-  -name ".fseventsd"\
-\) \
-  ! -path "./openspec/*" \
-  ! -path "./opencode/*" \
-  ! -path "./.claude/*" \
-  ! -path "./.git/*" \
-  2>/dev/null
-
-# Determine files that are truly transient (safe to remove):
-#   - Generated files that can be regenerated (lock files, caches)
-#   - Editor backup files
-#   - Binary artifacts (compiled output, not source)
-#   - Empty directories left behind
-
-echo "=== TRANSIENT FILE INVENTORY (REVIEW ONLY) ==="
-echo "Review the lists above; do NOT remove anything automatically."
+./skills/repo-health/scripts/scan-environment.sh --scan-transient
 ```
 
 **Decision rule — ALWAYS KEEP:**
@@ -253,29 +128,10 @@ echo "Review the lists above; do NOT remove anything automatically."
 ### PHASE 1 — Setup & Discovery
 **Goal:** Understand project structure, tech stack, package manager, and which audit dimensions actually apply.
 
-Run these discovery commands in parallel:
+Run these discovery commands:
 
 ```bash
-# Tech stack identification
-cat package.json | jq '{name, version, private, engines, scripts}' 2>/dev/null || echo "{}"
-ls *.json tsconfig.* pyproject.toml Cargo.toml go.mod Makefile pom.xml build.gradle 2>/dev/null | head -20
-git log --oneline -5
-
-# Package manager artifacts
-npm ls --depth=0 2>/dev/null | head -40
-pnpm list --depth=0 2>/dev/null | head -40
-yarn list --depth=0 2>/dev/null | head -40
-pip list 2>/dev/null | head -30
-
-# Entry points
-ls src/ lib/ app/ cmd/ main.* */main.* 2>/dev/null | head -20
-find . -name "__main__.py" -o -name "main.go" 2>/dev/null | head -20
-
-# Documentation locations
-ls *.md *.rst *.txt LICENSE* CONTRIBUTING* docs/ wiki/ .github/ 2>/dev/null | head -30
-
-# Specification locations
-ls specs/ SPEC.md OPENSPEC* .spec/ spec/ arch/ 2>/dev/null | head -30
+./skills/repo-health/scripts/scan-setup.sh --mode=discovery
 ```
 
 **Produce:**
@@ -318,16 +174,10 @@ If stale: `npx gitnexus analyze --force`
 **Step 2.3 — Cyclomatic complexity**
 
 ```bash
-# ESLint complexity rule (JS/TS)
-npx eslint src/ \
-  --rule 'complexity: ["error", 15]' \
-  --format json \
-  --max-warnings 0 \
-  2>/dev/null | jq '.[] | .filePath as $f | .messages[] | select(.ruleId == "complexity") | {file: $f, line: .line, message: .message}'
-
-# For Python:
-# radon cc -a -b src/ --max-complexity 10
+./skills/repo-health/scripts/scan-complexity.sh
 ```
+
+For Python: `radon cc -a -b src/ --max-complexity 10`
 
 Flag cyclomatic complexity > 15 as MEDIUM risk, > 25 as HIGH risk, and > 40 as CRITICAL.
 
@@ -347,15 +197,7 @@ query({search_query: "monstrous switch statement", limit: 5})
 **Step 2.5 — Duplicated code**
 
 ```bash
-# JavaScript/TypeScript:
-npx jscpd --threshold 3 --failOn true src/ 2>/dev/null || true
-
-# Python:
-# duplicates.py or coverage/runDuplicate.py
-
-# Generic (works on any text):
-# Find files with >80% similarity using line-hash
-./skills/repo-health/scripts/find-duplicates.sh src/
+./skills/repo-health/scripts/scan-complexity.sh
 ```
 
 Report duplicates > 50 lines identical.
@@ -386,20 +228,146 @@ Checks `package.json` dependencies against `node_modules/` and import graphs:
 
 ---
 
-### PHASE 3 — Documentation Audit
+**Step 2.8 — Linting**
 
-**Step 3.1 — Inventory all docs**
+**Goal:** Detect available linters for the project's language(s), run them, and report violations as part of code quality.
+
+**Step 2.8a — Detect and run linters**
+
+Detect available linters for the project's language(s) and run them with a single invocation. The script auto-detects the source directory (src/ → lib/ → app/ → .) and covers all major language linters.
 
 ```bash
-find . -maxdepth 3 \( -name "*.md" -o -name "*.rst" -o -name "*.txt" \) \
-  ! -path "./node_modules/*" ! -path "./.git/*" \
-  -exec wc -l {} \; | sort -rn | head -30
-
-ls -lh README* INSTALL* CONTRIBUTING* CHANGELOG* AUTHORS* SECURITY* LICENSE*
-ls -lh docs/ README.md API.md ARCHITECTURE* DESIGN* GUIDE* 2>/dev/null
+# Run linter detection + scan in one step
+./skills/repo-health/scripts/scan-linters.sh
 ```
 
-**Step 3.2 — Completeness check**
+If no linter is available for the project's language(s), flag as **MEDIUM** — "Linter available but not configured; consider adding one."
+
+Violation counts are written to `/tmp/<linter>-violations.txt` for each detected linter. The script exits 0 always; linter violations are captured as data, not failures.
+
+**Step 2.8c — Report linting findings**
+
+Compile all linter violations into a structured finding per linter.
+
+**Important note on severity-to-scoring mapping:** The severity assigned to a linting finding (LOW/MEDIUM/HIGH/CRITICAL) represents the finding's **overall code quality impact**, NOT one point per violation. For example, a linting tool with >200 violations produces **1 CRITICAL finding** (-25 points in the grading rubric), not 200 separate CRITICAL findings. Each linter tool generates at most 1 finding in the action plan.
+
+**Example mapping:**
+| Linter | Violations | Finding Severity | Rubric Impact |
+|--------|-----------|-----------------|---------------|
+| eslint | 0 errors, 5 warnings | LOW | -1 point |
+| ruff | 3 errors, 20 warnings | MEDIUM | -3 points |
+| pylint | 12 errors, 100 warnings | HIGH | -10 points |
+| phpcs | 50+ errors | CRITICAL | -25 points |
+
+Compile all linter violations into a structured finding per linter:
+
+```
+LINTING FINDING:
+  Tool: eslint
+  Config: .eslintrc.js (found) / NO CONFIG (missing)
+  Violations: N errors, N warnings
+  Severity: LOW (<10 violations) / MEDIUM (10-50) / HIGH (50-200) / CRITICAL (>200)
+  Blocking: YES if >0 errors / NO if only warnings
+```
+
+Flag findings:
+- **Linter available but no config** → MEDIUM
+- **Linter configured but >0 errors** → HIGH (must fix errors before they cause bugs)
+- **Linter configured and >50 total violations** → MEDIUM (code style debt)
+- **Linter configured but no lint script in package.json** → LOW (missing CI integration)
+- **No linter available for project's primary language** → MEDIUM (no automated code quality enforcement)
+- **Type checker (tsc/mypy) available but not configured in CI** → MEDIUM
+
+**Add to Scoring Rubric:**
+- Linter configured and clean (0 violations) → +2 bonus to overall grade
+- Type checker configured and passing → +1 bonus
+
+---
+
+### PHASE 3 — Top-Down Technical Debt Review
+
+**Goal:** Assess architectural and systemic technical debt that standard code-quality metrics miss. This phase looks at the big picture — module coupling, aging workarounds, technology currency, test debt, and API surface stability — to produce a consolidated debt profile.
+
+**How to use this phase:** Run the automated checks, then synthesize findings into the debt profile table. Flag findings using the severity guide below. This phase depends on PHASE 2 (code quality) and PHASE 6 (test suite) results — run those first.
+
+```bash
+./skills/repo-health/scripts/scan-tech-debt.sh
+```
+
+Compile findings into a structured debt profile:
+
+```
+## TECHNICAL DEBT PROFILE
+
+### Marker Debt
+| Category | Count | Severity |
+|----------|-------|----------|
+| TODO     | 23    | —        |
+| FIXME    | 5     | —        |
+| HACK     | 8     | MEDIUM   |
+| XXX      | 2     | —        |
+| WORKAROUND | 3   | LOW      |
+| **Total**  | **41** | **MEDIUM** |
+| Marker density | 2.3/1000 LOC | LOW |
+
+### Architecture Debt
+| Finding | Severity |
+|---------|----------|
+| Circular dependencies: 2 | HIGH |
+| Layer violations: 1 | MEDIUM |
+| God modules: 3 | MEDIUM |
+| Barrel files: 24 | LOW |
+
+### Technology Debt
+| Finding | Severity |
+|---------|----------|
+| Node 18.x (current LTS: 22.x) | MEDIUM |
+| TypeScript 4.9 (current: 5.5) | MEDIUM |
+| ESLint < 9 (flat config not supported) | LOW |
+
+### Test Debt
+| Finding | Severity |
+|---------|----------|
+| Test:Production ratio 0.25 | MEDIUM |
+| 3 sleep-based tests | MEDIUM |
+| 1 over-mocked test (>20 mocks) | LOW |
+| Avg test time: 320ms | LOW |
+
+### API Surface Debt
+| Finding | Severity |
+|---------|----------|
+| 14 unused exports | MEDIUM |
+| 3 hotspot files (>20 changes/6mo) | LOW |
+
+### Error Handling Debt
+| Finding | Severity |
+|---------|----------|
+| 12 empty catch blocks | HIGH |
+| 40% ad-hoc console.log vs structured logging | MEDIUM |
+| No error boundaries | MEDIUM |
+
+### OVERALL TECHNICAL DEBT RATING
+- **LOW**: Minor, schedule when convenient
+- **MEDIUM**: Plan to address within next quarter
+- **HIGH**: Actively causing friction or risk — prioritize
+- **CRITICAL**: Blocking velocity or creating production risk — address now
+
+**Overall rating: MEDIUM** (based on HIGH findings in error handling + architecture)
+```
+
+**Scoring integration:** The HIGH/MEDIUM/LOW findings in this phase map to the grading rubric using the standard weights (HIGH = -10, MEDIUM = -3, LOW = -1). Each distinct finding type (e.g., "circular dependencies") counts as one finding, not per-violation.
+
+---
+
+### PHASE 4 — Documentation Audit
+
+**Step 4.1 — Inventory all docs**
+
+```bash
+./skills/repo-health/scripts/scan-docs.sh
+```
+
+**Step 4.2 — Completeness check**
 
 Evaluate each doc for:
 
@@ -414,42 +382,32 @@ Evaluate each doc for:
 Flag docs missing 2+ expected sections as **INCOMPLETE**.
 Flag docs with stale info (links broken, commands that don't match current state) as **INACCURATE**.
 
-**Step 3.3 — Accuracy check**
+**Step 4.3 — Accuracy check**
 
 ```bash
-# Test that quick-start commands actually work
-# Install/deploy commands match current versions
-# API docs match actual exported signatures
-
-# Check for link rot:
-# Scripts/check-doc-links.sh docs/
+./skills/repo-health/scripts/scan-docs.sh --check-links
 ```
 
 ---
 
-### PHASE 4 — OpenSpec Specifications
+### PHASE 5 — OpenSpec Specifications
 
-**Step 4.1 — Locate specs**
-
-```bash
-ls -la specs/ OPENSPEC* .spec/ arch/ spec/ 2>/dev/null
-find . -maxdepth 4 \( -name "*spec*" -o -name "*SPEC*" -o -name "*requirement*" \) \
-  ! -path "./node_modules/*" ! -path "./.git/*" -type f 2>/dev/null | head -40
-```
-
-**Step 4.2 — Archive scan**
-
-Specs older than 6 months should be checked separately:
+**Step 5.1 — Locate specs**
 
 ```bash
-# List archived specs:
-ls -lt specs/archive/ specs/v0.*/ specs/old/ 2>/dev/null
-
-# Check for inconsistencies between archived and current:
-# Scripts/compare-specs.sh specs/current specs/archive/
+./skills/repo-health/scripts/scan-setup.sh --mode=specs
 ```
 
-**Step 4.3 — Alignment check**
+**Step 5.2 — Archive scan**
+
+Specs older than 6 months should be checked separately. Step 5.1 already ran the full spec inventory — review the output above for archived specs under `specs/archive/`, `specs/v0.*/`, or `specs/old/`.
+
+```bash
+# Re-run with archive focus if needed:
+# ./skills/repo-health/scripts/scan-setup.sh --mode=specs 2>&1 | grep -E 'archive|v0|old'
+```
+
+**Step 5.3 — Alignment check**
 
 For each spec:
 1. Read the spec requirements (Given/When/Then or plain requirements)
@@ -465,41 +423,20 @@ Flag: spec requires X but code has no evidence of X implementation.
 
 ---
 
-### PHASE 5 — Test Suite Health
+### PHASE 6 — Test Suite Health
 
-**Step 5.1 — Test presence check**
+**Step 6.1 — Test presence check**
 
 ```bash
-ls tests/ __tests__/ test/ spec/ *.test.* *.spec.* *-test.* *_test.* 2>/dev/null | head -20
-cat package.json | jq '.scripts | to_entries[] | select(.key | test("test|spec|cover"))'
+./skills/repo-health/scripts/scan-tests.sh --check-presence
 ```
 
 If no test files or no test scripts: **CRITICAL** — tests missing entirely.
 
-**Step 5.2 — Test run with coverage**
+**Step 6.2 — Test run with coverage**
 
 ```bash
-# Run the full test suite — NO timeout abort
-# Allow sufficient time for full run (up to 10 minutes)
-vitest run --coverage --reporter=verbose 2>&1 | tee /tmp/test-output.txt
-# OR
-jest --coverage --coverageReporters=text-summary 2>&1 | tee /tmp/test-output.txt
-# OR
-pytest --cov=. --cov-report=term-missing -v 2>&1 | tee /tmp/test-output.txt
-# OR
-go test -coverprofile=/tmp/cover.out -v ./... 2>&1 | tee /tmp/test-output.txt
-
-EXIT_CODE=$?
-echo "TEST_EXIT_CODE: $EXIT_CODE"
-```
-
-**Rule: Use a generous timeout (e.g., 10+ minutes) and treat timeouts as failures requiring investigation.**
-
-**Step 5.3 — Parse test results**
-
-```bash
-# Script: parse-test-results.sh /tmp/test-output.txt
-./skills/repo-health/scripts/parse-test-results.sh /tmp/test-output.txt
+./skills/repo-health/scripts/scan-tests.sh --run-coverage
 ```
 
 Produces:
@@ -515,31 +452,22 @@ TIMED_OUT: NN ← if any (should be 0)
 **Clean run definition:** EXIT_CODE=0, FAILED=0, ERRORS=0, RETRIED=0.
 A run with SKIPPED tests is acceptable if skips are documented.
 
-**Step 5.4 — Slowest tests**
+**Step 6.3 — Parse test results**
 
 ```bash
-# From test output, extract timing:
-grep -E "^  (✓|✗|○|●|[A-Z]) .+ \[.*\]$" /tmp/test-output.txt \
-  | grep -oE '\[[0-9]+\.?[0-9]*s\]' | sort -t'[' -k2 -rn | head -20
-
-# Or for Jest verbose:
-grep -E "(slow|ms|SLOW)" /tmp/test-output.txt | sort -rn | head -20
+./skills/repo-health/scripts/scan-tests.sh --parse-results
 ```
 
-Root-cause categories:
-- **Network I/O in test** — mock it
-- **Database query in test** — seed fixture or mock
-- **Large fixture loading** — use smaller fixture or factory
-- **Sleep/wait in test** — replace with event-based wait
-- **Complex computation** — precompute fixture
-
-**Step 5.5 — Coverage analysis**
-
-From coverage report:
+**Step 6.4 — Slowest tests**
 
 ```bash
-# Extract line/branch coverage %:
-grep -E "(Coverage|Total|All files)" /tmp/test-output.txt | tail -20
+./skills/repo-health/scripts/scan-tests.sh --slow-tests
+```
+
+**Step 6.5 — Coverage analysis**
+
+```bash
+./skills/repo-health/scripts/scan-tests.sh --coverage-report
 ```
 
 Coverage threshold enforcement:
@@ -561,36 +489,20 @@ impact({target: "CriticalModule", direction: "downstream", includeTests: false})
 
 ---
 
-### PHASE 6 — Security Review
+### PHASE 7 — Security Review
 
-**Step 6.1 — Third-party vulnerability scan**
+**Step 7.1 — Third-party vulnerability scan**
 
 ```bash
-# npm audit
-npm audit --production --audit-level=moderate 2>&1 | tee /tmp/npm-audit.txt
-
-# For Python:
-# pip-audit -r requirements.txt
-
-# For container/containerized projects:
-syft . -o cyclonedx-json > /tmp/sbom.json
-grype sbom:/tmp/sbom.json --scope=deps 2>&1 | tee /tmp/grype.txt
+./skills/repo-health/scripts/scan-security.sh --vuln-scan
 ```
 
 Aggregate all CVE findings with: **Severity, Package, Current Version, Fixed Version, CWE**.
 
-**Step 6.2 — Static code security scan**
+**Step 7.2 — Static code security scan**
 
 ```bash
-# Semgrep SAST scan:
-semgrep --config=auto --json src/ 2>/dev/null | jq '[.results[] | {rule: .check_id, file: .path, line: .start.line, severity: .extra.severity}]'
-
-# ESLint security plugin:
-npx eslint src/ --plugin=security --format json 2>/dev/null | jq '.'
-
-# Secrets scanning:
-# Scripts/scan-secrets.sh src/
-./skills/repo-health/scripts/scan-secrets.sh src/
+./skills/repo-health/scripts/scan-security.sh --vuln-scan
 ```
 
 Common patterns to flag:
@@ -612,43 +524,28 @@ Common patterns to flag:
 | Insecure cookie flags           | MEDIUM   | Cookie without httpOnly, secure   |
 | Server info disclosure          | LOW      | Banner exposing version in header |
 
-**Step 6.3 — Credential exposure**
+**Step 7.3 — Credential exposure**
 
 ```bash
-git log --all --full-history -p \
-  -- .env* *.env* secrets.* credentials.* 2>/dev/null | grep -iE "password|secret|apikey|token" \
-  | grep -v "^[-+]#\|^#\|Binary" | head -50
+./skills/repo-health/scripts/scan-security.sh --credential-exposure
 ```
 
 Any committed secret = **CRITICAL** — escalate to immediate remediation.
 
 ---
 
-### PHASE 7 — SBOM and License Audit
+### PHASE 8 — SBOM and License Audit
 
-**Step 7.1 — Generate SBOM**
+**Step 8.1 — Generate SBOM**
 
 ```bash
-# Syft (preferred for speed and accuracy):
-syft . -o spdx-json > /tmp/sbom.spdx.json
-syft . -o table > /tmp/sbom.txt
-
-# OR npm for JS-only:
-npm ls --all --omit=dev > /tmp/npm-tree.txt
-
-# OR spdx-builder for multi-lang:
+./skills/repo-health/scripts/scan-sbom.sh
 ```
 
-**Step 7.2 — License compliance check**
+**Step 8.2 — License compliance check**
 
 ```bash
-# Scan for copyleft / restrictively licensed deps:
-# Scripts/scan-licenses.sh /tmp/sbom.spdx.json
-./skills/repo-health/scripts/scan-licenses.sh /tmp/sbom.spdx.json
-
-# Common flags:
-# GPL-3.0, LGPL-3.0, MPL-2.0, CC-SA-*, EUPL-1.2 → RESTRICTIVE
-# Apache-2.0, MIT, BSD-2-Clause, BSD-3-Clause, ISC, Unlicense → PERMISSIVE
+./skills/repo-health/scripts/scan-sbom.sh
 ```
 
 License risk matrix:
@@ -665,9 +562,52 @@ License risk matrix:
 
 ---
 
-### PHASE 8 — Consolidated Action Plan
+### PHASE 9 — Twelve-Factor App Compliance
 
-Synthesize all findings into a **prioritized, executable plan**.
+**Goal:** Evaluate the project's adherence to the [12-Factor App methodology](https://12factor.net/), a methodology for building SaaS applications that are portable, resilient, and deployable to modern cloud platforms.
+
+**How to use this phase:** For each factor, determine applicability to the project. Some factors may not apply (e.g., a library without backing services, or a CLI tool without a web server). Document N/A factors with a rationale; do NOT count them as failures. Run the checks for applicable factors and report findings.
+
+> **Portability note:** The `grep` commands inside the script use GNU grep BRE alternation (`\|`), which works on Linux natively. On macOS, install GNU grep via `brew install grep` and ensure `ggrep` is available as `grep` in your PATH.
+
+**Step 9.1 — Run all 12-factor checks**
+
+```bash
+./skills/repo-health/scripts/scan-12factor.sh
+```
+
+Compile the results into a findings table:
+
+```
+## 12-FACTOR APP COMPLIANCE
+
+| Factor | Status | Detail |
+| ------ | ------ | ------ |
+| I. Codebase | ✅ PASS | git repo with single remote |
+| II. Dependencies | ⚠️ WARNING | lockfile missing |
+| III. Config | ❌ FAIL | hardcoded database config in src/db.js:15 |
+| IV. Backing services | ✅ PASS | all services via env var URLs |
+| V. Build, release, run | ⚠️ WARNING | no CI/CD found |
+| VI. Processes | ✅ PASS | stateless, no sticky sessions |
+| VII. Port binding | ✅ PASS | self-contained, port from env |
+| VIII. Concurrency | ⚠️ WARNING | no process type definitions |
+| IX. Disposability | ❌ FAIL | no SIGTERM handler in main server |
+| X. Dev/prod parity | ⚠️ WARNING | sqlite dev vs postgres prod suspected |
+| XI. Logs | ✅ PASS | stdout logging, no logfile mgmt |
+| XII. Admin processes | ✅ PASS | migrate commands available |
+```
+
+**Severity mapping for 12-factor violations:**
+- **FAIL**: Flag as MEDIUM (architectural concern, not blocking)
+- **FAIL** on Factor III (Config) or Factor VI (Processes): Flag as HIGH (common source of production incidents)
+- **FAIL** on Factor XI (Logs) if app manages logfiles directly: Flag as HIGH (operational blind spot)
+- **WARNING**: Flag as LOW (document as improvement opportunity)
+
+---
+
+### PHASE 10 — Consolidated Action Plan
+
+Synthesize all findings from PHASEs 1-9 into a **prioritized, actionable plan**.
 
 ## Template
 
@@ -684,11 +624,14 @@ Synthesize all findings into a **prioritized, executable plan**.
 | Dimension           | Status       | Issues Found | Priority |
 | ------------------- | ------------ | ------------- | -------- |
 | Code Quality        | 🟡 MODERATE  | 12            | HIGH     |
+| Linting             | 🟢 CLEAN     | 0             | —        |
 | Documentation       | 🔴 POOR      | 6             | MEDIUM   |
 | Spec Alignment      | 🟢 GOOD      | 0             | —        |
 | Test Suite          | 🔴 POOR      | 4             | HIGH     |
 | Security            | 🔴 ISSUES    | 7             | CRITICAL |
 | Supply Chain        | 🟡 WARNINGS  | 3             | MEDIUM   |
+| 12-Factor App       | 🟡 WARNINGS  | 4             | MEDIUM   |
+| Tech Debt           | 🟡 MODERATE  | 8             | MEDIUM   |
 
 ### GRADE COMPUTATION
 
@@ -806,17 +749,27 @@ Supporting scripts referenced in this skill live at:
 
 ```
 skills/repo-health/scripts/
-├── detect-dead-code.sh      # Static dead-code detector
-├── find-duplicates.sh       # Text-similarity duplicate finder
-├── scan-cognitive-complexity.sh  # Cyclomatic+cognitive metric scanner
 ├── audit-dependency-usage.sh     # Import-graph dependency audit
-├── check-doc-links.sh       # Link-rot checker for markdown docs
-├── compare-specs.sh         # Archived vs current spec comparator
-├── parse-test-results.sh    # Test output parser
-├── find-uncovered.sh        # Uncovered line finder
-├── scan-secrets.sh          # Secret/credential scanner
-├── scan-licenses.sh         # SPDX license risk assessor
-└── run-scan-suite.sh        # Master script — runs all deterministically
+├── check-doc-links.sh            # Link-rot checker for markdown docs
+├── compare-specs.sh              # Archived vs current spec comparator
+├── detect-dead-code.sh           # Static dead-code detector
+├── find-duplicates.sh            # Text-similarity duplicate finder
+├── find-uncovered.sh             # Uncovered line finder
+├── parse-test-results.sh         # Test output parser
+├── run-scan-suite.sh             # Master script — runs all deterministically
+├── scan-12factor.sh              # Twelve-Factor App compliance checks
+├── scan-cognitive-complexity.sh  # Cyclomatic+cognitive metric scanner
+├── scan-complexity.sh            # Cyclomatic complexity + duplication analysis
+├── scan-docs.sh                  # Documentation inventory and accuracy
+├── scan-environment.sh           # Tool detection + transient file inventory
+├── scan-licenses.sh              # SPDX license risk assessor
+├── scan-linters.sh               # Multi-language linter detection and run
+├── scan-sbom.sh                  # SBOM generation and license compliance
+├── scan-security.sh              # Vulnerability scan, SAST, secrets, credentials
+├── scan-secrets.sh               # Secret/credential scanner
+├── scan-setup.sh                 # Project discovery and spec inventory
+├── scan-tech-debt.sh             # Technical debt profile analysis
+└── scan-tests.sh                 # Test suite health checks
 ```
 
 Most scripts accept a target directory as `$1`. Exceptions: `scan-licenses.sh` expects an SBOM file path, `parse-test-results.sh` expects a test output file, and `find-uncovered.sh` expects a coverage report path. See each script's usage header for details.
@@ -857,6 +810,10 @@ Convert findings into a numeric score, then map to a letter grade.
 | Line coverage >= 90% | +3 (additional) |
 | Zero CRITICALs | +2 |
 | Zero HIGHs | +2 |
+| Linter configured and clean (0 violations) | +2 |
+| Type checker (tsc/mypy) configured and passing | +1 |
+| Zero 12-Factor FAIL findings | +2 |
+| All 12-Factor factors PASS or N/A with rationale | +3 |
 
 ### Grade Computation Steps
 
