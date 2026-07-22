@@ -9,13 +9,16 @@ Entries use [Keep a Changelog](https://keepachangelog.com/) conventions: Added, 
 ### Changed
 - `AGENTS.md`: Expanded gitnexus block disclaimer to explain downstream risk of staleness when manually pasted
 - `README.md`: Added **Features** section documenting each skill's capabilities and the repo-health phase breakdown
+- `CLAUDE.md`: Removed duplicated GitNexus block — instructions reference `AGENTS.md` instead (reducing staleness risk)
+- `CHANGELOG.md`: Cleaned up superseded `[2.0.0]` entry — version never finalized; content preserved with corrected header
+- `AGENTS.md`: Synced GitNexus index stats (195→190 symbols, 190→185 relationships)
 
 ### Fixed
 - Git branch `calm-beaver` now tracks `origin/main` (was previously tracking `origin/calm-beaver` which no longer exists on the remote)
 
 ---
 
-## [2.0.0] — 2024-10-01 (placeholder — version never finalized; superseded by future releases)
+## [2.0.0] — 2024-10-01 (unreleased — version superseded; content documents historical changes)
 
 ### Added
 - `skills/repo-health/` with full 11-script helper suite:
