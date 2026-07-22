@@ -157,64 +157,83 @@ total_current=0
 total_archive=0
 _total_found=0
 
-# ── Process each current spec ───────────────────────────────────────────────
+# ── Pre-load archive data into associative arrays ───────────────────────────
 declare -A archive_counts
 declare -A archive_paths
 
-# Pre-load archive counts if available
-if [[ -n "$ARCHIVE_DIR" && -d "$ARCHIVE_DIR" ]]; then
-    while IFS= read -r afile; do
-        acount=$(count_requirements "$afile")
-        rel_path="${afile#"$ARCHIVE_DIR"/}"
-        archive_paths["$rel_path"]="$afile"
-        archive_counts["$rel_path"]=$acount
-    done < <(list_spec_files "$ARCHIVE_DIR")
-fi
+preload_archive_data() {
+    local archive_dir="$1"
 
-# Process current specs
-while IFS= read -r cfile; do
-    cur_count=$(count_requirements "$cfile")
-    total_current=$((total_current + cur_count))
-
-    rel_path="${cfile#"$CURRENT_DIR"/}"
-    bname=$(basename "$cfile")
-
-    # Determine if archived version exists
-    arc_count=""
-    arc_label="—"
-    has_archive="—"
-    status="NEW"
-
-    if [[ -n "${archive_counts[$rel_path]+x}" ]]; then
-        arc_count="${archive_counts[$rel_path]}"
-        arc_label="$arc_count"
-        has_archive="📦"
-        total_archive=$((total_archive + arc_count))
-        status=$(comparison_status "$cur_count" "$arc_count")
-    elif [[ -d "$ARCHIVE_DIR" ]]; then
-        # Look for any archived version of this spec by fuzzy matching
-        matching_arc=$(find "$ARCHIVE_DIR" -type f \( -name "*.md" -o -name "*.txt" -o -name "*.spec" \) 2>/dev/null \
-            | while IFS= read -r af; do
-                abname=$(basename "$af")
-                if is_fuzzy_archive_match "$bname" "$abname"; then
-                    echo "$(basename "$af"):$(count_requirements "$af")"
-                    break
-                fi
-            done | head -1)
-        if [[ -n "$matching_arc" ]]; then
-            arc_count_real="${matching_arc##*:}"
-            arc_label="$arc_count_real"
-            has_archive="🔶"
-            total_archive=$((total_archive + arc_count_real))
-            status=$(comparison_status "$cur_count" "$arc_count_real")
-        fi
+    if [[ -z "$archive_dir" || ! -d "$archive_dir" ]]; then
+        return
     fi
 
-    # Emit row
-    printf "│ %-35s │ %5s │ %5s │ %6s │ %-10s │${RESET}\n" \
-        "${rel_path:0:35}" "$arc_label" "$cur_count" "$has_archive" "$status"
+    while IFS= read -r afile; do
+        local acount
+        acount=$(count_requirements "$afile")
+        local rel_path="${afile#"$archive_dir"/}"
+        archive_paths["$rel_path"]="$afile"
+        archive_counts["$rel_path"]=$acount
+    done < <(list_spec_files "$archive_dir")
+}
 
-done < <(list_spec_files "$CURRENT_DIR")
+preload_archive_data "$ARCHIVE_DIR"
+
+# ── Process current specs ───────────────────────────────────────────────────
+process_current_specs() {
+    local current_dir="$1"
+    local archive_dir="$2"
+
+    while IFS= read -r cfile; do
+        local cur_count
+        cur_count=$(count_requirements "$cfile")
+        total_current=$((total_current + cur_count))
+
+        local rel_path="${cfile#"$current_dir"/}"
+        local bname
+        bname=$(basename "$cfile")
+
+        # Determine if archived version exists
+        local arc_count=""
+        local arc_label="—"
+        local has_archive="—"
+        local status="NEW"
+
+        if [[ -n "${archive_counts[$rel_path]+x}" ]]; then
+            arc_count="${archive_counts[$rel_path]}"
+            arc_label="$arc_count"
+            has_archive="📦"
+            total_archive=$((total_archive + arc_count))
+            status=$(comparison_status "$cur_count" "$arc_count")
+        elif [[ -d "$archive_dir" ]]; then
+            # Look for any archived version of this spec by fuzzy matching
+            local matching_arc
+            matching_arc=$(find "$archive_dir" -type f \( -name "*.md" -o -name "*.txt" -o -name "*.spec" \) 2>/dev/null \
+                | while IFS= read -r af; do
+                    local abname
+                    abname=$(basename "$af")
+                    if is_fuzzy_archive_match "$bname" "$abname"; then
+                        echo "$(basename "$af"):$(count_requirements "$af")"
+                        break
+                    fi
+                done | head -1)
+            if [[ -n "$matching_arc" ]]; then
+                local arc_count_real="${matching_arc##*:}"
+                arc_label="$arc_count_real"
+                has_archive="🔶"
+                total_archive=$((total_archive + arc_count_real))
+                status=$(comparison_status "$cur_count" "$arc_count_real")
+            fi
+        fi
+
+        # Emit row
+        printf "│ %-35s │ %5s │ %5s │ %6s │ %-10s │${RESET}\n" \
+            "${rel_path:0:35}" "$arc_label" "$cur_count" "$has_archive" "$status"
+
+    done < <(list_spec_files "$current_dir")
+}
+
+process_current_specs "$CURRENT_DIR" "$ARCHIVE_DIR"
 
 echo -e "${BOLD}└─────────────────────────────────────────────────────────────┘${RESET}"
 
@@ -228,20 +247,30 @@ fi
 echo ""
 
 # ── Divergence Detection ────────────────────────────────────────────────────
-if [[ -d "$ARCHIVE_DIR" ]]; then
+run_divergence_analysis() {
+    local current_dir="$1"
+    local archive_dir="$2"
+
+    if [[ ! -d "$archive_dir" ]]; then
+        return
+    fi
+
     echo -e "${BOLD}${BLUE}━━━ Divergence Analysis ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 
     while IFS= read -r cfile; do
-        rel_path="${cfile#"$CURRENT_DIR"/}"
+        local rel_path="${cfile#"$current_dir"/}"
+        local bname
         bname=$(basename "$cfile")
+        local cur_reqs
         cur_reqs=$(extract_from_file "$cfile")
 
         # Find corresponding archived version
-        matching_arc="${archive_paths[$rel_path]-}"
+        local matching_arc="${archive_paths[$rel_path]-}"
         if [[ -z "$matching_arc" ]]; then
-            matching_arc=$(find "$ARCHIVE_DIR" -type f \( -name "*.md" -o -name "*.txt" -o -name "*.spec" \) 2>/dev/null \
+            matching_arc=$(find "$archive_dir" -type f \( -name "*.md" -o -name "*.txt" -o -name "*.spec" \) 2>/dev/null \
             | head -20 \
             | while IFS= read -r af; do
+                local abname
                 abname=$(basename "$af")
                 if is_fuzzy_archive_match "$bname" "$abname"; then
                     echo "$af"
@@ -256,9 +285,12 @@ if [[ -d "$ARCHIVE_DIR" ]]; then
             continue
         fi
 
+        local arc_reqs
         arc_reqs=$(extract_from_file "$matching_arc")
 
+        local cur_count
         cur_count=$(echo "$cur_reqs" | wc -l)
+        local arc_count
         arc_count=$(echo "$arc_reqs" | wc -l)
 
         echo ""
@@ -267,17 +299,19 @@ if [[ -d "$ARCHIVE_DIR" ]]; then
         echo "    Archived: $arc_count requirements"
 
         if (( arc_count > cur_count )); then
-            diff=$((arc_count - cur_count))
+            local diff=$((arc_count - cur_count))
             echo -e "    ${RED}  ⚠️  REGRESSION: archived has $diff MORE requirements${RESET}"
         elif (( cur_count > arc_count )); then
-            diff=$((cur_count - arc_count))
+            local diff=$((cur_count - arc_count))
             echo -e "    ${YELLOW}  📈 GROWTH: current has $diff MORE requirements${RESET}"
         else
             echo -e "    ${GREEN}  ✅ BALANCED: same requirement count${RESET}"
         fi
 
-    done < <(list_spec_files "$CURRENT_DIR")
-fi
+    done < <(list_spec_files "$current_dir")
+}
+
+run_divergence_analysis "$CURRENT_DIR" "$ARCHIVE_DIR"
 
 echo ""
 echo "Done."

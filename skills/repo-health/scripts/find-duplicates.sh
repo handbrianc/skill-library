@@ -96,6 +96,90 @@ jaccard_pct() {
   echo $(( intersect_count * 100 / union_count ))
 }
 
+# --- Fast path: exact hash match for a single window ---
+# Uses HASH_INDEX_EXACT to detect and report identical normalized windows.
+exact_scan() {
+  local content="$1" win_key="$2"
+  local h
+  h=$(fast_hash "$content")
+  if [ -n "${HASH_INDEX_EXACT[$h]:-}" ]; then
+    local orig="${HASH_INDEX_EXACT[$h]}"
+    local pair_key=""
+    [[ "$orig" < "$win_key" ]] && pair_key="${orig}:${win_key}" || pair_key="${win_key}:${orig}"
+    if [ -z "${REPORTED_PAIRS[$pair_key]:-}" ]; then
+      REPORTED_PAIRS[$pair_key]=1
+      printf '%s\t%s\t%d lines\t100%% similarity (exact hash match)\n' "$orig" "$win_key" "$MIN_LINES"
+    fi
+  else
+    HASH_INDEX_EXACT[$h]="$win_key"
+  fi
+}
+
+# --- Fuzzy path: compare a window against all previously seen windows ---
+# Builds an N-gram fingerprint and uses Jaccard similarity to find duplicates.
+compare_windows() {
+  local content="$1" win_key="$2" scanned="$3" start="$4" windows="$5"
+  local fp
+  fp=$(fingerprint_ngram "$content")
+  CANONICAL_FP[$win_key]="$fp"
+
+  local prev_key prev_fp sim pair_sort
+  for prev_key in "${!CANONICAL_FP[@]}"; do
+    [[ "$prev_key" == "$win_key" ]] && continue
+    [[ "$prev_key" < "$win_key" ]] && pair_sort="${prev_key}:${win_key}" || pair_sort="${win_key}:${prev_key}"
+    [ -n "${REPORTED_PAIRS[$pair_sort]:-}" ] && continue
+
+    prev_fp="${CANONICAL_FP[$prev_key]}"
+    [ -z "$prev_fp" ] && continue
+
+    sim=$(jaccard_pct "$fp" "$prev_fp")
+
+    if (( sim >= THRESHOLD )); then
+      REPORTED_PAIRS[$pair_sort]=1
+      printf '%s\t%s\t%d lines\t%d%% similarity (N-gram fingerprint)\n' "$prev_key" "$win_key" "$MIN_LINES" "$sim"
+    fi
+  done
+
+  # Memory guard: flush FP cache periodically to avoid unbounded growth
+  if (( scanned % 200 == 0 )) && (( start == windows )); then
+    unset CANONICAL_FP
+    declare -A CANONICAL_FP
+  fi
+}
+
+# --- Process a single file: normalize, iterate sliding windows, detect duplicates ---
+scan_file() {
+  local file="$1"
+
+  [ ! -f "$file" ] && return
+  local linecount
+  linecount=$(wc -l < "$file")
+  [ "$linecount" -lt "$MIN_LINES" ] && return
+
+  local norm_file="$TMPDIR/norm_${SCANNED}.txt"
+  normalize < "$file" > "$norm_file"
+  local norm_lc
+  norm_lc=$(wc -l < "$norm_file")
+
+  local windows=$(( norm_lc - MIN_LINES + 1 ))
+  [ "$windows" -lt 1 ] && return
+
+  local start end win_key content
+  for (( start=1; start<=windows; start++ )); do
+    end=$(( start + MIN_LINES - 1 ))
+    win_key="${file}:${start}"
+
+    content=$(sed -n "${start},${end}p" "$norm_file" | tr -d '\0')
+    [ -z "$content" ] && continue
+
+    if (( THRESHOLD == 100 )); then
+      exact_scan "$content" "$win_key"
+    else
+      compare_windows "$content" "$win_key" "$SCANNED" "$start" "$windows"
+    fi
+  done
+}
+
 # ============================================================
 # MAIN
 # ============================================================
@@ -110,69 +194,7 @@ SCANNED=0
 
 while IFS= read -r FILE; do
   (( SCANNED++ )) || true
-
-  [ ! -f "$FILE" ] && continue
-  LINECOUNT=$(wc -l < "$FILE")
-  [ "$LINECOUNT" -lt "$MIN_LINES" ] && continue
-
-  # Store normalized lines for cheap per-window extraction
-  NORM_LINES="$TMPDIR/norm_${SCANNED}.txt"
-  normalize < "$FILE" > "$NORM_LINES"
-  NORM_LC=$(wc -l < "$NORM_LINES")
-
-  WINDOWS=$(( NORM_LC - MIN_LINES + 1 ))
-  [ "$WINDOWS" -lt 1 ] && continue
-
-  for (( START=1; START<=WINDOWS; START++ )); do
-    end=$(( START + MIN_LINES - 1 ))
-    win_key="${FILE}:${START}"
-
-    CONTENT=$(sed -n "${START},${end}p" "$NORM_LINES" | tr -d '\0')
-    [ -z "$CONTENT" ] && continue
-
-    if (( THRESHOLD == 100 )); then
-      # Fast path: exact hash match
-      h=$(fast_hash "$CONTENT")
-      if [ -n "${HASH_INDEX_EXACT[$h]:-}" ]; then
-        orig="${HASH_INDEX_EXACT[$h]}"
-        pair_key=""
-        [[ "$orig" < "$win_key" ]] && pair_key="${orig}:${win_key}" || pair_key="${win_key}:${orig}"
-        if [ -z "${REPORTED_PAIRS[$pair_key]:-}" ]; then
-          REPORTED_PAIRS[$pair_key]=1
-          printf '%s\t%s\t%d lines\t100%% similarity (exact hash match)\n' "$orig" "$win_key" "$MIN_LINES"
-        fi
-      else
-        HASH_INDEX_EXACT[$h]="$win_key"
-      fi
-    else
-      # Fuzzy path: build fingerprint and compare against candidate windows
-      fp=$(fingerprint_ngram "$CONTENT")
-      CANONICAL_FP[$win_key]="$fp"
-
-      # Compare against previously seen windows (nested loop, bounded by candidate pruning)
-      for prev_key in "${!CANONICAL_FP[@]}"; do
-        [[ "$prev_key" == "$win_key" ]] && continue
-        [[ "$prev_key" < "$win_key" ]] && pair_sort="${prev_key}:${win_key}" || pair_sort="${win_key}:${prev_key}"
-        [ -n "${REPORTED_PAIRS[$pair_sort]:-}" ] && continue
-
-        prev_fp="${CANONICAL_FP[$prev_key]}"
-        [ -z "$prev_fp" ] && continue
-
-        sim=$(jaccard_pct "$fp" "$prev_fp")
-
-        if (( sim >= THRESHOLD )); then
-          REPORTED_PAIRS[$pair_sort]=1
-          printf '%s\t%s\t%d lines\t%d%% similarity (N-gram fingerprint)\n' "$prev_key" "$win_key" "$MIN_LINES" "$sim"
-        fi
-      done
-
-      # Memory guard: flush FP cache periodically to avoid unbounded growth
-      if (( SCANNED % 200 == 0 )) && (( START == WINDOWS )); then
-        unset CANONICAL_FP
-        declare -A CANONICAL_FP
-      fi
-    fi
-  done
+  scan_file "$FILE"
 done <<<"$FILE_LIST"
 
 echo "" >&2
