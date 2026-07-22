@@ -8,7 +8,7 @@ An OpenCode skill distribution template. Packages reusable skill files for agent
 |------|---------|
 | `skills/note-taker/` | Conference note-taking and synthesis skill for transforming transcripts into structured summaries |
 | `skills/sarcastic/` | A tone/sarcasm skill for agent use |
-| `skills/repo-health/` | Repo health auditing skill with scripts for secrets, licenses, complexity, coverage, and more |
+| `skills/repo-health/` | Repo health audit orchestrator + 10 phase subskills + scripts for secrets, licenses, complexity, coverage, and more |
 | `skills/spec-compliance/` | Specification compliance verification skill |
 | User-installed skills | Located at `~/.config/opencode/skills/` — these take priority over project-local copies |
 
@@ -17,20 +17,25 @@ An OpenCode skill distribution template. Packages reusable skill files for agent
 ### `sarcastic`
 Provides a sharp-tongued commentary mode for agents. Activates when users say things like *"you're so slow"*, *"are you serious"*, or any phrase warranting merciless sarcasm. Keeps responses punchy, emoji-free, and confrontationally indifferent.
 
-### `repo-health`
-Conducts deterministic, nine-phase repository audits:
-- **Phase 1**: Tech-stack discovery (Node/Python/Go/etc.), package manager, entry-points inventory
-- **Phase 2**: Code quality — dead-code detection, cyclomatic/cognitive complexity, duplication scans, dependency-utilization analysis, linting
-- **Phase 3**: Top-down technical debt review — TODO/FIXME inventory, module coupling, technology currency, test debt, API surface, error handling
-- **Phase 4**: Documentation audit — completeness, accuracy, and link-rot checks
-- **Phase 5**: OpenSpec specification alignment verification
-- **Phase 6**: Test suite health — presence, coverage, pass/fail parsing, slowest-test profiling
-- **Phase 7**: Security review — npm/dependency CVE scan, SAST secrets scanning, credential-exposure audit
-- **Phase 8**: SBOM and license compliance (GPL copyleft flags, permissiveness scoring)
-- **Phase 9**: Twelve-Factor App compliance — architecture, config, processes, disposability, logs, etc.
-- **Phase 10**: Consolidated actionable plan with per-finding prioritization and verification steps
+### `repo-health` (skill + 10 subskills)
 
-Also ships 21 Bash helper scripts under `scripts/` (detector, scanner, auditor variants) used by the skill phases.
+An **orchestrator skill** (`skill(name="repo-health")`) that delegates to 10 phase subskills (`repo-health--phase-{N}-{name}`) + one helpers subskill. Subskills are only callable by the orchestrator. Phases:
+
+| # | Phase | Subskill |
+|---|-------|----------|
+| 0 | Environment Readiness (Gate) | `repo-health--phase-0-environment` |
+| 1 | Project Discovery | `repo-health--phase-1-discovery` |
+| 2 | Code Quality | `repo-health--phase-2-code-quality` |
+| 3 | Technical Debt | `repo-health--phase-3-tech-debt` |
+| 4 | Documentation Audit | `repo-health--phase-4-docs` |
+| 5 | OpenSpec Alignment | `repo-health--phase-5-specs` |
+| 6 | Test Suite Health | `repo-health--phase-6-tests` |
+| 7 | Security Review | `repo-health--phase-7-security` |
+| 8 | SBOM & License Audit | `repo-health--phase-8-sbom` |
+| 9 | 12-Factor Compliance | `repo-health--phase-9-12factor` |
+| 10 | Action Plan Synthesis | `repo-health--phase-10-action-plan` |
+
+Also ships 21 Bash helper scripts under `scripts/` (detector, scanner, auditor variants) used by the subskills, and a `repo-health--helpers` subskill containing the grading rubric + script reference.
 
 ## Skill Installation Paths
 
