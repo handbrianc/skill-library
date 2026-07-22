@@ -25,7 +25,7 @@ Entries use [Keep a Changelog](https://keepachangelog.com/) conventions: Added, 
 
 ---
 
-## [2.0.0] — 2024-10-01 (unreleased — version superseded; content documents historical changes)
+## [2.0.0] — 2024-10-01
 
 ### Added
 - `skills/repo-health/` with full 11-script helper suite:
