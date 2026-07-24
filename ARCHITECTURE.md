@@ -132,8 +132,7 @@ All scripts source: lib/common.sh
 
 ## GitNexus Integration
 
-The repository is indexed by GitNexus as `skill-library` (303 symbols, 298
-relationships, 0 execution flows). The `AGENTS.md` file documents GitNexus
+The repository is indexed by GitNexus as `skill-library`. See `AGENTS.md` for the current symbol/relationship statistics.
 usage for impact analysis before editing any symbol.
 
 Workflow:
