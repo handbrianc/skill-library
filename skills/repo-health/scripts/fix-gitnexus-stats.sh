@@ -99,9 +99,9 @@ for file in "${FILES[@]}"; do
   # Escape forward slashes for sed
   OLD_ESC=$(printf '%s\n' "$CURRENT_STATS" | sed 's/[\/&]/\\&/g')
   NEW_ESC=$(printf '%s\n' "$NEW_STATS_LINE" | sed 's/[\/&]/\\&/g')
-  if sed -i "s/$OLD_ESC/$NEW_ESC/" "$file"; then
+  if sed -i.bak "s/$OLD_ESC/$NEW_ESC/" "$file"; then
+    rm -f "${file}.bak" 2>/dev/null || true
     fix_ok "$(basename "$file") — updated"
-    ((UPDATED++)) || true
   else
     fix_err "$(basename "$file") — update failed"
     fix_rollback "$file"
