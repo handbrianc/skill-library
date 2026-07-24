@@ -34,7 +34,7 @@ bash "$SCRIPT_DIR/scan-linters-detect.sh" "$TARGET_DIR"
 
 echo ""
 echo "=== LINTER RUN ==="
-bash "$SCRIPT_DIR/scan-linters-run.sh" "$TARGET_DIR"
+bash "$SCRIPT_DIR/scan-linters-run.sh" "$TARGET_DIR" || true
 
 echo ""
 echo "=== LINTER SCAN COMPLETE ==="
