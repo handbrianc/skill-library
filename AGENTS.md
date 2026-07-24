@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **skill-library** (212 symbols, 208 relationships, 0 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **skill-library** (320 symbols, 314 relationships, 0 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -42,9 +42,9 @@ This project is indexed by GitNexus as **skill-library** (212 symbols, 208 relat
 
 <!-- gitnexus:end -->
 
-When editing `AGENTS.md`, `CLAUDE.md`, or `README.md` — **do not paste GitNexus-generated blocks manually** (e.g., `<!-- gitnexus:start %> … <!-- gitnexus:end -->`). Keep authored prose focused on the project purpose, structure, and conventions.
+When editing `AGENTS.md`, or `README.md` — **do not paste GitNexus-generated blocks manually** (e.g., `<!-- gitnexus:start %> … <!-- gitnexus:end -->`). Keep authored prose focused on the project purpose, structure, and conventions.
 
-> **Why it matters:** Manually pasting the `gitnexus:start`…`gitnexus:end` block risks desynchronizing the embedded statistics (symbol counts, relationship counts) from the actual live index. Out-of-date counts mislead readers about repository state. Always regenerate via `gitnexus analyze` rather than copying stale output.
+> **Why it matters:** Manually pasting the `gitnexus:start`…`gitnexus:end` block risks desynchronizing the embedded statistics (symbol counts, relationship counts) from the actual live index. Out-of-date counts mislead readers about repository state. Always regenerate via `gitnexus analyze` rather than copying stale output.  When running gitnexus make sure the .claude file is not interacted with.  This is for opencode only.
 
 ## Skill Loading Precedence
 

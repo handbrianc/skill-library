@@ -8,14 +8,24 @@ Entries use [Keep a Changelog](https://keepachangelog.com/) conventions: Added, 
 
 ### Changed
 - `AGENTS.md`: Expanded gitnexus block disclaimer to explain downstream risk of staleness when manually pasted
-- `README.md`: Added **Features** section documenting each skill's capabilities and the repo-health phase breakdown
+- `CLAUDE.md`: Removed duplicated GitNexus block — instructions reference `AGENTS.md` instead (reducing staleness risk)
+- `CHANGELOG.md`: Cleaned up superseded `[2.0.0]` entry — version never finalized; content preserved with corrected header
+- `AGENTS.md`: Synced GitNexus index stats (195→190 symbols, 190→185 relationships)
+
+### Added
+- `skills/repo-health--helpers/`: New subskill containing grading rubric + full script reference
+- `skills/repo-health--phase-{0..10}/`: 11 new subskills, one per audit phase, callable only by the orchestrator
 
 ### Fixed
 - Git branch `calm-beaver` now tracks `origin/main` (was previously tracking `origin/calm-beaver` which no longer exists on the remote)
 
+### Removed
+- `skills/repo-health/SKILL.md` (853-line monolith): Replaced by orchestrator (64 lines) + 12 subskills (720 lines total)
+  - Monolith was too large, had no partial-invocation path, and coupled 10 independent audit dimensions into one file
+
 ---
 
-## [2.0.0] — tbd (blocked on: open issue to finalize feature scope)
+## [2.0.0] — 2024-10-01
 
 ### Added
 - `skills/repo-health/` with full 11-script helper suite:

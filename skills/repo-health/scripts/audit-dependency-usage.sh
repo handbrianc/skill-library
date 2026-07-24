@@ -15,101 +15,96 @@ set -euo pipefail
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
-echo "=== DEPENDENCY USAGE AUDIT ===" >&2
-echo "" >&2
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
-PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-cd "$PROJECT_ROOT"
-
-# Determine package manager
-if [ -f "pnpm-lock.yaml" ]; then
-  PKG_MANAGER="pnpm"
-elif [ -f "yarn.lock" ]; then
-  PKG_MANAGER="yarn"
-elif [ -f "package-lock.json" ]; then
-  PKG_MANAGER="npm"
-elif [ -f "requirements.txt" ] || [ -f "pyproject.toml" ]; then
-  PKG_MANAGER="pip"
-elif [ -f "go.mod" ]; then
-  PKG_MANAGER="go"
-else
-  echo "Cannot detect package manager — exiting" >&2
-  exit 0
-fi
-echo "Detected package manager: $PKG_MANAGER" >&2
-
-# ------ Node.js/npm ------
-if [ "$PKG_MANAGER" == "npm" ] || [ "$PKG_MANAGER" == "pnpm" ] || [ "$PKG_MANAGER" == "yarn" ]; then
-  PACKAGE_JSON="package.json"
-  
-  if [ ! -f "$PACKAGE_JSON" ]; then
-    echo "No package.json found — skipping" >&2
-    exit 0
-  fi
-
-  if ! command -v jq &>/dev/null; then
-    echo "jq not available — skipping Node dependency audit (install jq to enable)" >&2
-    exit 0
-  fi
-  
-  NODE_MODULES="./node_modules"
-  [ ! -d "$NODE_MODULES" ] && echo "No node_modules/ — run npm install first" >&2
-  
-  # Parse declared production dependencies
-  DEPENDENCIES=$(jq -r '.dependencies // {} | keys[]' "$PACKAGE_JSON" 2>/dev/null)
-  SRC_DIRS=$(find . -type d \( -name "src" -o -name "lib" -o -name "app" -o -name "packages" \) \
-    ! -path "*/node_modules/*" ! -path "*/.git/*" ! -path "*/dist/*" 2>/dev/null | head -10)
-
-  if [ -z "$SRC_DIRS" ]; then
-    echo "No source directories (src/lib/app/packages) found — skipping unused dependency scan" >&2
-    exit 0
-  fi
-
-  SRC_INDEX="$TMPDIR/src_imports.txt"
-  touch "$SRC_INDEX"
-  for DIR in $SRC_DIRS; do
-    # Collect import/require usages into a temp file to avoid large in-memory variable
-    grep -rh --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
-      -E "require\(|import[[:space:]].*from" "$DIR" 2>/dev/null >> "$SRC_INDEX" || true
-  done
-  
-  echo "" >&2
-  echo "====== UNUSED DEPENDENCIES ======" >&2
-  echo "(Declared but no import found in source)" >&2
-  echo "" >&2
-  
-  for DEPK in $DEPENDENCIES; do
-    # Dependency keys from package.json are already package names (no version suffix)
-    BASENAME="$DEPK"
-    if ! grep -qE "['\"]${BASENAME}(['\"/]|$)" "$SRC_INDEX" 2>/dev/null; then
-      echo -e "DEAD_INSTALL\t$DEPK" >&2
-      # Check if it's actually used dynamically
-      find . -type f \( -name "*.ts" -o -name "*.js" -o -name "*.json" -o -name "*.config.*" \) \
-        ! -path "*/node_modules/*" ! -path "*/dist/*" \
-        -exec grep -lH "$BASENAME" {} + 2>/dev/null | head -3 || true
-    fi
-  done
-  
+# Run npm-check-updates to show available major version bumps.
+version_advisory() {
   echo "" >&2
   echo "====== VERSION ADVISORY ======" >&2
   echo "(Packages with newer major versions available)" >&2
-  
-  # Check for majors
+
   if command -v npx &>/dev/null; then
     npx --yes npm-check-updates --target latest --format compact 2>/dev/null \
       | grep -E '# major|major' | head -20 || true
   else
     echo "npx not available — skipping version advisory" >&2
   fi
-  # ------ Python/pip ------
-elif [ "$PKG_MANAGER" == "pip" ]; then
-  REQS_FILE="requirements.txt"
-  PYPROJECT_FILE="pyproject.toml"
-  
-  if [ -f "$REQS_FILE" ]; then
-    DEPENDENCIES=$(awk -F'[=<>]' '{print $1}' "$REQS_FILE" | xargs)
-  elif [ -f "$PYPROJECT_FILE" ]; then
-    DEPENDENCIES=$(
+}
+
+# ---------------------------------------------------------------------------
+# Package-manager handlers
+# ---------------------------------------------------------------------------
+
+handle_npm() {
+  local package_json="package.json"
+
+  if [ ! -f "$package_json" ]; then
+    echo "No package.json found — skipping" >&2
+    return
+  fi
+
+  if ! command -v jq &>/dev/null; then
+    echo "jq not available — skipping Node dependency audit (install jq to enable)" >&2
+    return
+  fi
+
+  local node_modules="./node_modules"
+  [ ! -d "$node_modules" ] && echo "No node_modules/ — run npm install first" >&2
+
+  # Parse declared production dependencies
+  local dependencies
+  dependencies=$(jq -r '.dependencies // {} | keys[]' "$package_json" 2>/dev/null)
+
+  local src_dirs
+  src_dirs=$(find . -type d \( -name "src" -o -name "lib" -o -name "app" -o -name "packages" \) \
+    ! -path "*/node_modules/*" ! -path "*/.git/*" ! -path "*/dist/*" 2>/dev/null | head -10)
+
+  if [ -z "$src_dirs" ]; then
+    echo "No source directories (src/lib/app/packages) found — skipping unused dependency scan" >&2
+    return
+  fi
+
+  local src_index="$TMPDIR/src_imports.txt"
+  touch "$src_index"
+  local dir
+  for dir in $src_dirs; do
+    # Collect import/require usages into a temp file to avoid large in-memory variable
+    grep -rh --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
+      -E "require\(|import[[:space:]].*from" "$dir" 2>/dev/null >> "$src_index" || true
+  done
+
+  echo "" >&2
+  echo "====== UNUSED DEPENDENCIES ======" >&2
+  echo "(Declared but no import found in source)" >&2
+  echo "" >&2
+
+  local depk basename
+  for depk in $dependencies; do
+    # Dependency keys from package.json are already package names (no version suffix)
+    basename="$depk"
+    if ! grep -qE "['\"]${basename}(['\"/]|$)" "$src_index" 2>/dev/null; then
+      echo -e "DEAD_INSTALL\t$depk" >&2
+      # Check if it's actually used dynamically
+      find . -type f \( -name "*.ts" -o -name "*.js" -o -name "*.json" -o -name "*.config.*" \) \
+        ! -path "*/node_modules/*" ! -path "*/dist/*" \
+        -exec grep -lH "$basename" {} + 2>/dev/null | head -3 || true
+    fi
+  done
+
+  version_advisory
+}
+
+handle_pip() {
+  local reqs_file="requirements.txt"
+  local pyproject_file="pyproject.toml"
+  local dependencies=""
+
+  if [ -f "$reqs_file" ]; then
+    dependencies=$(awk -F'[=<>]' '{print $1}' "$reqs_file" | xargs)
+  elif [ -f "$pyproject_file" ]; then
+    dependencies=$(
       python3 - <<'PY' 2>/dev/null
 import re, sys
 try:
@@ -135,18 +130,61 @@ print(" ".join(sorted(set(deps))))
 PY
     ) || true
   fi
-  
-  _INSTALLED=$(pip list 2>/dev/null | awk 'NR>2 {print $1}' | head -50)
-  
+
+  local installed
+  # shellcheck disable=SC2034 # reserved for future unused-package analysis
+  installed=$(pip list 2>/dev/null | awk 'NR>2 {print $1}' | head -50)
+
   # Check if installed packages are actually imported
-  for DEP in $DEPENDENCIES; do
-    BASE_DEP="${DEP%%[*}"; BASE_DEP="${BASE_DEP%%;*}"
-    MODULE="${BASE_DEP//-/_}"
-    if [[ "$MODULE" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] && ! python3 -c "import $MODULE" 2>/dev/null; then
-      echo -e "POSSIBLY_UNUSED\t$DEP" >&2
+  local dep base_dep module
+  for dep in $dependencies; do
+    base_dep="${dep%%[*}"
+    base_dep="${base_dep%%;*}"
+    module="${base_dep//-/_}"
+    if [[ "$module" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] && ! python3 -c "import $module" 2>/dev/null; then
+      echo -e "POSSIBLY_UNUSED\t$dep" >&2
     fi
   done
+}
+
+handle_go() {
+  # Go module audit — no-op for now; go.mod detected but no analysis implemented
+  :
+}
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+echo "=== DEPENDENCY USAGE AUDIT ===" >&2
+echo "" >&2
+
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+cd "$PROJECT_ROOT"
+
+# Determine package manager
+PKG_MANAGER=""
+if [ -f "pnpm-lock.yaml" ]; then
+  PKG_MANAGER="pnpm"
+elif [ -f "yarn.lock" ]; then
+  PKG_MANAGER="yarn"
+elif [ -f "package-lock.json" ]; then
+  PKG_MANAGER="npm"
+elif [ -f "requirements.txt" ] || [ -f "pyproject.toml" ]; then
+  PKG_MANAGER="pip"
+elif [ -f "go.mod" ]; then
+  PKG_MANAGER="go"
+else
+  echo "Cannot detect package manager — exiting" >&2
+  exit 0
 fi
+echo "Detected package manager: $PKG_MANAGER" >&2
+
+case "$PKG_MANAGER" in
+  npm|pnpm|yarn) handle_npm ;;
+  pip)          handle_pip ;;
+  go)           handle_go ;;
+esac
 
 echo "" >&2
 echo "=== AUDIT COMPLETE ===" >&2
