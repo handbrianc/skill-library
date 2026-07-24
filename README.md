@@ -46,10 +46,6 @@ OpenCode loads skills from two places (this repo vendors skill folders under `./
 
 User-installed skills override project-local ones of the same name.
 
-## Repos Using This
-
-- `@gitnexus` group uses this as a package source for distributed skill files
-
 ## Quick Ref
 
 ```bash
