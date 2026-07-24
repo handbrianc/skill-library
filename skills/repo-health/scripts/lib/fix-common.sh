@@ -134,7 +134,8 @@ fix_apply() {
   local file="$1" desc="$2" expr="$3"
   fix_snapshot "$file"
   fix_info "applying: $desc"
-  if sed -i "$expr" "$file" 2>/dev/null; then
+  if sed -i.bak "$expr" "$file" 2>/dev/null; then
+    rm -f "${file}.bak" 2>/dev/null || true
     fix_ok "$desc"
     return 0
   else
