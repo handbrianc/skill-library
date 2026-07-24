@@ -82,6 +82,20 @@ check_tools_phase() {
     echo "TOOL_MISSING: find (not found)"
   fi
 
+  # grep PCRE support (used by several scanners via grep -P)
+  if echo "test" | grep -P 't.st' >/dev/null 2>&1; then
+    echo "TOOL_OK: grep -P (PCRE supported)"
+  else
+    echo "TOOL_MISSING: grep -P not supported (install GNU grep; macOS: brew install grep)"
+  fi
+
+  # realpath -m support (used for path normalization)
+  if command -v realpath >/dev/null 2>&1 && realpath -m . >/dev/null 2>&1; then
+    echo "TOOL_OK: realpath -m"
+  else
+    echo "TOOL_MISSING: realpath -m not supported (install coreutils; macOS: brew install coreutils)"
+  fi
+
   echo ""
 
   # ── Language runtimes (informational) ──────────────────────────────────
