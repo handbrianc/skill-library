@@ -183,7 +183,7 @@ fix_replace_block() {
 # ---- Pre-flight -------------------------------------------------------------
 
 # fix_has_ungit
-#   Check for uncommitted changes in the repo. Returns 0 if clean, 1 if dirty.
+#   Check for uncommitted changes in the repo. Returns 0 if dirty, 1 if clean.
 fix_has_ungit() {
   if ! git -C "$FIX_REPO_ROOT" diff --quiet 2>/dev/null; then
     fix_warn "uncommitted changes detected in $FIX_REPO_ROOT"
