@@ -50,8 +50,7 @@ count_markers() {
     --include='*.swift' --include='*.dart' \
     2>/dev/null \
     | grep -v 'node_modules\|\.git\|/test/\|/tests/\|/spec/' \
-    | grep -vi 'nocheck\|eslint-disable\|pragma' \
-    | wc -l
+    | grep -vic 'nocheck\|eslint-disable\|pragma'
   return 0
 }
 
@@ -95,9 +94,9 @@ done
 echo ""
 sub "Marker Density"
 total_lines=$(find "$SRC_DIR" \
-  -name '*.js' -o -name '*.ts' -o -name '*.tsx' -o -name '*.jsx' \
-  -o -name '*.py' -o -name '*.go' \
-  2>/dev/null | xargs wc -l 2>/dev/null | tail -1 | awk '{print $1}')
+  \( -name '*.js' -o -name '*.ts' -o -name '*.tsx' -o -name '*.jsx' \
+     -o -name '*.py' -o -name '*.go' \) \
+  -exec wc -l {} + 2>/dev/null | tail -1 | awk '{print $1}')
 
 if [[ -n "$total_lines" && "$total_lines" -gt 0 ]]; then
   density=$(calc "scale=2; $total_markers * 1000 / $total_lines")

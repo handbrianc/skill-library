@@ -18,6 +18,7 @@ set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/common.sh"
 
 # ---- Config ---------------------------------------------------------------
+# shellcheck disable=SC2034 # used by section/sub/warn helpers referencing SRC_DIR
 SRC_DIR="${1:-src}"
 
 # Colours for headings (disabled if not a terminal)

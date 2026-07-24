@@ -52,8 +52,7 @@ count_markers() {
     --include='*.swift' --include='*.dart' \
     2>/dev/null \
     | grep -v 'node_modules\|\.git\|/test/\|/tests/\|/spec/' \
-    | grep -vi 'nocheck\|eslint-disable\|pragma' \
-    | wc -l
+    | grep -vic 'nocheck\|eslint-disable\|pragma'
   return 0
 }
 
@@ -85,9 +84,9 @@ grand_total=$((todo_cnt + fixme_cnt + hack_cnt + xxx_cnt + workaround_cnt + temp
 
 # Re-derive total_lines for density (mirrors step-1)
 total_lines=$(find "$SRC_DIR" \
-  -name '*.js' -o -name '*.ts' -o -name '*.tsx' -o -name '*.jsx' \
-  -o -name '*.py' -o -name '*.go' \
-  2>/dev/null | xargs wc -l 2>/dev/null | tail -1 | awk '{print $1}')
+  \( -name '*.js' -o -name '*.ts' -o -name '*.tsx' -o -name '*.jsx' \
+     -o -name '*.py' -o -name '*.go' \) \
+  -exec wc -l {} + 2>/dev/null | tail -1 | awk '{print $1}')
 
 density_str="N/A"
 if [[ -n "$total_lines" && "$total_lines" -gt 0 ]]; then

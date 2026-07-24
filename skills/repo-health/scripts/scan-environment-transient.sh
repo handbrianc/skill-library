@@ -16,6 +16,7 @@ fi
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/common.sh"
 
 # Override SCRIPT_DIR: common.sh points to lib/, we need scripts/
+# shellcheck disable=SC2034 # sourced consumers use SCRIPT_DIR for script root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # ═══════════════════════════════════════════════════════════════════════════

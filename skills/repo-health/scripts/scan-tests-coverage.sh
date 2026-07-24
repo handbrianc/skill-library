@@ -29,7 +29,7 @@ run_coverage() {
     local ec="${PIPESTATUS[0]}"
     echo "TEST_EXIT_CODE: $ec" | tee -a "$TEST_OUTPUT"
 
-  elif command -v pytest &>/dev/null && (ls "$REPO_ROOT"/pytest.ini "$REPO_ROOT"/pyproject.toml "$REPO_ROOT"/setup.cfg 2>/dev/null | grep -q . || ls "$REPO_ROOT"/test*/ "$REPO_ROOT"/tests/ 2>/dev/null | grep -q .); then
+  elif command -v pytest &>/dev/null && (for f in "$REPO_ROOT"/pytest.ini "$REPO_ROOT"/pyproject.toml "$REPO_ROOT"/setup.cfg; do [ -f "$f" ] && { found=true; break; }; done; [ "${found:-false}" = true ] || for d in "$REPO_ROOT"/test*/ "$REPO_ROOT"/tests/; do [ -d "$d" ] && { found=true; break; }; done; [ "${found:-false}" = true ]); then
     echo "DETECTED_RUNNER: pytest"
     if python3 -c "import pytest_cov" 2>/dev/null; then
       pytest --cov="$REPO_ROOT" --cov-report=term-missing -v 2>&1 | tee "$TEST_OUTPUT"
@@ -39,7 +39,7 @@ run_coverage() {
     local ec="${PIPESTATUS[0]}"
     echo "TEST_EXIT_CODE: $ec" | tee -a "$TEST_OUTPUT"
 
-  elif command -v go &>/dev/null && ls "$REPO_ROOT"/*_test.go 2>/dev/null | grep -q .; then
+  elif command -v go &>/dev/null && (for f in "$REPO_ROOT"/*_test.go; do [ -f "$f" ] && { found=true; break; }; done; [ "${found:-false}" = true ]); then
     echo "DETECTED_RUNNER: go test"
     go test -coverprofile=/tmp/cover.out -v ./... 2>&1 | tee "$TEST_OUTPUT"
     local ec="${PIPESTATUS[0]}"

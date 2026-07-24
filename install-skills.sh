@@ -27,7 +27,6 @@ DEFAULT_DEST="${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills"
 
 usage() {
   sed -n '3,20p' "$0" | sed 's/^# \?//'
-  exit 0
 }
 
 # ── Parse args ──────────────────────────────────────────────────────────────
@@ -41,7 +40,7 @@ DEST="$DEFAULT_DEST"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    -h|--help)     usage ;;
+    -h|--help)     usage; exit 0 ;;
     -s|--symlink)  MODE="symlink" ; shift ;;
     -f|--force)    FORCE=true ; shift ;;
     -d|--dry-run)  DRY_RUN=true ; shift ;;
@@ -84,7 +83,6 @@ if $LIST_ONLY; then
   echo "Mode: $MODE"
   echo
   for name in "${SKILLS[@]}"; do
-    extra=""
     has_scripts=
     if [[ -d "$SKILLS_SOURCE/$name/scripts" ]]; then
       has_scripts=" ($(find "$SKILLS_SOURCE/$name/scripts" -type f | wc -l) scripts)"

@@ -35,7 +35,7 @@ if "$DISCOVERY"; then
   echo ""
   echo "--- Tech Stack ---"
   jq '{name, version, private, engines, scripts}' package.json 2>/dev/null || echo "{}"
-  ls *.json tsconfig.* pyproject.toml Cargo.toml go.mod Makefile pom.xml build.gradle 2>/dev/null | head -20
+  ls ./*.json ./tsconfig.* ./pyproject.toml ./Cargo.toml ./go.mod ./Makefile ./pom.xml ./build.gradle 2>/dev/null | head -20
   git log --oneline -5
 
   # -- Package manager artifacts
@@ -49,18 +49,18 @@ if "$DISCOVERY"; then
   # -- Entry points
   echo ""
   echo "--- Entry Points ---"
-  ls src/ lib/ app/ cmd/ main.* */main.* 2>/dev/null | head -20
+  ls ./src/ ./lib/ ./app/ ./cmd/ ./main.* ./*/main.* 2>/dev/null | head -20
   find . -name "__main__.py" -o -name "main.go" 2>/dev/null | head -20
 
   # -- Documentation locations
   echo ""
   echo "--- Documentation Locations ---"
-  ls *.md *.rst *.txt LICENSE* CONTRIBUTING* docs/ wiki/ .github/ 2>/dev/null | head -30
+  ls ./*.md ./*.rst ./*.txt ./LICENSE* ./CONTRIBUTING* ./docs/ ./wiki/ ./.github/ 2>/dev/null | head -30
 
   # -- Specification locations
   echo ""
   echo "--- Specification Locations ---"
-  ls specs/ SPEC.md OPENSPEC* .spec/ spec/ arch/ 2>/dev/null | head -30
+  ls ./specs/ ./SPEC.md ./OPENSPEC* ./.spec/ ./spec/ ./arch/ 2>/dev/null | head -30
 
   echo ""
 fi

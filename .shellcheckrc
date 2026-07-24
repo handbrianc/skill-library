@@ -1,0 +1,27 @@
+# .shellcheckrc — Project-level ShellCheck configuration
+#
+# Disabled rules (false positives / intentional patterns in this repo):
+#
+# SC1091 — Not following: sourced file not specified as input
+#   All scripts source lib/common.sh via dynamic path resolution;
+#   shellcheck cannot follow it without -x and explicit include paths.
+#
+# SC2034 — Variable appears unused
+#   Library-level helper variables in common.sh are exported for sourced
+#   consumers; unused-variable detection is noisy across sourced contexts.
+#
+# SC2086 — Double quote to prevent globbing and word splitting
+#   Used intentionally in has_files() with a glob pattern argument;
+#   the word splitting IS the desired behavior in that specific case.
+#
+# SC2012 — Use find instead of ls
+#   Pervasive across the codebase; ls patterns are all simple globs
+#   where non-alphanumeric filenames never occur in practice.
+#
+# SC2001 — See if you can use ${variable//search/replace} instead
+#   Intentional sed usage for compatibility and readability.
+#
+# SC2126 — Consider using grep -c instead of grep|wc -l
+#   False positive: extract_from_file is a function, not grep.
+
+disable=SC1091,SC2086,SC2012,SC2001,SC2126

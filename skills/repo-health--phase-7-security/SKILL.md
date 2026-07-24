@@ -14,6 +14,8 @@ subskill-of: repo-health
 
 Aggregate CVE findings: **Severity, Package, Current Version, Fixed Version, CWE**.
 
+**Any package with a known CVE → CRITICAL regardless of the CVE's reported severity.** A dependency with any CVE is an exploitable attack surface. Do NOT downgrade to HIGH or lower. This finding MUST be addressed in the remediation loop (Phase 10).
+
 ## Step 7.2 — Static Code Security Scan
 
 ```bash
@@ -26,16 +28,16 @@ Aggregate CVE findings: **Severity, Package, Current Version, Fixed Version, CWE
 | ------------------------------- | -------- | --------------------------------- |
 | SQL string concatenation | CRITICAL | `db.query("SELECT * FROM u WHERE id=" + id)` |
 | eval(user_input) | CRITICAL | `eval(req.body.code)` |
-| innerHTML without sanitize | HIGH | `el.innerHTML = userData` |
+| innerHTML without sanitize | CRITICAL | `el.innerHTML = userData` |
 | Command injection | CRITICAL | `exec(userCmd)` |
-| Hardcoded password/secret | HIGH | `password: "hunter2"` |
-| JWT none algorithm | HIGH | `{ algorithm: "none" }` |
+| Hardcoded password/secret | CRITICAL | `password: "hunter2"` |
+| JWT none algorithm | CRITICAL | `{ algorithm: "none" }` |
 | Insecure random | MEDIUM | `Math.random()` for tokens |
-| Path traversal | HIGH | `fs.readFile(userPath)` |
-| XXE | HIGH | XML parsing without safe settings |
+| Path traversal | CRITICAL | `fs.readFile(userPath)` |
+| XXE | CRITICAL | XML parsing without safe settings |
 | Deserialization of untrusted | CRITICAL | `pickle.load(userData)` |
 | Missing rate limiting | MEDIUM | Auth endpoints without ratelimit |
-| Missing CSRF protection | HIGH | Stateful POST without token |
+| Missing CSRF protection | CRITICAL | Stateful POST without token |
 | Insecure cookie flags | MEDIUM | Cookie without httpOnly, secure |
 | Server info disclosure | LOW | Banner exposing version in header |
 

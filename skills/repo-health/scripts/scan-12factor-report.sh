@@ -42,12 +42,11 @@ factor_13_report() {
 
   for r in "${results[@]}"; do
     # Extract factor number and status
-    local factor_num
-    factor_num=$(echo "$r" | sed 's/^FACTOR_\([0-9]*\):.*/\1/')
-    local factor_status
-    factor_status=$(echo "$r" | sed 's/^FACTOR_[0-9]*: \([A-Z]*\) -.*/\1/')
-    local factor_detail
-    factor_detail=$(echo "$r" | sed 's/^FACTOR_[0-9]*: [A-Z]* - //')
+    local factor_num="${r#FACTOR_}"
+    factor_num="${factor_num%%:*}"
+    local rest="${r#*: }"
+    local factor_status="${rest%% -*}"
+    local factor_detail="${rest#* - }"
 
     local icon
     case "$factor_status" in

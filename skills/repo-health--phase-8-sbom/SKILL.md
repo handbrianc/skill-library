@@ -18,6 +18,19 @@ subskill-of: repo-health
 ./skills/repo-health/scripts/scan-sbom.sh
 ```
 
+## Step 8.3 — CVE & Outdated Dependency Classification
+
+### CRITICAL Severity Rules (MANDATORY)
+
+| Condition | Severity | Rationale |
+|-----------|----------|-----------|
+| Any dependency has a known CVE (any severity) | **CRITICAL** | Exploitable attack surface — do NOT downgrade |
+| Any dependency outdated by a major version | **CRITICAL** | Missing security patches, known-vulnerable surface |
+| GPL-3.0/AGPL licensed dependency | HIGH | Strong copyleft — commercial use restricted (stays HIGH) |
+| Dependency outdated by minor version with CVE in changelog | **CRITICAL** | Same class as major-outdated with CVE |
+
+All CRITICAL SBOM/CVE findings MUST flow into the remediation loop (Phase 10). Do NOT classify them as MEDIUM or HIGH.
+
 ### License Risk Matrix
 
 | License Family | Risk Level | Notes |

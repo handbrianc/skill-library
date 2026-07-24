@@ -18,6 +18,11 @@ skills/repo-health/scripts/
 ├── detect-dead-code.sh           # Static dead-code detector
 ├── find-duplicates.sh            # Text-similarity duplicate finder
 ├── find-uncovered.sh             # Uncovered line finder
+├── fix-doc-links.sh              # (FIX) Check + report broken doc links
+├── fix-env-example.sh            # (FIX) Generate/update .env.example
+├── fix-gitnexus-stats.sh         # (FIX) Sync GitNexus stats across docs
+├── fix-lint.sh                   # (FIX) Auto-fix lint violations
+├── fix-rollback.sh               # (FIX) Snapshot rollback + regression detection
 ├── parse-test-results.sh         # Test output parser
 ├── run-scan-suite.sh             # Master script — runs all deterministically
 ├── scan-12factor.sh              # Twelve-Factor App compliance checks
@@ -33,9 +38,15 @@ skills/repo-health/scripts/
 ├── scan-setup.sh                 # Project discovery and spec inventory
 ├── scan-tech-debt.sh             # Technical debt profile analysis
 └── scan-tests.sh                 # Test suite health checks
+
+lib/
+├── common.sh                     # Shared library (sourced by all scan scripts)
+└── fix-common.sh                 # Shared library (sourced by all fix scripts)
 ```
 
-Most scripts accept `$1` as target directory. Exceptions: `scan-licenses.sh` (SBOM file path), `parse-test-results.sh` (test output file), `find-uncovered.sh` (coverage report path).
+Scan scripts accept `$1` as target directory. Exceptions: `scan-licenses.sh` (SBOM file path), `parse-test-results.sh` (test output file), `find-uncovered.sh` (coverage report path).
+
+Fix scripts accept `--dry-run` for safe preview. `fix-rollback.sh` accepts `--list`, `--restore`, `--check`, `--clean` subcommands.
 
 ## Determinism Guarantee
 
@@ -85,4 +96,43 @@ GRADE = POINTS >= 90 ? "A"
       : "F"
 
 Output: **Overall Grade:** {GRADE} ({POINTS}/100)
+
+## Finding Classification Rubric
+
+Used by the Remediation Loop (Phase 10) to decide which findings must be auto-fixed vs skipped.
+
+### Severity → Classification Mapping
+
+| Severity | Default Classification | Reasoning |
+|----------|----------------------|-----------|
+| CRITICAL | **ACTIONABLE** | Security or release-blocking — must never skip |
+| HIGH | **ACTIONABLE** | Significant impact — must fix |
+| MEDIUM | **ACTIONABLE** | Moderate impact — should fix |
+| LOW | **Conditional** | Apply the NITPICK test below |
+
+### NITPICK Test (applied to LOW severity findings only)
+
+A LOW finding is a **NITPICK** if ANY of these conditions are true:
+
+| Condition | Question | Indicates |
+|-----------|----------|-----------|
+| **Cosmetic** | Is the finding purely cosmetic (formatting, minor doc wording, optional enhancement, naming preference)? | Nitpick |
+| **Negligible** | Does it have negligible impact on correctness, security, or maintainability? | Nitpick |
+| **Quick-manual** | Would fixing it require manual judgment (non-automatable) rather than a scripted change? | Nitpick |
+
+If ALL three are false → classify as **ACTIONABLE** (even though LOW severity).
+
+### Remediation Priority Matrix
+
+| Classification | Priority | Action | Scope |
+|---------------|----------|--------|-------|
+| ACTIONABLE (CRITICAL) | P0 | Auto-fix silently (no user prompt) | Single file, targeted |
+| ACTIONABLE (HIGH) | P1 | Auto-fix silently (no user prompt) | 1-3 files |
+| ACTIONABLE (MEDIUM) | P2 | Auto-fix silently (no user prompt) | 1-5 files |
+| ACTIONABLE (LOW) | P3 | Auto-fix silently (no user prompt) | Single file |
+| NITPICK | P4 | Report only — do not modify code | None |
+
+### Exit Condition
+
+The iterative loop exits when ALL findings in the action plan are classified as **NITPICK** (i.e., CRITICAL=0, HIGH=0, MEDIUM=0, ACTIONABLE(LOW)=0).
 ```

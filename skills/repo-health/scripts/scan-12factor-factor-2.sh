@@ -9,7 +9,6 @@ factor_2_dependencies() {
   local status="PASS"
 
   local manifest_found=false
-  local lockfile_found=false
 
   # Check manifest files
   if has_files "package.json" || has_files "yarn.lock" || has_files "pnpm-lock.yaml" || \
@@ -27,7 +26,6 @@ factor_2_dependencies() {
   if has_files "package-lock.json" || has_files "yarn.lock" || has_files "pnpm-lock.yaml" || \
      has_files "Cargo.lock" || has_files "Gemfile.lock" || \
      has_files "composer.lock" || has_files "poetry.lock"; then
-    lockfile_found=true
     detail+=" | Lockfile present"
   else
     detail+=" | WARNING: No lockfile — dependencies not pinned"

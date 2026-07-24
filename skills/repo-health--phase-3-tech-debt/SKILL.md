@@ -40,8 +40,14 @@ subskill-of: repo-health
 ### Technology Debt
 | Finding | Severity |
 |---------|----------|
-| Node X.x (current LTS: Y.y) | MEDIUM |
-| TypeScript X.x (current: Y.y) | MEDIUM |
+| Node X.x (current LTS: Y.y) — outdated major | **CRITICAL** |
+| Node X.x (current LTS: Y.y) — outdated minor/patch | MEDIUM |
+| TypeScript X.x (current: Y.y) — outdated major | **CRITICAL** |
+| TypeScript X.x (current: Y.y) — outdated minor/patch | MEDIUM |
+| Any language runtime outdated by major version | **CRITICAL** |
+| Any dependency outdated by major version | **CRITICAL** |
+
+**Rule:** Outdated major versions are CRITICAL because they accumulate unpatched CVEs and breaking-security gaps. Cross-reference with SBOM (Phase 8) for CVE-impacted outdated dependencies. Major-outdated findings MUST be addressed in the remediation loop (Phase 10).
 
 ### Test Debt
 | Finding | Severity |

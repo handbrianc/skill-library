@@ -33,7 +33,7 @@ An **orchestrator skill** (`skill(name="repo-health")`) that delegates to 10 pha
 | 7 | Security Review | `repo-health--phase-7-security` |
 | 8 | SBOM & License Audit | `repo-health--phase-8-sbom` |
 | 9 | 12-Factor Compliance | `repo-health--phase-9-12factor` |
-| 10 | Action Plan Synthesis | `repo-health--phase-10-action-plan` |
+| 10 | Remediation Loop | `repo-health--phase-10-remediate` |
 
 Also ships 21 Bash helper scripts under `scripts/` (detector, scanner, auditor variants) used by the subskills, and a `repo-health--helpers` subskill containing the grading rubric + script reference.
 

@@ -72,19 +72,35 @@ Check: dead installs, mis-scoped devDependencies, optionalDependencies classific
 
 ## Step 2.8 — Linting
 
+### ⚠️ Lint BOTH source code AND test code (MANDATORY)
+
+Linting violations in test files are equally important as violations in source files. The linter scan MUST cover both directories.
+
 ```bash
-./skills/repo-health/scripts/scan-linters.sh
+# Lint source code
+./skills/repo-health/scripts/scan-linters.sh src/
+
+# Lint test code — MANDATORY separate scan
+./skills/repo-health/scripts/scan-linters.sh test/ tests/ spec/ __tests__/
 ```
+
+If both `src/` and test directories exist, you MUST run both scans. Report findings from BOTH. Any lint violation in either source or test code is reportable.
 
 ### Linting Report Format
 
 ```
-LINTING FINDING:
+LINTING FINDING (Source):
   Tool: eslint
   Config: .eslintrc.js (found) / NO CONFIG (missing)
   Violations: N errors, N warnings
   Severity: LOW (<10) / MEDIUM (10-50) / HIGH (50-200) / CRITICAL (>200)
   Blocking: YES if >0 errors / NO if only warnings
+
+LINTING FINDING (Tests):
+  Tool: eslint
+  Violations: N errors, N warnings
+  Severity: (same mapping)
+  Blocking: YES if >0 errors
 ```
 
 ### Linting Severity Mapping
@@ -96,7 +112,7 @@ LINTING FINDING:
 | pylint | 12 errors, 100 warnings | HIGH | -10 points |
 | phpcs | 50+ errors | CRITICAL | -25 points |
 
-**Key rule:** Each linter tool generates at most **1 finding** (not 1 per violation). The severity reflects overall code quality impact.
+**Key rule:** Each linter tool generates at most **1 finding per scan target** (source vs test), not 1 per violation. The severity reflects overall code quality impact. Source and test are separate findings.
 
 ### Linter Findings to Flag
 
@@ -106,8 +122,18 @@ LINTING FINDING:
 - **Linter configured but no lint script in package.json** → LOW
 - **No linter for primary language** → MEDIUM
 - **Type checker available but not in CI** → MEDIUM
+- **Lint violations in test code that differ from source code** → MEDIUM (inconsistent standards)
+
+### Exit Condition for Linting
+
+A finding is **NOT fixed** until:
+- 0 errors in source code lint
+- 0 errors in test code lint
+- Total warnings < 10 across both (or as configured)
+
+All lint violations (source + test) are tracked under the `LINT_ERRORS` metric in the Phase 10 exit condition.
 
 ### Scoring Bonuses
 
-- Linter configured and clean (0 violations) → +2 bonus
+- Linter configured and clean (0 violations on source AND test) → +2 bonus
 - Type checker configured and passing → +1 bonus

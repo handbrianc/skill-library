@@ -132,6 +132,7 @@ PY
   fi
 
   local installed
+  # shellcheck disable=SC2034 # reserved for future unused-package analysis
   installed=$(pip list 2>/dev/null | awk 'NR>2 {print $1}' | head -50)
 
   # Check if installed packages are actually imported
