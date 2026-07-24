@@ -50,8 +50,8 @@ count_markers() {
     --include='*.swift' --include='*.dart' \
     2>/dev/null \
     | grep -v 'node_modules\|\.git\|/test/\|/tests/\|/spec/' \
-    | grep -vic 'nocheck\|eslint-disable\|pragma'
-  return 0
+    | grep -vic 'nocheck\|eslint-disable\|pragma' \
+    | wc -l
 }
 
 # Safe bc arithmetic (returns 0 or value)
