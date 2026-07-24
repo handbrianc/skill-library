@@ -16,6 +16,10 @@ run_coverage() {
   echo "=== TEST RUN WITH COVERAGE ==="
   cd "$REPO_ROOT"
 
+  # Allow failing test runs without aborting under `set -euo pipefail`.
+  # We still capture the runner exit code via PIPESTATUS.
+  trap 'set -o pipefail; trap - RETURN' RETURN
+  set +o pipefail
   # Auto-detect test runner
   if command -v vitest &>/dev/null && [[ -f "vitest.config.ts" || -f "vitest.config.js" || -f "vite.config.ts" ]]; then
     echo "DETECTED_RUNNER: vitest"
