@@ -49,11 +49,8 @@ def check_skill_placeholders(skill_path):
             continue
         if in_code_block:
             continue
-        # Skip comments
-        if stripped.startswith("#") or stripped.startswith("//"):
-            continue
         for ph in PLACEHOLDERS:
-            if ph in line:
+            if re.search(rf"\b{re.escape(ph)}\b", line, re.IGNORECASE):
                 ERRORS.append(f"  PLACEHOLDER '{ph}' in {rel_path}:{i}")
                 break
 
