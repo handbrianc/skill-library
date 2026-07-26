@@ -9,7 +9,8 @@ Produce a comprehensive, structured summary from any conference session transcri
 
 ## Input
 
-Paste the raw transcript (auto-generated, messy, or incomplete) or scattered notes. The system handles imperfect source material.
+Paste the raw transcript (auto-generated, messy, or incomplete) or scattered notes. The
+system handles imperfect source material.
 
 ## Six-Section Output Format
 
@@ -34,6 +35,7 @@ Paste the raw transcript (auto-generated, messy, or incomplete) or scattered not
 Organize chronologically. Add approximate timestamps or section markers if present.
 
 For each segment capture:
+
 - The point made
 - The supporting argument, example, or data
 - Any caveats the speaker raised
@@ -42,7 +44,8 @@ Highlight all **frameworks, models, case studies, and methodologies** — explai
 
 Include notable quotes verbatim (with quotation marks) where exact wording matters.
 
-Comprehensively extract every distinct idea, topic, and key point. If the speaker mentioned it briefly, it belongs here if it's a real idea.
+Comprehensively extract every distinct idea, topic, and key point. If the speaker mentioned
+it briefly, it belongs here if it's a real idea.
 
 ### 4. Actionable Next Steps
 
@@ -62,11 +65,15 @@ Comprehensively extract every distinct idea, topic, and key point. If the speake
 
 ## Ground Rules
 
-1. **Be faithful first.** Capture what the speaker actually said. Infer or fill gaps only when necessary, then mark clearly as **[Inferred]**.
+1. **Be faithful first.** Capture what the speaker actually said. Infer or fill gaps only
+   when necessary, then mark clearly as **[Inferred]**.
 2. **Preserve reasoning, not just conclusions.** Capture the *why* — evidence, logic, examples, data — not only the takeaway.
-3. **Flag uncertainty.** If the transcript is garbled, inaudible, or ambiguous, note as **[unclear in transcript]** rather than guessing.
-4. **Distinguish fact from claim.** Mark opinions/predictions as the speaker's stance. Present stated facts and cited data as facts.
-5. **Define jargon.** For technical terms or acronyms, add a bracketed plain-English definition on first use — e.g., RAG [Retrieval-Augmented Generation].
+3. **Flag uncertainty.** If the transcript is garbled, inaudible, or ambiguous, note as
+   **[unclear in transcript]** rather than guessing.
+4. **Distinguish fact from claim.** Mark opinions/predictions as the speaker's stance.
+   Present stated facts and cited data as facts.
+5. **Define jargon.** For technical terms or acronyms, add a bracketed plain-English
+   definition on first use — e.g., RAG [Retrieval-Augmented Generation].
 6. **No hallucinated details.** Do not invent names, numbers, titles, or citations. If unknown, write **[not stated]**.
 
 ## Formatting
@@ -74,10 +81,13 @@ Comprehensively extract every distinct idea, topic, and key point. If the speake
 - Clean markdown, with **bold** for key terms and concepts
 - Professional, objective, comprehensive tone — no filler, no praise of the speaker
 - Bracketed definitions for technical terms and obscure acronyms
-- If the transcript is too sparse to fill a section, write **[Not enough information in transcript]** rather than padding it
+- If the transcript is too sparse to fill a section, write
+  **[Not enough information in transcript]** rather than padding it
 
 ## Processing Notes
 
-- Auto-generated transcripts may contain duplicate sentences, mid-sentence cuts, or hallucinated punctuation — transcribe meaning accurately even when source is corrupted
+- Auto-generated transcripts may contain duplicate sentences, mid-sentence cuts,
+  or hallucinated punctuation — transcribe meaning accurately even when source
+  is corrupted
 - Incomplete transcripts (early ending, missing sections): note this explicitly rather than inventing content
 - Multiple speakers: attribute clearly. If speaker identification is unclear, mark as **[Unidentified Speaker]**
