@@ -20,6 +20,12 @@ on all bash scripts, markdown linting, placeholder detection, and trigger phrase
 checks. See [.github/workflows/validate.yml](.github/workflows/validate.yml). There is no
 build pipeline — skills are plain markdown files.
 
+<<<<<<< HEAD
 **Package consumers:** The `@gitnexus` group syncs from this repo as a package source.
 If you change skill structure or add mandatory files, update `skills/repo-health/` or
 `skills/spec-compliance/` scripts accordingly.
+=======
+**Package consumers:** The `@gitnexus` group syncs from this repo as a package source. If you change skill structure or add mandatory files, update `skills/repo-health/` or `skills/spec-compliance/` scripts accordingly.
+
+
+>>>>>>> origin/main
