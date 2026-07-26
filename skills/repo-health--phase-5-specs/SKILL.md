@@ -23,6 +23,7 @@ Check for archived specs under `specs/archive/`, `specs/v0.*/`, or `specs/old/`.
 ## Step 5.3 — Alignment Check
 
 For each spec:
+
 1. Read the spec requirements (Given/When/Then or plain requirements)
 2. Cross-reference with GitNexus — `query({search_query: "requirement keyword"})`
 3. Verify implementation exists
