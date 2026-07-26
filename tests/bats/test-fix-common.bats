@@ -60,10 +60,9 @@ teardown() {
 }
 
 @test "fix_err outputs error message to stderr" {
-  source "${BATS_TEST_DIRNAME}/../../skills/repo-health/scripts/lib/fix-common.sh"
-  run fix_err "something broke"
+  run bash -c "source \"${BATS_TEST_DIRNAME}/../../skills/repo-health/scripts/lib/fix-common.sh\"; fix_err \"something broke\" 2>&1"
   [ "$status" -eq 0 ]
-  # Should be on stderr - bats captures stderr too
+  [[ "$output" == *"something broke"* ]]
 }
 
 # ── Environment ─────────────────────────────────────────────────────────────
