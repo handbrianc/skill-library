@@ -14,7 +14,7 @@ Entries use [Keep a Changelog](https://keepachangelog.com/) conventions: Added, 
   instead (reducing staleness risk)
 - `CHANGELOG.md`: Cleaned up superseded `[2.0.0]` entry — version never finalized;
   content preserved with corrected header
-- `AGENTS.md`: Synced GitNexus index stats (195→190 symbols, 190→185 relationships)
+- `AGENTS.md`: Synced GitNexus index stats (420→422 symbols, 434→436 relationships)
 
 ### Added
 
