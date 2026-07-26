@@ -147,7 +147,7 @@ If ANY step in the chain fails: fix the issue, then re-run from step 3 (LSP). Do
 
 After ALL actionable findings in the current round are processed:
 
-1. **Re-index**: `npx gitnexus analyze --force`
+1. **Re-index**: `npx gitnexus analyze --force --skip-agents-md`
 2. **Run test suite**: Confirm `FAILED=0`, `ERRORS=0`, exit code 0
 3. **Run linters on BOTH source and test code**: Confirm `LINT_ERRORS=0`
 4. **Run `lsp_diagnostics` on all changed files**: Confirm `LSP_ERRORS=0` (0 errors AND 0 warnings)

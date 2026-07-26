@@ -23,6 +23,10 @@ writes it to `.gitnexus/`, and generates CLAUDE.md / AGENTS.md context files.
 | `--force`                 | Force full re-index even if up to date                                                               |
 | `--embeddings`            | Enable embedding generation for semantic search (off by default)                                     |
 | `--drop-embeddings`       | Drop existing embeddings on rebuild. By default, an `analyze` without `--embeddings` preserves them. |
+| `--skip-agents-md`        | Skip updating the gitnexus section in AGENTS.md and CLAUDE.md (pure index, no file injection).        |
+| `--no-stats`              | Omit volatile file/symbol counts from AGENTS.md and CLAUDE.md (useful for CI or stable docs).         |
+| `--skip-skills`           | Skip installing standard GitNexus skill files under `.claude/skills/gitnexus/`.                       |
+| `--index-only`            | Pure index mode: skip all file injection (AGENTS.md, CLAUDE.md, skills).                              |
 
 **When to run:** First time in a project, after major code changes, or when
 `gitnexus://repo/{name}/context` reports the index is stale. In Claude Code, a PostToolUse

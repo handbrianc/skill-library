@@ -50,7 +50,7 @@ section "STEP 3.2 — Architectural Analysis"
 
 sub "GitNexus Clusters"
 if has_cmd npx; then
-  npx gitnexus status 2>/dev/null || npx gitnexus analyze --force 2>/dev/null || true
+  npx gitnexus status 2>/dev/null || npx gitnexus analyze --force --skip-agents-md 2>/dev/null || true
   npx gitnexus cypher \
     "MATCH (c:Community) RETURN c.heuristicLabel, c.symbolCount, c.cohesion, c.keywords ORDER BY c.symbolCount DESC" \
     2>/dev/null \

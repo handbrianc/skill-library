@@ -4,6 +4,7 @@
 This project is indexed by GitNexus as **skill-library** (422 symbols, 436 relationships, 2 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
+> Use `--skip-agents-md` to re-index without touching this file or CLAUDE.md (pure refresh, no side effects).
 
 ## Always Do
 
@@ -45,6 +46,12 @@ This project is indexed by GitNexus as **skill-library** (422 symbols, 436 relat
 When editing `AGENTS.md`, or `README.md` — **do not paste GitNexus-generated blocks manually** (e.g., `<!-- gitnexus:start %> … <!-- gitnexus:end -->`). Keep authored prose focused on the project purpose, structure, and conventions.
 
 > **Why it matters:** Manually pasting the `gitnexus:start`…`gitnexus:end` block risks desynchronizing the embedded statistics (symbol counts, relationship counts) from the actual live index. Out-of-date counts mislead readers about repository state. Always regenerate via `gitnexus analyze` rather than copying stale output.  When running gitnexus make sure the .claude file is not interacted with.  This is for opencode only.
+>
+> **To suppress file injection** (e.g. in CI, automation, or when you only need the index):
+> - `--skip-agents-md` — skip updating AGENTS.md and CLAUDE.md
+> - `--no-stats` — omit volatile symbol/file counts from the gitnexus block
+> - `--skip-skills` — skip skill file installation under `.claude/skills/gitnexus/`
+> - `--index-only` — pure index; skip all file injection
 
 ## Skill Loading Precedence
 
