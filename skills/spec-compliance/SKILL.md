@@ -99,14 +99,14 @@ find . -maxdepth 4 -type d \( -name "archive" -o -name "legacy" -o -name "deprec
 
 **Extraction Patterns (checked in order for each line):**
 
-| Priority   | Pattern          | Regex                           | Means                                         |
-| ---------- | ---------------- | ------------------------------- | --------------------------------------------- |
-| 1          | Explicit marker  | `^(?:.*?)(REQUIREMENT           | RFP-                                          |
-| 2          | Gherkin BDD      | `^\s*(GIVEN                     | WHEN                                          |
-| 3          | Checkbox item    | `^\s*-\s+\[(x                   | )\]\s*(.+)$`                                  |
-| 4          | Capital sentence | `^[A-Z][A-Za-z0-9\s]{20,}[.:]$` | Prose requirement (min 20 chars, ends . or :) |
-| 5          | Numbered item    | `^\s*(\d+[.)]                   | \([a-z]+\))\s+(.+)$`                          |
-| 6          | Quoted directive | `^["'].{15,}["']\s*$`           | Longer quoted requirement                     |
+| Priority   | Pattern          | Regex                                                                        | Means                                         |
+| ---------- | ---------------- | ---------------------------------------------------------------------------- | --------------------------------------------- |
+| 1          | Explicit marker  | `^(?:.*?)(REQUIREMENT|RFP-|SRS-|USER STORY|TICKET):\s*(.+)$`                 | Named requirement                             |
+| 2          | Gherkin BDD      | `^\s*(GIVEN|WHEN|THEN|AND|BACKGROUND|SCENARIO)\s+(.+)$`                      | Scenario step                                 |
+| 3          | Checkbox item    | `^\s*-\s+\[(x| )\]\s*(.+)$`                                               | Checklist item (checked or unchecked)         |
+| 4          | Capital sentence | `^[A-Z][A-Za-z0-9\s]{20,}[.:]$`                                             | Prose requirement (min 20 chars, ends . or :) |
+| 5          | Numbered item    | `^\s*(\d+[.)]|\([a-z]+\))\s+(.+)$`                                        | Numbered sequence item                        |
+| 6          | Quoted directive | `^["'].{15,}["']\s*$`                                                      | Longer quoted requirement                     |
 
 **Extraction Commands:**
 
