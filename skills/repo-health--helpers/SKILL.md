@@ -23,6 +23,7 @@ skills/repo-health/scripts/
 ├── fix-gitnexus-stats.sh         # (FIX) Sync GitNexus stats across docs
 ├── fix-lint.sh                   # (FIX) Auto-fix lint violations
 ├── fix-rollback.sh               # (FIX) Snapshot rollback + regression detection
+├── install-missing-tools.sh      # (INSTALL) OS-agnostic tool installer
 ├── parse-test-results.sh         # Test output parser
 ├── run-scan-suite.sh             # Master script — runs all deterministically
 ├── scan-12factor.sh              # Twelve-Factor App compliance checks

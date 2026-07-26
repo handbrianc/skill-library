@@ -93,13 +93,33 @@ Six fix scripts live under `skills/repo-health/scripts/`:
 2. Load the helpers subskill: `skill(name="repo-health--helpers")`
 3. Load ALL phase subskills: `skill(name="repo-health--phase-{N}-{name}")` for N=0..10
 
-### Step A2 — Phase 0 (Blocking Gate)
+### Step A2 — Phase 0 (Gate + Auto-Install)
 
 ```bash
+# Step 0.1 — Check what's present
 ./skills/repo-health/scripts/scan-environment.sh --check-tools
 ```text
 
-If any required tool is MISSING/BROKEN → **ABORT. Do not proceed.**
+**If any core utility is MISSING/BROKEN** (bash, node, npm, npx, git, jq, find, grep,
+realpath) → **ABORT. Do not proceed.** The audit cannot run without them.
+
+**If only optional tools are MISSING** (test runners, linters, security scanners, etc.):
+
+```bash
+# Step 0.2 — Auto-install everything that's missing
+./skills/repo-health/scripts/install-missing-tools.sh
+
+# Or install by category matching the project's stack
+./skills/repo-health/scripts/install-missing-tools.sh --filter=test
+./skills/repo-health/scripts/install-missing-tools.sh --filter=security
+./skills/repo-health/scripts/install-missing-tools.sh --filter=linter
+
+# Step 0.3 — Re-verify after install
+./skills/repo-health/scripts/scan-environment.sh --check-tools
+```text
+
+If any optional tool still cannot be installed, proceed to Phase 1 anyway — the
+corresponding scanner section will produce reduced output with adjusted findings.
 
 ### Step A3 — Wave 1: Single Synchronous Composite Audit Subagent
 
