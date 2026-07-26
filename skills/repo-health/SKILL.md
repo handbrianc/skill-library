@@ -90,24 +90,74 @@ Six fix scripts live under `skills/repo-health/scripts/`:
 ```
 If any required tool is MISSING/BROKEN → **ABORT. Do not proceed.**
 
-### Step A3 — Wave 1: Launch 8 Parallel Subagent Sessions
-Fire these phases as independent background tasks with category + load_skills:
+### Step A3 — Wave 1: Single Synchronous Composite Audit Subagent
 
-| Phase | Category | Subskill |
-|-------|----------|----------|
-| 1 | unspecified-low | `repo-health--phase-1-discovery` |
-| 2 | unspecified-low | `repo-health--phase-2-code-quality` |
-| 4 | unspecified-low | `repo-health--phase-4-docs` |
-| 5 | unspecified-low | `repo-health--phase-5-specs` |
-| 6 | unspecified-low | `repo-health--phase-6-tests` |
-| 7 | unspecified-low | `repo-health--phase-7-security` |
-| 8 | unspecified-low | `repo-health--phase-8-sbom` |
-| 9 | unspecified-low | `repo-health--phase-9-12factor` |
+**Do NOT fire 8 separate background tasks. That creates a continuation gap — the orchestrator must end its response to wait for them, and the system does not auto-trigger the next turn. The user gets stuck manually typing "continue."**
 
-Each subagent prompt MUST include: TASK, EXPECTED OUTCOME, REQUIRED TOOLS, MUST DO, MUST NOT DO, and CONTEXT (file paths, existing patterns, constraints).
+Instead, launch a **single synchronous composite subagent** that runs ALL audit phases (1-9) internally. It handles the Phase 2+6→Phase 3 dependency within its own session — no orchestrator-level continuation needed.
 
-### Step A4 — Wait for Wave 1, then Wave 2 (Phase 3)
-Collect Phase 2 + Phase 6 results. Launch Phase 3 with those results baked in. Then collect remaining phases.
+```text
+const auditResults = await task(
+  category="deep",
+  load_skills=[
+    "repo-health--helpers",
+    "repo-health--phase-1-discovery",
+    "repo-health--phase-2-code-quality",
+    "repo-health--phase-3-tech-debt",
+    "repo-health--phase-4-docs",
+    "repo-health--phase-5-specs",
+    "repo-health--phase-6-tests",
+    "repo-health--phase-7-security",
+    "repo-health--phase-8-sbom",
+    "repo-health--phase-9-12factor"
+  ],
+  run_in_background=false,   // SYNCHRONOUS — orchestrator waits for complete result
+  prompt=`
+TASK: Run ALL audit phases 1-9 sequentially. Execute scanners via the \`bash\` tool (no nested \`task()\` calls). Return a synthesized JSON findings list with all findings plus aggregate metrics.
+
+WORKING DIRECTORY: [WORKING_DIR]
+
+CRITICAL CONSTRAINT: You MAY call \`skill(...)\` to load phase instructions, but you MUST run every phase's scanner scripts via the \`bash\` tool. Do NOT use \`task()\` or any other subagent mechanism — that will create a continuation gap and the user has to manually continue. All phases run sequentially in this single session using \`bash\` tool calls.
+EXPECTED OUTCOME: A JSON object with fields:
+  { "findings": [{ "phase": number, "severity": "CRITICAL|HIGH|MEDIUM|LOW", "description": "...", "evidence": "...", "fixScript": "..." }], "metrics": { "FAILED_TESTS": number, "LINT_ERRORS": number, "LSP_ERRORS": number } }
+
+PHASE SEQUENCE (run in this exact order, sequentially, via bash tool calls):
+
+1. Phase 1 — Discovery: \`bash ./skills/repo-health/scripts/scan-setup.sh\` + interpret output
+2. Phase 2 — Code Quality: run scan-dead-code, scan-complexity, scan-cognitive-complexity, scan-linters, audit-dependency-usage
+3. Phase 4 — Docs: \`bash ./skills/repo-health/scripts/scan-docs.sh\`
+4. Phase 5 — Specs: \`bash ./skills/repo-health/scripts/scan-setup.sh --mode=specs\`
+5. Phase 6 — Tests: \`bash ./skills/repo-health/scripts/scan-tests.sh\`
+6. Phase 7 — Security: \`bash ./skills/repo-health/scripts/scan-security.sh\`
+7. Phase 8 — SBOM: \`bash ./skills/repo-health/scripts/scan-sbom.sh\`
+8. Phase 9 — 12-Factor: \`bash ./skills/repo-health/scripts/scan-12factor.sh\`
+9. Phase 3 — Tech Debt: \`bash ./skills/repo-health/scripts/scan-tech-debt.sh\` (depends on Phase 2 + Phase 6 context — pass their results when interpreting)
+10. Synthesize all findings into structured JSON
+
+TIP: For each phase, first load its subskill via \`skill(name="repo-health--phase-{N}-{name}")\` to get the full scanner instructions, then run the bash commands it specifies.
+
+MUST DO:
+- Load each phase subskill via \`skill(...)\` before running its bash commands
+- Load helpers subskill via \`skill(name="repo-health--helpers")\`
+- Run \`bash\` commands ONLY — each tool call runs synchronously and returns the output
+- Collect scanner output, interpret it against the subskill's rubric, produce findings
+- Track aggregate metrics from test output, lint output, and LSP diagnostics
+- Return ONLY the JSON object — no prose, no markdown formatting around it
+
+MUST NOT DO:
+- Do NOT call \`task()\` with any \`run_in_background\` value — that creates a continuation gap
+- Do NOT present findings in a report or narrative format — return raw JSON only
+- Do NOT ask the user for anything
+- Do NOT edit any files during this phase (Phase 10 handles remediation)
+- Do NOT end your response early — run ALL 9 phases in sequence before returning
+`
+)
+```
+
+The orchestrator waits synchronously. When \`auditResults\` comes back, it contains all findings including Phase 3. Zero continuation gaps because the composite subagent uses \`bash\` tool calls only — no \`task()\`, no background work at any level.
+
+### Step A4 — Synthesize Composite Results
+Extract the findings list and metrics from the returned \`auditResults\`. If any phase didn't produce findings, document as N/A. Do NOT present to the user. Proceed immediately to Step A5.
 
 ### Step A5 — Phase 10: Delegate Remediation Loop to Subagent (MANDATORY — do NOT run inline)
 
@@ -115,11 +165,11 @@ Collect Phase 2 + Phase 6 results. Launch Phase 3 with those results baked in. T
 
 The subagent receives the synthesized findings and its ONLY job is: fix → re-audit → loop until exit condition.
 
-**IMPORTANT: After collecting all Phase 1-9 results, you MUST immediately proceed to Phase 10. Do NOT present findings to the user. Do NOT stop. Do NOT ask for confirmation. The remediation loop is mandatory and non-optional.**
+**IMPORTANT: The composite subagent in Step A3 already returned synthesized findings. Do NOT re-collect phases. Do NOT present findings to the user. Do NOT stop. Do NOT ask for confirmation. The remediation loop is mandatory and non-optional.**
 
-#### Step A5.1 — Synthesize Findings
+#### Step A5.1 — Validate Synthesized Findings
 
-Aggregate ALL findings from Phases 1-9 into a single structured list. Every finding MUST include:
+The composite subagent returned findings as structured JSON. Verify the list is complete (all phases 1-9 represented). Every finding MUST include:
 - **Severity**: CRITICAL / HIGH / MEDIUM / LOW
 - **Description**: One-line summary
 - **Evidence**: file:line or scanner output reference
