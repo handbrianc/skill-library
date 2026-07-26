@@ -9,13 +9,18 @@
 
 ## Reporting a Vulnerability
 
-This repository distributes static OpenCode skill files (.md) and Bash helper scripts. There are no compiled binaries, no network-facing services, and no dependency supply chain beyond the skill files themselves.
+This repository distributes static OpenCode skill files (.md) and Bash helper scripts.
+There are no compiled binaries, no network-facing services, and no dependency supply
+chain beyond the skill files themselves.
 
 **If you discover a security concern:**
 
 1. **Do not** open a public GitHub issue for active vulnerabilities.
-2. Open a regular issue or pull request for non-sensitive concerns (logic bugs, documentation gaps) on the [issue tracker](https://github.com/anomalyco/opencode/issues).
-3. For sensitive vulnerabilities (credential exposure, code injection risks, supply-chain attacks in script logic), please email the maintainers directly or open a GitHub Security Advisory at the upstream repository.
+2. Open a regular issue or pull request for non-sensitive concerns (logic bugs,
+   documentation gaps) on the [issue tracker](https://github.com/anomalyco/opencode/issues).
+3. For sensitive vulnerabilities (credential exposure, code injection risks,
+   supply-chain attacks in script logic), please email the maintainers directly or
+   open a GitHub Security Advisory at the upstream repository.
 
 ## Disclosure Timeline
 
@@ -24,7 +29,9 @@ This repository distributes static OpenCode skill files (.md) and Bash helper sc
 
 ## Credentials and Secrets
 
-This repository should never contain active credentials. See `.gitignore` for the list of files that are never committed. If you find exposed secrets (API keys, tokens, passwords) in any commit:
+This repository should never contain active credentials. See `.gitignore` for the list
+of files that are never committed. If you find exposed secrets (API keys, tokens,
+passwords) in any commit:
 
 - **Immediately** rotate the compromised credential.
 - Open a security-advisory issue to coordinate removal from git history.
@@ -33,10 +40,12 @@ This repository should never contain active credentials. See `.gitignore` for th
 ## Scope
 
 The following are **in scope** for security review:
+
 - Bash helper scripts under `skills/repo-health/scripts/` — shell injection, unsafe `eval`, insecure temp-file handling.
 - Skill content that executes commands on the agent's host.
 
 The following are **out of scope**:
+
 - The OpenCode agent platform itself (report to the OpenCode project).
 - Third-party tools invoked by helper scripts (npm, git, jq, etc.).
 
