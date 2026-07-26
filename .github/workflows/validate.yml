@@ -50,7 +50,7 @@ jobs:
       # ── 3. Markdown linting ────────────────────────────────────────────
       - name: Markdown lint
         run: |
-          markdownlint 'skills/*/SKILL.md' --config .markdownlint.json || true
+          markdownlint 'skills/*/SKILL.md' --config .markdownlint.json
         continue-on-error: true
 
       # ── 4. Placeholder detection in SKILL.md bodies ────────────────────
