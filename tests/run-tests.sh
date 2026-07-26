@@ -33,8 +33,7 @@ done
 
 BATS_FLAGS=""
 $VERBOSE && BATS_FLAGS="--tap"
-$CI_MODE && BATS_FLAGS="$BATS_FLAGS --timing"
-
+$CI_MODE && BATS_FLAGS="$BATS_FLAGS --timing --fail-fast"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Skill Library — Test Runner"
 echo "  Date: $(date)"
