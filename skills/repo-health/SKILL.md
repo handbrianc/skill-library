@@ -5,25 +5,32 @@ description: "Fully automatic repository health audit with mandatory silent reme
 
 # Repository Health Audit — Mandatory Remediation Loop
 
-A rigorous, deterministic repository audit covering nine dimensions with **mandatory** auto-remediation. The audit detects issues, classifies them, fixes them, re-audits, and loops until only trivial nitpicks remain.
+A rigorous, deterministic repository audit covering nine dimensions with **mandatory**
+auto-remediation. The audit detects issues, classifies them, fixes them, re-audits, and
+loops until only trivial nitpicks remain.
 
-> **Prerequisite:** Run `npx gitnexus analyze --force` on the target repo before starting. Do NOT skip this — the remediation loop depends on a fresh index.
+> **Prerequisite:** Run `npx gitnexus analyze --force` on the target repo before starting.
+> Do NOT skip this — the remediation loop depends on a fresh index.
 
 ---
 
 ## MANDATORY WORKFLOW — DO NOT DEVIATE
 
-This skill is **not an advisory report** — it is an **automated remediation system**. The remediation loop is NOT optional. Do NOT ask the user for permission. Do NOT present findings and stop. Phase 10 is a single unified pipeline that synthesizes, classifies, fixes, and loops — it does NOT produce an advisory plan.
+This skill is **not an advisory report** — it is an **automated remediation system**.
+The remediation loop is NOT optional. Do NOT ask the user for permission. Do NOT present
+findings and stop. Phase 10 is a single unified pipeline that synthesizes, classifies,
+fixes, and loops — it does NOT produce an advisory plan.
 
-```
+```text
 AUDIT (Phases 0-10) ──► 10.1 SYNTHESIZE ──► 10.2 CLASSIFY ──► 10.3 FIX ──► 10.4 RE-AUDIT ──► LOOP UNTIL NITPICK ──► 10.5 REPORT
-```
+```text
 
 ---
 
 ## Critical Constraints
 
 ### MUST DO
+
 - **Run PHASE 0 before all other phases** — abort if any required tool is missing
 - **Phase 10 is the remediation pipeline (synthesize → classify → fix → loop)** — do NOT stop after synthesis. Classification, fix execution, re-audit, and loop are all mandatory parts of Phase 10.
 - **Re-audit after each remediation round** within Phase 10 — loop until exit condition met (CRITICAL=0 AND HIGH=0 AND MEDIUM=0 AND FAILED_TESTS=0 AND LINT_ERRORS=0 AND LSP_ERRORS=0 AND ACTIONABLE(LOW)=0)
@@ -33,6 +40,7 @@ AUDIT (Phases 0-10) ──► 10.1 SYNTHESIZE ──► 10.2 CLASSIFY ──► 
 - If a fix introduces a regression (new CRITICAL/HIGH finding), **revert via fix-rollback.sh** and skip that fix
 
 ### MUST NOT DO
+
 - Never present an advisory action plan without executing the remediation steps in Phase 10.3-10.4
 - Never stop after Phase 10.1 (Synthesize) — that is only the first of five sub-steps
 - Never ask "do you want me to fix these?" — fix them. That is the entire point of this skill.
@@ -47,7 +55,7 @@ AUDIT (Phases 0-10) ──► 10.1 SYNTHESIZE ──► 10.2 CLASSIFY ──► 
 ## Phase Reference
 
 | # | Dimension | Subskill |
-|---|-----------|----------|
+| --- | ----------- | ---------- |
 | 0 | Environment Readiness (Gate) | `repo-health--phase-0-environment` |
 | 1 | Project Discovery | `repo-health--phase-1-discovery` |
 | 2 | Code Quality | `repo-health--phase-2-code-quality` |
@@ -67,7 +75,7 @@ AUDIT (Phases 0-10) ──► 10.1 SYNTHESIZE ──► 10.2 CLASSIFY ──► 
 Six fix scripts live under `skills/repo-health/scripts/`:
 
 | Script | Purpose | Finding Types |
-|--------|---------|---------------|
+| -------- | --------- | --------------- |
 | `fix-gitnexus-stats.sh` | Sync GitNexus stats across AGENTS.md/CLAUDE.md/ARCHITECTURE.md | Stale gitnexus blocks |
 | `fix-doc-links.sh` | Check + report broken external/internal links in docs | Broken links |
 | `fix-env-example.sh` | Generate/update .env.example from code-scanned env vars | Missing .env.example |
@@ -80,14 +88,17 @@ Six fix scripts live under `skills/repo-health/scripts/`:
 ## Phase A — Audit: Phases 0-10
 
 ### Step A1 — Prerequisite & Helpers
+
 1. Ensure `npx gitnexus analyze --force` ran on the target repo
 2. Load the helpers subskill: `skill(name="repo-health--helpers")`
 3. Load ALL phase subskills: `skill(name="repo-health--phase-{N}-{name}")` for N=0..10
 
 ### Step A2 — Phase 0 (Blocking Gate)
+
 ```bash
 ./skills/repo-health/scripts/scan-environment.sh --check-tools
-```
+```text
+
 If any required tool is MISSING/BROKEN → **ABORT. Do not proceed.**
 
 ### Step A3 — Wave 1: Single Synchronous Composite Audit Subagent
@@ -152,11 +163,12 @@ MUST NOT DO:
 - Do NOT end your response early — run ALL 9 phases in sequence before returning
 `
 )
-```
+```text
 
 The orchestrator waits synchronously. When \`auditResults\` comes back, it contains all findings including Phase 3. Zero continuation gaps because the composite subagent uses \`bash\` tool calls only — no \`task()\`, no background work at any level.
 
 ### Step A4 — Synthesize Composite Results
+
 Extract the findings list and metrics from the returned \`auditResults\`. If any phase didn't produce findings, document as N/A. Do NOT present to the user. Proceed immediately to Step A5.
 
 ### Step A5 — Phase 10: Delegate Remediation Loop to Subagent (MANDATORY — do NOT run inline)
@@ -170,6 +182,7 @@ The subagent receives the synthesized findings and its ONLY job is: fix → re-a
 #### Step A5.1 — Validate Synthesized Findings
 
 The composite subagent returned findings as structured JSON. Verify the list is complete (all phases 1-9 represented). Every finding MUST include:
+
 - **Severity**: CRITICAL / HIGH / MEDIUM / LOW
 - **Description**: One-line summary
 - **Evidence**: file:line or scanner output reference
@@ -215,7 +228,7 @@ MUST NOT DO:
 CONTEXT: Working directory is [WORKING_DIR]. All scripts are under skills/repo-health/scripts/. Run tests with the project's test command. Lint both src/ and test/ directories.
 `
 )
-```
+```text
 
 #### Step A5.3 — Collect Result
 
@@ -228,10 +241,9 @@ The subagent will return a "Remediation Complete" report or "INCOMPLETE" with fi
 #### Step A5.4 — Fallback: If Phase 10 Delegation Fails
 
 If the `task()` call times out or the subagent returns an advisory plan:
+
 1. **Run Phase 10 inline yourself** — load the remediate subskill and follow its pipeline directly
 2. Do NOT stop. Do NOT ask the user. The remediation must complete either way.
-
-
 
 ## Helper Scripts
 
