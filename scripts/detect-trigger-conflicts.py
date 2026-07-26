@@ -9,8 +9,7 @@ same phrase appears in multiple skill descriptions).
 Conflict severity:
   - Exact match: same phrase in ≥2 skills (HIGH)
   - Substring: one skill's phrase is a substring of another's (MEDIUM)
-  - Near-duplicate: Levenshtein distance ≤ 3 (LOW)
-
+  - Near-duplicate: word-overlap similarity > 80% (LOW)
 Usage:
   python3 scripts/detect-trigger-conflicts.py
   python3 scripts/detect-trigger-conflicts.py --ci   # exit 1 on any conflict
