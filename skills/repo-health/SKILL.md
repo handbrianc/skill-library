@@ -96,7 +96,7 @@ If any required tool is MISSING/BROKEN → **ABORT. Do not proceed.**
 
 Instead, launch a **single synchronous composite subagent** that runs ALL audit phases (1-9) internally. It handles the Phase 2+6→Phase 3 dependency within its own session — no orchestrator-level continuation needed.
 
-```typescript
+```text
 const auditResults = await task(
   category="deep",
   load_skills=[
