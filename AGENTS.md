@@ -1,10 +1,9 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **skill-library** (422 symbols, 436 relationships, 2 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **skill-library**. Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
-> Use `--skip-agents-md` to re-index without touching this file or CLAUDE.md (pure refresh, no side effects).
 
 ## Always Do
 
@@ -24,7 +23,7 @@ This project is indexed by GitNexus as **skill-library** (422 symbols, 436 relat
 ## Resources
 
 | Resource | Use for |
-| ---------- | --------- |
+|----------|---------|
 | `gitnexus://repo/skill-library/context` | Codebase overview, check index freshness |
 | `gitnexus://repo/skill-library/clusters` | All functional areas |
 | `gitnexus://repo/skill-library/processes` | All execution flows |
@@ -33,7 +32,7 @@ This project is indexed by GitNexus as **skill-library** (422 symbols, 436 relat
 ## CLI
 
 | Task | Read this skill file |
-| ------ | --------------------- |
+|------|---------------------|
 | Understand architecture / "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md` |
 | Blast radius / "What breaks if I change X?" | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
 | Trace bugs / "Why is X failing?" | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md` |
@@ -43,11 +42,19 @@ This project is indexed by GitNexus as **skill-library** (422 symbols, 436 relat
 
 <!-- gitnexus:end -->
 
-When editing `AGENTS.md`, or `README.md` — **do not paste GitNexus-generated blocks manually** (e.g., `<!-- gitnexus:start %> … <!-- gitnexus:end -->`). Keep authored prose focused on the project purpose, structure, and conventions.
+When editing `AGENTS.md`, or `README.md` — **do not paste GitNexus-generated blocks
+manually** (e.g., `<!-- gitnexus:start %> … <!-- gitnexus:end -->`). Keep authored prose
+focused on the project purpose, structure, and conventions.
 
-> **Why it matters:** Manually pasting the `gitnexus:start`…`gitnexus:end` block risks desynchronizing the embedded statistics (symbol counts, relationship counts) from the actual live index. Out-of-date counts mislead readers about repository state. Always regenerate via `gitnexus analyze` rather than copying stale output.  When running gitnexus make sure the .claude file is not interacted with.  This is for opencode only.
+> **Why it matters:** Manually pasting the `gitnexus:start`…`gitnexus:end` block risks
+> desynchronizing the embedded statistics (symbol counts, relationship counts) from the
+> actual live index. Out-of-date counts mislead readers about repository state. Always
+> regenerate via `gitnexus analyze` rather than copying stale output. When running
+> gitnexus make sure the .claude file is not interacted with. This is for opencode only.
 >
-> **To suppress file injection** (e.g. in CI, automation, or when you only need the index):
+> **To suppress file injection** (e.g. in CI, automation, or when you only need the
+> index):
+>
 > - `--skip-agents-md` — skip updating AGENTS.md and CLAUDE.md
 > - `--no-stats` — omit volatile symbol/file counts from the gitnexus block
 > - `--skip-skills` — skip skill file installation under `.claude/skills/gitnexus/`
@@ -60,9 +67,11 @@ OpenCode resolves skills from two locations (in priority order):
 1. **User-installed** (`~/.config/opencode/skills/`) — shared across all projects
 2. **Project-local** (`skills/`) — vendored skill folders in this repository
 
-User-installed skills override project-local copies of the same name. When adding a skill to this repo, also install it locally to `~/.config/opencode/skills/<skill-name>/` to test before contributing.
+User-installed skills override project-local copies of the same name. When adding a
+skill to this repo, also install it locally to
+`~/.config/opencode/skills/<skill-name>/` to test before contributing.
 
-# Background Task Rules
+## Background Task Rules
 
 - You are using background execution blocks.
 - DO NOT emit your final summary or exit the process while a background task ID is active.
