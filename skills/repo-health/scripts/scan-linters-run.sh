@@ -11,10 +11,10 @@
 #   /tmp/eslint-violations.txt, /tmp/ruff-violations.txt, etc.
 #
 
-set -euo pipefail
+set -uo pipefail
 
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/common.sh"
-
+set +e
 # ---- Source directory detection ----
 TARGET_DIR="${1:-}"
 if [[ -z "$TARGET_DIR" ]]; then
