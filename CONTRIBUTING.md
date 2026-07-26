@@ -72,7 +72,7 @@ Before opening a PR, verify:
 Before submitting a PR, run the full validation suite:
 
 ```bash
-# Quick validation (runs all checks except sh ellcheck)
+# Quick validation (runs all checks except shellcheck)
 python3 scripts/validate-frontmatter.py --ci   # Schema + frontmatter + triggers
 python3 scripts/detect-placeholders.py --ci     # No TODO/FIXME in skill bodies
 python3 scripts/detect-trigger-conflicts.py --ci # No overlapping trigger phrases
