@@ -113,12 +113,11 @@ const auditResults = await task(
   ],
   run_in_background=false,   // SYNCHRONOUS — orchestrator waits for complete result
   prompt=`
-TASK: Run ALL audit phases 1-9 sequentially using DIRECT BASH CALLS ONLY. Return a synthesized JSON findings list with all findings plus aggregate metrics.
+TASK: Run ALL audit phases 1-9 sequentially. Execute scanners via the \`bash\` tool (no nested \`task()\` calls). Return a synthesized JSON findings list with all findings plus aggregate metrics.
 
 WORKING DIRECTORY: [WORKING_DIR]
 
-CRITICAL CONSTRAINT: You MUST run every phase by calling scanner scripts via the \`bash\` tool. Do NOT use \`task()\` or any other subagent mechanism — that will create a continuation gap and the user has to manually continue. All phases run sequentially in this single session using \`bash\` tool calls.
-
+CRITICAL CONSTRAINT: You MAY call \`skill(...)\` to load phase instructions, but you MUST run every phase's scanner scripts via the \`bash\` tool. Do NOT use \`task()\` or any other subagent mechanism — that will create a continuation gap and the user has to manually continue. All phases run sequentially in this single session using \`bash\` tool calls.
 EXPECTED OUTCOME: A JSON object with fields:
   { "findings": [{ "phase": number, "severity": "CRITICAL|HIGH|MEDIUM|LOW", "description": "...", "evidence": "...", "fixScript": "..." }], "metrics": { "FAILED_TESTS": number, "LINT_ERRORS": number, "LSP_ERRORS": number } }
 
