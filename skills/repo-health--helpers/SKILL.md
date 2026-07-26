@@ -10,7 +10,7 @@ Internal reference data for the repo-health audit orchestrator. This subskill is
 
 ## Scripts Directory
 
-```
+```text
 skills/repo-health/scripts/
 ├── audit-dependency-usage.sh     # Import-graph dependency audit
 ├── check-doc-links.sh            # Link-rot checker for markdown docs
@@ -42,7 +42,7 @@ skills/repo-health/scripts/
 lib/
 ├── common.sh                     # Shared library (sourced by all scan scripts)
 └── fix-common.sh                 # Shared library (sourced by all fix scripts)
-```
+```text
 
 Scan scripts accept `$1` as target directory. Exceptions: `scan-licenses.sh` (SBOM file path), `parse-test-results.sh` (test output file), `find-uncovered.sh` (coverage report path).
 
@@ -63,14 +63,14 @@ If a finding cannot be deterministically reproduced, mark it `[NON-DETERMINISTIC
 ### Scoring Weights
 
 | Finding Type | Points Deducted |
-|---|---|
+| --- | --- |
 | CRITICAL | -25 |
 | HIGH | -10 |
 | MEDIUM | -3 |
 | LOW | -1 |
 
 | Bonuses | Points Added |
-|---|---|
+| --- | --- |
 | Clean test run (0 failed/errors) | +5 |
 | Line coverage >= 80% | +3 |
 | Line coverage >= 90% | +3 (additional) |
@@ -83,7 +83,7 @@ If a finding cannot be deterministically reproduced, mark it `[NON-DETERMINISTIC
 
 ### Grade Computation
 
-```
+```text
 POINTS = 100
 POINTS -= (CRITICAL × 25) + (HIGH × 10) + (MEDIUM × 3) + (LOW × 1)
 POINTS += BONUSES as applicable
@@ -135,4 +135,4 @@ If ALL three are false → classify as **ACTIONABLE** (even though LOW severity)
 ### Exit Condition
 
 The iterative loop exits when ALL findings in the action plan are classified as **NITPICK** (i.e., CRITICAL=0, HIGH=0, MEDIUM=0, ACTIONABLE(LOW)=0).
-```
+```text
