@@ -76,7 +76,7 @@ fingerprint_ngram() {
 # Returns integer percentage (0-100): share of unique ngrams in common.
 jaccard_pct() {
   local a="$1" b="$2"
-  local -A seen_a seen_b union_seen intersect_seen
+  local -A seen_a; local -A seen_b; local -A union_seen; local -A intersect_seen
   local item
 
   for item in $a; do seen_a[$item]=1; done
