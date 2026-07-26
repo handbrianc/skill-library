@@ -1,6 +1,8 @@
 # Contributing to Skill Library
 
-This repo distributes reusable OpenCode skill markdown files. No production code, no build system, no tests needed. There is no CI/CD pipeline — PRs are reviewed manually by maintainers.
+This repo distributes reusable OpenCode skill markdown files. No production code, no build system.
+
+> **CI/CD:** Every PR against `main` is automatically validated by GitHub Actions. See [.github/workflows/validate.yml](.github/workflows/validate.yml).
 
 ## Skill Location
 
@@ -63,8 +65,30 @@ Before opening a PR, verify:
 - [ ] Installs cleanly: `ln -s skills/my-skill ~/.config/opencode/skills/my-skill`
 - [ ] Loads without errors when OpenCode activates the skill
 - [ ] If editing `AGENTS.md`, `CLAUDE.md`, or `README.md`, run `npx gitnexus analyze` afterward and regenerate the `<!-- gitnexus:start -->…<!-- gitnexus:end -->` block with fresh statistics (never paste stale counts)
+- [ ] Run `bash tests/run-tests.sh` and confirm all tests pass
 
-## Testing Locally
+## Automated Validation
+
+Before submitting a PR, run the full validation suite:
+
+```bash
+# Quick validation (runs all checks except shellcheck)
+python3 scripts/validate-frontmatter.py --ci   # Schema + frontmatter + triggers
+python3 scripts/detect-placeholders.py --ci     # No TODO/FIXME in skill bodies
+python3 scripts/detect-trigger-conflicts.py --ci # No overlapping trigger phrases
+
+# Bash script tests (requires bats: npm install -g bats)
+bats tests/bats/test-fix-common.bats
+bats tests/bats/test-fix-rollback.bats
+bats tests/bats/test-scan-tests.bats
+
+# Or run everything at once
+bash tests/run-tests.sh
+```
+
+All validations must pass before merging.
+
+## Testing a Skill Locally
 
 1. Create the skill directory: `mkdir -p skills/my-new-skill`
 2. Write `skills/my-new-skill/SKILL.md`
@@ -102,8 +126,6 @@ Maintainers evaluate PRs on:
 ## What NOT to Contribute
 
 - Production application code (this is a distribution repo)
-- Test suites for skill markdown files (testing is manual/local)
-- Build tooling (there is no build)
 - Skills duplicating existing functionality
 
 ## Directory Structure
@@ -117,9 +139,14 @@ skills/
     └── .claude/              # OPTIONAL — Claude Code integration
 ```
 
-Avoid adding files outside your skill directory. Common exclusions:
-- No root-level `test/` or `tests/` directories
-- No `package.json`, `Makefile`, or build artifacts
-- No `node_modules/` or dependency installations
+Root-level directories:
+
+```
+scripts/              # Validation and utility scripts
+tests/                # bats test suites and fixtures
+.github/workflows/    # CI/CD pipeline definitions
+```
+
+Avoid adding large binary files, credentials, or dependency installations (`node_modules/`, `venv/`) to the repo.
 
 Questions or ideas? Open an issue or PR — contributions welcome!

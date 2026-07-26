@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **skill-library** (320 symbols, 314 relationships, 0 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **skill-library** (420 symbols, 434 relationships, 2 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -39,7 +39,7 @@ This project is indexed by GitNexus as **skill-library** (320 symbols, 314 relat
 | Rename / extract / split / refactor | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
 | Tools, resources, schema reference | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
 | Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
-Note: The `.claude/skills/...` paths above are the vendored copies in this repository (useful for reference / Claude Code). OpenCode skill loading still follows the locations described in “Skill Loading Precedence” below.
+
 <!-- gitnexus:end -->
 
 When editing `AGENTS.md`, or `README.md` — **do not paste GitNexus-generated blocks manually** (e.g., `<!-- gitnexus:start %> … <!-- gitnexus:end -->`). Keep authored prose focused on the project purpose, structure, and conventions.

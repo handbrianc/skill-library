@@ -1,0 +1,62 @@
+# =============================================================================
+# Skill Library — PR Validation Pipeline
+# =============================================================================
+#
+# Runs on every pull request against main. Validates:
+#   1. SKILL.md frontmatter schema compliance
+#   2. ShellCheck on all bash scripts
+#   3. Markdown linting (markdownlint)
+#   4. Placeholder detection (TODO/FIXME in skill bodies)
+#   5. Trigger phrase conflict detection across skills
+#
+# There is no build step — skills are plain markdown.
+
+name: validate
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml
+          npm install -g markdownlint-cli shellcheck
+      # ── 1. SKILL.md Frontmatter Validation ─────────────────────────────
+      - name: Validate SKILL.md frontmatter
+        run: python3 scripts/validate-frontmatter.py --ci
+
+      # ── 2. ShellCheck all bash scripts ─────────────────────────────────
+      - name: ShellCheck bash scripts
+        run: |
+          # shellcheck disable=SC2046
+          shellcheck $(find skills -name '*.sh' -type f) --severity=warning
+
+      # ── 3. Markdown linting ────────────────────────────────────────────
+      - name: Markdown lint
+        run: |
+          markdownlint 'skills/*/SKILL.md' --config .markdownlint.json
+        continue-on-error: true
+
+      # ── 4. Placeholder detection in SKILL.md bodies ────────────────────
+      - name: Check for placeholders
+        run: python3 scripts/detect-placeholders.py --ci
+
+      # ── 5. Trigger phrase conflict detection ──────────────────────────
+      - name: Check trigger phrase conflicts
+        run: python3 scripts/detect-trigger-conflicts.py --ci

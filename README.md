@@ -1,6 +1,8 @@
 # Skill Library
 
-An OpenCode skill distribution template. Packages reusable skill files for agents — nothing to build, run, or test.
+An OpenCode skill distribution template. Packages reusable skill files for agents — nothing to build or run.
+
+> **CI/CD:** PRs are validated via GitHub Actions — frontmatter schema compliance, shellcheck on all bash scripts, placeholder detection, and trigger phrase conflict checks. See [.github/workflows/validate.yml](.github/workflows/validate.yml).
 
 ## What's Inside
 
@@ -46,11 +48,22 @@ OpenCode loads skills from two places (this repo vendors skill folders under `./
 
 User-installed skills override project-local ones of the same name.
 
-## Quick Ref
+## Validation & Testing
 
 ```bash
-# No build, no test suite — skills are markdown files
-# To install: copy or symlink skill folders to ~/.config/opencode/skills/
+# Run the full validation suite (requires python3 + bats)
+bash tests/run-tests.sh
+
+# Or run individual checks:
+python3 scripts/validate-frontmatter.py --ci      # SKILL.md schema validation
+python3 scripts/detect-placeholders.py --ci         # No TODO/FIXME in skills
+python3 scripts/detect-trigger-conflicts.py --ci    # No conflicting triggers
+bats tests/bats/test-fix-rollback.bats              # Rollback mechanism tests
+bats tests/bats/test-scan-tests.bats                # Test scanner tests
+bats tests/bats/test-fix-common.bats                # Fix library tests
+
+# ShellCheck all bash scripts
+find skills -name '*.sh' -type f -exec shellcheck --severity=warning {} +
 ```
 
 ## Quick Start
@@ -58,6 +71,9 @@ User-installed skills override project-local ones of the same name.
 ```bash
 # Symlink a single skill for local testing
 ln -sf "$(pwd)/skills/<name>" ~/.config/opencode/skills/<name>
+
+# After modifying, run validation
+bash tests/run-tests.sh
 ```
 
 ## License

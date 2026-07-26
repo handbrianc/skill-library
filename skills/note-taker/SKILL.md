@@ -1,6 +1,6 @@
 ---
 name: note-taker
-description: "Transform conference transcripts or raw notes into comprehensive, structured summaries using a six-section format covering overview, takeaways, breakdown, next steps, Q&A, and open questions."
+description: "Transform conference transcripts or raw notes into comprehensive, structured summaries using a six-section format. Triggers: 'take notes on this', 'summarize this transcript', 'synthesize these notes', 'structure this session', 'organize these meeting notes'."
 ---
 
 # Conference Note-Taking & Synthesis
