@@ -19,14 +19,14 @@ For any task involving code understanding, debugging, impact analysis, or refact
 
 ## Skills
 
-| Task                                         | Skill to read       |
-| -------------------------------------------- | ------------------- |
-| Understand architecture / "How does X work?" | `gitnexus-exploring`         |
-| Blast radius / "What breaks if I change X?"  | `gitnexus-impact-analysis`   |
-| Trace bugs / "Why is X failing?"             | `gitnexus-debugging`         |
-| Rename / extract / split / refactor          | `gitnexus-refactoring`       |
-| Tools, resources, schema reference           | `gitnexus-guide` (this file) |
-| Index, status, clean, wiki CLI commands      | `gitnexus-cli`               |
+| Task                                         | Skill to read                  |
+| -------------------------------------------- | ------------------------------ |
+| Understand architecture / "How does X work?" | `gitnexus-exploring`           |
+| Blast radius / "What breaks if I change X?"  | `gitnexus-impact-analysis`     |
+| Trace bugs / "Why is X failing?"             | `gitnexus-debugging`           |
+| Rename / extract / split / refactor          | `gitnexus-refactoring`         |
+| Tools, resources, schema reference           | `gitnexus-guide` (this file)   |
+| Index, status, clean, wiki CLI commands      | `gitnexus-cli`                 |
 
 ## Tools Reference
 

@@ -15,12 +15,12 @@ description: "Use when the user wants to rename, extract, split, move, or restru
 
 ## Workflow
 
-```
+```text
 1. gitnexus_impact({target: "X", direction: "upstream"})  → Map all dependents
 2. gitnexus_query({query: "X"})                            → Find execution flows involving X
 3. gitnexus_context({name: "X"})                           → See all incoming/outgoing refs
 4. Plan update order: interfaces → implementations → callers → tests
-```
+```text
 
 > If "Index is stale" → run `npx gitnexus analyze` in terminal.
 
@@ -28,28 +28,28 @@ description: "Use when the user wants to rename, extract, split, move, or restru
 
 ### Rename Symbol
 
-```
+```text
 - [ ] gitnexus_rename({symbol_name: "oldName", new_name: "newName", dry_run: true}) — preview all edits
 - [ ] Review graph edits (high confidence) and ast_search edits (review carefully)
 - [ ] If satisfied: gitnexus_rename({..., dry_run: false}) — apply edits
 - [ ] gitnexus_detect_changes() — verify only expected files changed
 - [ ] Run tests for affected processes
-```
+```text
 
 ### Extract Module
 
-```
+```text
 - [ ] gitnexus_context({name: target}) — see all incoming/outgoing refs
 - [ ] gitnexus_impact({target, direction: "upstream"}) — find all external callers
 - [ ] Define new module interface
 - [ ] Extract code, update imports
 - [ ] gitnexus_detect_changes() — verify affected scope
 - [ ] Run tests for affected processes
-```
+```text
 
 ### Split Function/Service
 
-```
+```text
 - [ ] gitnexus_context({name: target}) — understand all callees
 - [ ] Group callees by responsibility
 - [ ] gitnexus_impact({target, direction: "upstream"}) — map callers to update
@@ -57,42 +57,42 @@ description: "Use when the user wants to rename, extract, split, move, or restru
 - [ ] Update callers
 - [ ] gitnexus_detect_changes() — verify affected scope
 - [ ] Run tests for affected processes
-```
+```text
 
 ## Tools
 
 **gitnexus_rename** — automated multi-file rename:
 
-```
+```text
 gitnexus_rename({symbol_name: "validateUser", new_name: "authenticateUser", dry_run: true})
 → 12 edits across 8 files
 → 10 graph edits (high confidence), 2 ast_search edits (review)
 → Changes: [{file_path, edits: [{line, old_text, new_text, confidence}]}]
-```
+```text
 
 **gitnexus_impact** — map all dependents first:
 
-```
+```text
 gitnexus_impact({target: "validateUser", direction: "upstream"})
 → d=1: loginHandler, apiMiddleware, testUtils
 → Affected Processes: LoginFlow, TokenRefresh
-```
+```text
 
 **gitnexus_detect_changes** — verify your changes after refactoring:
 
-```
+```text
 gitnexus_detect_changes({scope: "all"})
 → Changed: 8 files, 12 symbols
 → Affected processes: LoginFlow, TokenRefresh
 → Risk: MEDIUM
-```
+```text
 
 **gitnexus_cypher** — custom reference queries:
 
 ```cypher
 MATCH (caller)-[:CodeRelation {type: 'CALLS'}]->(f:Function {name: "validateUser"})
 RETURN caller.name, caller.filePath ORDER BY caller.filePath
-```
+```text
 
 ## Risk Rules
 
@@ -105,7 +105,7 @@ RETURN caller.name, caller.filePath ORDER BY caller.filePath
 
 ## Example: Rename `validateUser` to `authenticateUser`
 
-```
+```text
 1. gitnexus_rename({symbol_name: "validateUser", new_name: "authenticateUser", dry_run: true})
    → 12 edits: 10 graph (safe), 2 ast_search (review)
    → Files: validator.ts, login.ts, middleware.ts, config.json...
@@ -118,4 +118,4 @@ RETURN caller.name, caller.filePath ORDER BY caller.filePath
 4. gitnexus_detect_changes({scope: "all"})
    → Affected: LoginFlow, TokenRefresh
    → Risk: MEDIUM — run tests for these flows
-```
+```text
