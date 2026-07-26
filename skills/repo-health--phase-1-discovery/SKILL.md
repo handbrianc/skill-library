@@ -12,11 +12,11 @@ subskill-of: repo-health
 
 ```bash
 ./skills/repo-health/scripts/scan-setup.sh --mode=discovery
-```
+```text
 
 ## Produce
 
-```
+```text
 | Dimension         | Stack       | Toolchain          |
 | ----------------- | ----------- | ------------------ |
 | Language          | TypeScript  | node/npm           |
@@ -27,6 +27,6 @@ subskill-of: repo-health
 | Has Docs Dir?     | PARTIAL     | ./docs/ partial    |
 | Test Runner       | vitest      | vitest run --coverage |
 | Coverage Tool     | —           |                    |
-```
+```text
 
 Mark any dimension as **NOT APPLICABLE** if the project type makes it irrelevant (e.g., no test runner for a pure-config repo).
