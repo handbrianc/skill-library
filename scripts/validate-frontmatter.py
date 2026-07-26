@@ -140,8 +140,21 @@ def validate_skill(skill_path, all_skill_names):
         # Count trigger phrases — subskills are internal; exempt from trigger count
         is_subskill = "subskill-of" in fm
         if not is_subskill:
-            triggers = [t.strip() for t in desc.replace("'", "'").split(",")]
-            trigger_count = sum(1 for t in triggers if len(t) > 5)
+            # Prefer extracting explicitly quoted trigger phrases to avoid counting prose.
+            triggers = set()
+            triggers.update(t.strip() for t in re.findall(r"'([^']+)'", desc))
+            triggers.update(t.strip() for t in re.findall(r'"([^"]+)"', desc))
+
+            # Fallback: parse a dedicated "Triggers:" section if present.
+            if not triggers:
+                m = re.search(r"(?:triggers?|examples?):(.*)$", desc, flags=re.IGNORECASE)
+                if m:
+                    for item in re.split(r"[;,]", m.group(1)):
+                        item = item.strip().strip("'\".")
+                        if item:
+                            triggers.add(item)
+
+            trigger_count = sum(1 for t in triggers if len(t) > 3)
             if trigger_count < 3:
                 err(
                     f"frontmatter 'description' has only {trigger_count} trigger phrase(s); need ≥3",
