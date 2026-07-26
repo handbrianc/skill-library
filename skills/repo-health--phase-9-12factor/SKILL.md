@@ -14,11 +14,11 @@ Determine applicability per factor. Document N/A factors with rationale — do N
 
 ```bash
 ./skills/repo-health/scripts/scan-12factor.sh
-```
+```text
 
 ## Report Format
 
-```
+```text
 | Factor | Status | Detail |
 | ------ | ------ | ------ |
 | I. Codebase | ✅ PASS | git repo with single remote |
@@ -33,7 +33,7 @@ Determine applicability per factor. Document N/A factors with rationale — do N
 | X. Dev/prod parity | ⚠️ WARNING | sqlite dev vs postgres prod |
 | XI. Logs | ✅ PASS | stdout logging, no logfile mgmt |
 | XII. Admin processes | ✅ PASS | migrate commands available |
-```
+```text
 
 ## Severity Mapping
 

@@ -14,7 +14,7 @@ packages reusable instruction files for AI agent use. The repository contains
 no application code, no build system, and no test runner — skills are plain
 Markdown files consumed by the OpenCode agent runtime.
 
-```
+```text
 skills/
 ├── note-taker/           # Independent skill
 ├── sarcastic/            # Independent skill
@@ -34,7 +34,7 @@ skills/
         ├── compare-*.sh           # Comparison helpers
         ├── parse-*.sh             # Parsing helpers
         └── run-scan-suite.sh      # Master runner
-```
+```text
 
 ---
 
@@ -46,7 +46,7 @@ instructions inline.
 
 ### Delegation Flow
 
-```
+```text
 User: "audit this project"
   → OpenCode loads skill(name="repo-health")
     → SKILL.md instructs: run PHASE 0 first (gate)
@@ -55,12 +55,12 @@ User: "audit this project"
         → Load repo-health--phase-N-{name} subskill
         → Execute scanner scripts defined in subskill
       → After all phases: load phase-10 → synthesize action plan
-```
+```text
 
 ### Benefits
 
 | Concern | Orchestrator Design |
-|---------|---------------------|
+| --------- | --------------------- |
 | Monolith size | 853 → 64 (orchestrator) + ~720 (subskills) |
 | Partial invocation | Each phase loads independently |
 | Discoverability | `skill --list` shows 11 subskills |
@@ -77,7 +77,7 @@ common library.
 ### Shared Library: `lib/common.sh`
 
 | Symbol | Purpose |
-|--------|---------|
+| -------- | --------- |
 | `SCRIPT_DIR` | Directory of the sourcing script |
 | `REPO_ROOT` | Repository root (3 levels up from `lib/`) |
 | `TIMEOUT_CMD` | `gtimeout` (macOS) or `timeout` (Linux) |
@@ -87,7 +87,7 @@ common library.
 ### Script Categories
 
 | Category | Examples | Purpose |
-|----------|----------|---------|
+| ---------- | ---------- | --------- |
 | **Environment** | `scan-environment.sh`, `scan-environment-tools.sh`, `scan-environment-transient.sh` | PHASE 0 — tool/transient checks |
 | **Discovery** | `scan-setup.sh` | PHASE 1 — project discovery |
 | **Code Quality** | `scan-linters.sh`, `scan-complexity.sh`, `scan-cognitive-complexity.sh`, `detect-dead-code.sh`, `find-duplicates.sh`, `audit-dependency-usage.sh` | PHASE 2 — dead code, duplication, complexity |
@@ -102,7 +102,7 @@ common library.
 
 ### Cross-Script Dependencies
 
-```
+```text
 scan-tests.sh
   └─ sources: scan-tests-presence.sh
   └─ sources: scan-tests-coverage.sh
@@ -126,7 +126,7 @@ scan-linters.sh
   └─ sources: scan-linters-run.sh
 
 All scripts source: lib/common.sh
-```
+```text
 
 ---
 
@@ -136,6 +136,7 @@ The repository is indexed by GitNexus as `skill-library`. See `AGENTS.md` for th
 usage for impact analysis before editing any symbol.
 
 Workflow:
+
 1. `npx gitnexus analyze --force` (refresh index)
 2. `npx gitnexus status` (check freshness)
 3. `gitnexus_impact({target: "symbolName", direction: "upstream"})` (pre-edit)
@@ -158,7 +159,7 @@ Workflow:
 Three skills do not participate in the orchestrator pattern:
 
 | Skill | Contents | Dependency |
-|-------|----------|------------|
+| ------- | ---------- | ------------ |
 | `note-taker` | Single SKILL.md (82 lines) | None |
 | `sarcastic` | Single SKILL.md (53 lines) | None |
 | `spec-compliance` | SKILL.md (485 lines) + `scripts/` (extract-requirements.sh, compare-specs.sh) | None external |

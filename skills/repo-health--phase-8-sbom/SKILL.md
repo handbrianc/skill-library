@@ -23,7 +23,7 @@ subskill-of: repo-health
 ### CRITICAL Severity Rules (MANDATORY)
 
 | Condition | Severity | Rationale |
-|-----------|----------|-----------|
+| ----------- | ---------- | ----------- |
 | Any dependency has a known CVE (any severity) | **CRITICAL** | Exploitable attack surface — do NOT downgrade |
 | Any dependency outdated by a major version | **CRITICAL** | Missing security patches, known-vulnerable surface |
 | GPL-3.0/AGPL licensed dependency | HIGH | Strong copyleft — commercial use restricted (stays HIGH) |

@@ -6,7 +6,9 @@ subskill-of: repo-health
 
 # PHASE 0 — Environment Readiness (Gate)
 
-**Goal:** Validate baseline tools required for all audits (bash, git, node/npm, jq, find) and report language/project-specific tools as informational. If any required baseline tool is missing, **abort immediately**.
+**Goal:** Validate baseline tools required for all audits (bash, git, node/npm, jq, find)
+and report language/project-specific tools as informational. If any required baseline
+tool is missing, **abort immediately**.
 
 ## Required Environment
 
@@ -28,6 +30,7 @@ subskill-of: repo-health
 ```
 
 **If any core utility prints `MISSING/BROKEN`, or any helper script prints `SKILL_ERR` / `SKILL_MISSING`:**
+
 - Collect all missing/malformed items into a single block
 - **ABORT — do not proceed to PHASE 1**
 - Report using this template:
@@ -43,4 +46,5 @@ The following tools are missing or broken. Install them before re-running:
 | ...  | ...    | ...             |
 ```
 
-Optional language/test/security tools may print `MISSING (optional)` — only treat them as blocking if the repo's stack requires them.
+Optional language/test/security tools may print `MISSING (optional)` — only treat them as
+blocking if the repo's stack requires them.

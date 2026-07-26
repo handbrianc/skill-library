@@ -12,7 +12,7 @@ Uses GitNexus + static analysis scripts for deterministic results.
 
 ```bash
 npx gitnexus status
-```
+```text
 
 If stale: `npx gitnexus analyze --force`
 
@@ -20,13 +20,13 @@ If stale: `npx gitnexus analyze --force`
 
 ```bash
 ./skills/repo-health/scripts/detect-dead-code.sh src/
-```
+```text
 
 ## Step 2.3 — Cyclomatic Complexity
 
 ```bash
 ./skills/repo-health/scripts/scan-complexity.sh
-```
+```text
 
 Flag: >15 MEDIUM, >25 HIGH, >40 CRITICAL.
 
@@ -34,19 +34,20 @@ Flag: >15 MEDIUM, >25 HIGH, >40 CRITICAL.
 
 ```bash
 ./skills/repo-health/scripts/scan-cognitive-complexity.sh src/
-```
+```text
 
 Manual spot-check via GitNexus:
-```
+
+```text
 query({search_query: "deeply nested callback hell", limit: 5})
 query({search_query: "monstrous switch statement", limit: 5})
-```
+```text
 
 ## Step 2.5 — Duplicated Code
 
 ```bash
 ./skills/repo-health/scripts/scan-complexity.sh
-```
+```text
 
 Report duplicates > 50 lines identical.
 
@@ -58,7 +59,7 @@ Use GitNexus clusters:
 query({search_query: "arch component module service layer"})
 READ gitnexus://repo/{name}/clusters
 READ gitnexus://repo/{name}/processes
-```
+```text
 
 Flag clusters with LOW cohesion or no natural grouping.
 
@@ -66,7 +67,7 @@ Flag clusters with LOW cohesion or no natural grouping.
 
 ```bash
 ./skills/repo-health/scripts/audit-dependency-usage.sh
-```
+```text
 
 Check: dead installs, mis-scoped devDependencies, optionalDependencies classification.
 
@@ -82,13 +83,13 @@ Linting violations in test files are equally important as violations in source f
 
 # Lint test code — MANDATORY separate scan
 ./skills/repo-health/scripts/scan-linters.sh test/ tests/ spec/ __tests__/
-```
+```text
 
 If both `src/` and test directories exist, you MUST run both scans. Report findings from BOTH. Any lint violation in either source or test code is reportable.
 
 ### Linting Report Format
 
-```
+```text
 LINTING FINDING (Source):
   Tool: eslint
   Config: .eslintrc.js (found) / NO CONFIG (missing)
@@ -101,12 +102,12 @@ LINTING FINDING (Tests):
   Violations: N errors, N warnings
   Severity: (same mapping)
   Blocking: YES if >0 errors
-```
+```text
 
 ### Linting Severity Mapping
 
 | Linter | Violations | Finding Severity | Rubric Impact |
-|--------|-----------|-----------------|---------------|
+| -------- | ----------- | ----------------- | --------------- |
 | eslint | 0 errors, 5 warnings | LOW | -1 point |
 | ruff | 3 errors, 20 warnings | MEDIUM | -3 points |
 | pylint | 12 errors, 100 warnings | HIGH | -10 points |
@@ -127,6 +128,7 @@ LINTING FINDING (Tests):
 ### Exit Condition for Linting
 
 A finding is **NOT fixed** until:
+
 - 0 errors in source code lint
 - 0 errors in test code lint
 - Total warnings < 10 across both (or as configured)

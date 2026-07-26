@@ -5,19 +5,25 @@ description: "Verify that code and tests meet specifications defined in openspec
 
 # Spec Compliance Verifier
 
-Checks that application code and test suites provably satisfy specifications defined in `openspec/` or `specs/` folders. Operates bidirectionally: (1) specs → code evidence and (2) specs → test evidence.
+Checks that application code and test suites provably satisfy specifications defined in
+`openspec/` or `specs/` folders. Operates bidirectionally: (1) specs → code evidence and
+(2) specs → test evidence.
 
-> **Prerequisite:** Run `npx gitnexus analyze --force` on the target repo before starting to ensure the knowledge graph is fresh.
+> **Prerequisite:** Run `npx gitnexus analyze --force` on the target repo before starting
+> to ensure the knowledge graph is fresh.
 
 ## Critical Constraints
 
 ### MUST DO
+
 - Treat both **active** and **archived** specs with equal rigor — archived specs represent commitments too
-- Distinguish three separate compliance states: **implemented** (code exists), **test-proven** (tests assert it), and **fully-compliant** (both)
+- Distinguish three separate compliance states: **implemented** (code exists),
+  **test-proven** (tests assert it), and **fully-compliant** (both)
 - Report every requirement with at least one divergence (no code evidence OR no test evidence) as a distinct finding
 - Prioritize findings by: CRITICAL (security-relevant requirement unmet) > HIGH > MEDIUM > LOW
 
 ### MUST NOT DO
+
 - Never claim a spec is "met" without showing concrete file-level evidence (not just plausible-sounding queries)
 - Never ignore archived specs — they may contain requirements still implemented but no longer actively maintained
 - Never rely solely on the existence of tests — tests must actually exercise the requirement's intent
@@ -29,12 +35,13 @@ Checks that application code and test suites provably satisfy specifications def
 
 Every requirement has **two independent compliance axes**:
 
-| Axis | Question | Detection Method |
-|------|----------|------------------|
-| **Code Compliance** | Does production code implement the requirement? | `query(search_query:)` for requirement keywords → `gitnexus_context()` on matched symbols |
-| **Test Compliance** | Do tests prove the code satisfies the requirement's intent? | Test file analysis linked to requirement-verifying functions |
+| Axis                    | Question                                                              | Detection Method                                                                             |
+| ----------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| **Code Compliance**     | Does production code implement the requirement?                       | `query(search_query:)` for requirement keywords → `gitnexus_context()` on matched symbols    |
+| **Test Compliance**     | Do tests prove the code satisfies the requirement's intent?           | Test file analysis linked to requirement-verifying functions                                 |
 
 **Combined Status:**
+
 - `✅ FULLY COMPLIANT` — code implements AND tests prove it
 - `🟡 PARTIAL (code only)` — code exists, no test proof
 - `🟡 PARTIAL (test only)` — tests exist, no identifiable code path
@@ -65,20 +72,21 @@ find . -maxdepth 4 -type f \( -name "*.md" -o -name "*.txt" -o -name "*.spec" -o
 
 # Alternative naming conventions
 find . -maxdepth 4 -type d \( -name "archive" -o -name "legacy" -o -name "deprecated" \) 2>/dev/null | head -10
-```
+```text
 
 **Inventory Table:**
 
-```
-| Spec File                     | Classification | Age/Location    | Requirement Count |
+```text
+| Spec File                     | Classification | Age/Location     | Requirement Count |
 | ----------------------------- | -------------- | ---------------- | ----------------- |
 | openspec/auth.spec            | ACTIVE         | current          | 12                |
 | openspec/api-requirements.md  | ACTIVE         | current          | 8                 |
 | specs/archive/v0.1-auth.md    | ARCHIVED       | >6 months        | 15                |
 | specs/archive/old-api.md      | DEPRECATED     | explicit archive | 6                 |
-```
+```text
 
 **Classification Rules:**
+
 - Active: in root `specs/` or `openspec/` with no archive marker
 - Archived: in `*/archive/*`, `*/v*/*`, `*/old/*`, `*/legacy/*`, or modified >6 months ago
 - Deprecated: explicitly named with `deprecated`, `archive`, `old` in path
@@ -91,14 +99,14 @@ find . -maxdepth 4 -type d \( -name "archive" -o -name "legacy" -o -name "deprec
 
 **Extraction Patterns (checked in order for each line):**
 
-| Priority | Pattern | Regex | Means |
-|----------|---------|-------|-------|
-| 1 | Explicit marker | `^(?:.*?)(REQUIREMENT|RFP-|SRS-|USER STORY|TICKET):\s*(.+)$` | Named requirement |
-| 2 | Gherkin BDD | `^\s*(GIVEN|WHEN|THEN|AND|BACKGROUND|SCENARIO)\s+(.+)$` | Scenario step |
-| 3 | Checkbox item | `^\s*-\s+\[(x| )\]\s*(.+)$` | Checklist item (checked or unchecked) |
-| 4 | Capital sentence | `^[A-Z][A-Za-z0-9\s]{20,}[.:]$` | Prose requirement (min 20 chars, ends . or :) |
-| 5 | Numbered item | `^\s*(\d+[.)]|\([a-z]+\))\s+(.+)$` | Numbered sequence item |
-| 6 | Quoted directive | `^["'].{15,}["']\s*$` | Longer quoted requirement |
+| Priority   | Pattern          | Regex                                                                        | Means                                         |
+| ---------- | ---------------- | ---------------------------------------------------------------------------- | --------------------------------------------- |
+| 1          | Explicit marker  | `^(?:.*?)(REQUIREMENT|RFP-|SRS-|USER STORY|TICKET):\s*(.+)$`                 | Named requirement                             |
+| 2          | Gherkin BDD      | `^\s*(GIVEN|WHEN|THEN|AND|BACKGROUND|SCENARIO)\s+(.+)$`                      | Scenario step                                 |
+| 3          | Checkbox item    | `^\s*-\s+\[(x| )\]\s*(.+)$`                                               | Checklist item (checked or unchecked)         |
+| 4          | Capital sentence | `^[A-Z][A-Za-z0-9\s]{20,}[.:]$`                                             | Prose requirement (min 20 chars, ends . or :) |
+| 5          | Numbered item    | `^\s*(\d+[.)]|\([a-z]+\))\s+(.+)$`                                        | Numbered sequence item                        |
+| 6          | Quoted directive | `^["'].{15,}["']\s*$`                                                      | Longer quoted requirement                     |
 
 **Extraction Commands:**
 
@@ -110,19 +118,20 @@ for spec in $(find openspec/ specs/ -type f \( -name "*.md" -o -name "*.txt" -o 
   echo "=== $spec ==="
   grep -n -E 'REQUIREMENT:|RFP-|SRS-|USER STORY:|GIVEN|WHEN|THEN|AND\b|-\s+\[.\]|^\s*\d+[.)]\s|^\s*\([a-z]\)\s|^["'"'"'][A-Z].{15,}["'"'"']$' "$spec" | head -100
 done
-```
+```text
 
 **Example Extracted Requirements:**
 
-```
+```text
 42|GHERKIN_THEN|The response shall include a paginated list|
 45|CHECKBOX_X|Rate limiting enforces 100 req/min|
 67|PROSE|Authentication tokens expire after 24 hours.|
 89|MARKER|Data must be encrypted at rest and in transit.|
 103|NUMBERED|1. All inputs must be validated before processing.|
-```
+```text
 
 **Categorization (internal `PATTERN_TYPE` values; terminal output renders checkbox entries as `CHECKED`/`PENDING`):**
+
 - `GHERKIN_GIVEN` / `GHERKIN_WHEN` / `GHERKIN_THEN` / `GHERKIN_AND` — Individual Gherkin lines extracted separately
 - `GHERKIN_BLOCK` — SCENARIO/BACKGROUND/FEATURE block headers
 - `CHECKBOX_X` — Checkbox item marked `[x]` or `[X]` (requirement satisfied in spec)
@@ -139,7 +148,7 @@ done
 
 **Workflow:**
 
-```
+```text
 For each requirement_text:
   1. Strip noise words: "shall", "must", "should", "will", "the", "that"
   2. Build search query from key nouns/verbs
@@ -147,7 +156,7 @@ For each requirement_text:
   4. If results found → record file locations, symbol names
   5. If no results → run query with alternate phrasing
   6. If still no results → mark as MISSING_CODE_COMPLIANCE
-```
+```text
 
 **Detailed Search Strategy:**
 
@@ -172,27 +181,27 @@ gitnexus_context({
   name: "rateLimit",
   include_content: true
 })
-```
+```text
 
 **Compliance Determination:**
 
-```
+```text
 FULL_CODE_EVIDENCE  — query() call returned ≥1 high-confidence result AND
                        gitnexus_context confirmed production code involvement
 PARTIAL_CODE_EVIDENCE — query returned fuzzy match (confidence < 0.7)
                         OR only infrastructure/config files (not core logic)
 MISSING_CODE_COMPLIANCE — Zero results across all query variations
-```
+```text
 
 **Example Tracking Table:**
 
-```
-| Req ID | Requirement Text                  | Evidence Found                  | Status              |
-| ------- | --------------------------------- | ------------------------------- | ------------------- |
-| R-042   | Rate limiting enforces 100 req/min| src/middleware/ratelimit.ts     | FULL_CODE_EVIDENCE  |
-| R-043   | Tokens expire after 24 hours      | src/auth/token.ts (partial)     | PARTIAL_CODE_EVIDENCE |
+```text
+| Req ID  | Requirement Text                  | Evidence Found                  | Status                  |
+| ------- | --------------------------------- | ------------------------------- | ----------------------- |
+| R-042   | Rate limiting enforces 100 req/min| src/middleware/ratelimit.ts     | FULL_CODE_EVIDENCE      |
+| R-043   | Tokens expire after 24 hours      | src/auth/token.ts (partial)     | PARTIAL_CODE_EVIDENCE   |
 | R-044   | Data encrypted at rest            | NO_RESULTS                      | MISSING_CODE_COMPLIANCE |
-```
+```text
 
 ---
 
@@ -208,13 +217,13 @@ This is not the same as code coverage. A function covered by tests may still not
 
 **Workflow:**
 
-```
+```text
 For each requirement with FULL_CODE_EVIDENCE or PARTIAL_CODE_EVIDENCE:
   1. Identify the implementation file(s) and symbol(s) from Phase 3
   2. Find test files associated with those symbols
   3. Analyze test assertions to determine if they validate the requirement
   4. Classify as: FULL_TEST_PROOF | PARTIAL_TEST_PROOF | NO_TEST_PROOF
-```
+```text
 
 **Test Discovery Methods:**
 
@@ -232,7 +241,7 @@ find . -type f \( -name "*.test.*" -o -name "*.spec.*" -o -name "*_test.*" -o -n
 
 # Via test directory scanning:
 ls tests/ __tests__/ test/ spec/ 2>/dev/null
-```
+```text
 
 **Assertion Analysis (manual inference from test files):**
 
@@ -242,7 +251,7 @@ For each test file suspected of covering the requirement:
 2. **Identify the assertion(s)**
 3. **Map assertion to requirement intent:**
 
-```
+```text
 Requirement Intent: "rate limiting enforces 100 req/min"
 Validating Assertion: expect(throttledRequests.length).toBeLessThanOrEqual(100)
 → FULL_TEST_PROOF ✓
@@ -258,26 +267,26 @@ Supporting But Insufficient: Encryption tested for transit but not rest
 Requirement Intent: "API responds within 200ms"
 No Timing Assertion Found
 → NO_TEST_PROOF ✗
-```
+```text
 
 **Test Quality Criteria:**
 
-| Criterion | Meaning |
-|-----------|---------|
-| Specific assertion exists | Test explicitly asserts the requirement condition |
-| Boundary conditions tested | Edges (0, null, max, overflow) are tested |
-| Negative cases tested | Invalid inputs are asserted to be rejected |
-| Mock boundaries correct | External deps mocked at appropriate abstraction |
+| Criterion                  | Meaning                                           |
+| -------------------------- | ------------------------------------------------- |
+| Specific assertion exists  | Test explicitly asserts the requirement condition |
+| Boundary conditions tested | Edges (0, null, max, overflow) are tested         |
+| Negative cases tested      | Invalid inputs are asserted to be rejected        |
+| Mock boundaries correct    | External deps mocked at appropriate abstraction   |
 
 **Tracking Table Extension:**
 
-```
-| Req ID | Code Status      | Test Evidence                    | Test Quality    | Overall Status |
-| ------- | ---------------- | -------------------------------- | ---------------- | -------------- |
-| R-042   | FULL_CODE_EVIDENCE | tests/unit/ratelimit.test.ts   | SPECIFIC_ASSERT | ✅ FULL COMPLIANCE |
-| R-043   | PARTIAL_CODE_EVIDENCE | tests/auth.token.test.ts (weak)| BOUNDARY_MISSING | 🟡 PARTIAL |
-| R-044   | MISSING_CODE_COMPLIANCE | (no code, cannot test)       | N/A              | ❌ NON-COMPLIANT |
-```
+```text
+| Req ID  | Code Status             | Test Evidence                    | Test Quality     | Overall Status    |
+| ------- | ----------------------- | -------------------------------- | ---------------- | ----------------- |
+| R-042   | FULL_CODE_EVIDENCE      | tests/unit/ratelimit.test.ts     | SPECIFIC_ASSERT  | ✅ FULL COMPLIANCE |
+| R-043   | PARTIAL_CODE_EVIDENCE   | tests/auth.token.test.ts (weak)  | BOUNDARY_MISSING | 🟡 PARTIAL         |
+| R-044   | MISSING_CODE_COMPLIANCE | (no code, cannot test)           | N/A              | ❌ NON-COMPLIANT   |
+```text
 
 ---
 
@@ -292,13 +301,13 @@ No Timing Assertion Found
 for dir in openspec/archive specs/archive specs/v0.* specs/old specs/archive/backup; do
   ls -la "$dir" 2>/dev/null
 done
-```
+```text
 
 **Comparison Method:**
 
 For each requirement in an archived spec:
 
-```
+```text
 1. Extract requirement (same parser as Phase 2)
 2. Search current codebase for implementation (Phase 3 method)
 3. Search current tests for coverage (Phase 4 method)
@@ -306,26 +315,26 @@ For each requirement in an archived spec:
    → May be INTENTIONAL OMISSION (deliberately removed feature)
    → May be LATENT FEATURE (still implemented but no longer spec'd)
 5. If NOT FOUND: Likely deprecated requirement — flag as STALE_ARCHIVED
-```
+```text
 
 **Divergence Scenarios:**
 
-| Scenario | Archived Has | Current Has | Implication |
-|----------| ------------ | ----------- | ------------|
-| Feature Regression | Requirement R existed | No code evidence | Removed functionality, intentional or accidental |
-| Spec Drift | No archived requirement | Code implements R | New capability, needs spec update |
-| Latent Implementation | Archived R | Code + test evidence | Currently compliant despite archive status |
-| Silent Deprecation | Requirement R in archived | Neither code nor test | Fully retired capability |
+| Scenario              | Archived Has              | Current Has           | Implication                                      |
+| --------------------- | ------------------------- | --------------------- | ------------------------------------------------ |
+| Feature Regression    | Requirement R existed     | No code evidence      | Removed functionality, intentional or accidental |
+| Spec Drift            | No archived requirement   | Code implements R     | New capability, needs spec update                |
+| Latent Implementation | Archived R                | Code + test evidence  | Currently compliant despite archive status       |
+| Silent Deprecation    | Requirement R in archived | Neither code nor test | Fully retired capability                         |
 
 **Tracking Table:**
 
-```
-| Archived Spec         | Requirement        | Current Status       | Classification          |
-| --------------------- | ------------------ | -------------------- | ------------------------ |
-| v0.1-auth.md R-015    | Session persistence | NO code or test    | STALE_ARCHIVED          |
-| v0.1-auth.md R-016    | Remember Me token  | EXISTS (auth/rm.ts) | LATENT_IMPLEMENTATION   |
-| old-api.md R-003      | SOAP XML API       | NO code              | INTENTIONAL_REGRESSION  |
-```
+```text
+| Archived Spec         | Requirement         | Current Status       | Classification           |
+| --------------------- | ------------------- | -------------------- | ------------------------ |
+| v0.1-auth.md R-015    | Session persistence | NO code or test      | STALE_ARCHIVED           |
+| v0.1-auth.md R-016    | Remember Me token   | EXISTS (auth/rm.ts)  | LATENT_IMPLEMENTATION    |
+| old-api.md R-003      | SOAP XML API        | NO code              | INTENTIONAL_REGRESSION   |
+```text
 
 Flag STALE_ARCHIVED findings at MEDIUM priority (requirements may still have business value).
 
@@ -360,13 +369,13 @@ Flag STALE_ARCHIVED findings at MEDIUM priority (requirements may still have bus
 
 ### TWO-AXIS STATUS MATRIX
 
-| Req ID | Requirement Text                    | Code Status | Test Status | Combined |
-| ------- | ----------------------------------- | ----------- | ----------- | -------- |
-| R-001   | Rate limiting: 100 req/min          | ✅ Present  | ✅ Proven   | ✅ FULL  |
-| R-002   | Token expiry: 24 hours              | ✅ Present  | ⚠️ Weak    | 🟡 PARTIAL |
-| R-003   | Data encryption at rest             | ❌ Absent   | N/A         | ❌ FAIL  |
-| R-004   | API response time < 200ms           | ✅ Present  | ❌ No timing| 🟡 PARTIAL |
-| ...     | ...                                 | ...         | ...         | ...      |
+| Req ID  | Requirement Text                    | Code Status | Test Status | Combined  |
+| ------- | ----------------------------------- | ----------- | ----------- | --------- |
+| R-001   | Rate limiting: 100 req/min          | ✅ Present   | ✅ Proven    | ✅ FULL    |
+| R-002   | Token expiry: 24 hours              | ✅ Present   | ⚠️ Weak     | 🟡 PARTIAL |
+| R-003   | Data encryption at rest             | ❌ Absent    | N/A         | ❌ FAIL    |
+| R-004   | API response time < 200ms           | ✅ Present   | ❌ No timing | 🟡 PARTIAL |
+| ...     | ...                                 | ...         | ...         | ...       |
 
 ---
 
@@ -425,10 +434,10 @@ Flag STALE_ARCHIVED findings at MEDIUM priority (requirements may still have bus
 
 ### ARCHIVED-SPEC REGRESSIONS
 
-| Archived Requirement | Was In | Current Status | Recommendation |
-| -------------------- | ------ | -------------- | --------------- |
+| Archived Requirement      | Was In          | Current Status | Recommendation                           |
+| ------------------------- | --------------- | -------------- | ---------------------------------------- |
 | Session affinity fallback | v0.1-auth:R-022 | NO code found  | Investigate — may be intentional removal |
-| Legacy SOAP interface | old-api:R-003 | NO code found  | Confirm deprecation, clean archived spec |
+| Legacy SOAP interface     | old-api:R-003   | NO code found  | Confirm deprecation, clean archived spec |
 
 ---
 
@@ -446,7 +455,8 @@ Flag STALE_ARCHIVED findings at MEDIUM priority (requirements may still have bus
 <details>
 <summary>All extracted requirements by file</summary>
 
-```
+```text
+
 openspec/auth.spec (12 requirements)
   R-001: "Rate limiting: 100 req/min" .............. ✅ FULL
   R-002: "Token expiry: 24 hours" ................. 🟡 PARTIAL
@@ -455,7 +465,8 @@ openspec/auth.spec (12 requirements)
 openspec/api-req.md (8 requirements)
   R-009: "GET /users returns paginated list" ...... ✅ FULL
   ...
-```
+
+```text
 
 </details>
 
@@ -465,22 +476,24 @@ openspec/api-req.md (8 requirements)
 
 Supporting scripts live at:
 
-```
+```text
+
 skills/spec-compliance/scripts/
 ├── compare-specs.sh        # Archived vs current spec extractor + delta reporter
 └── extract-requirements.sh # Standalone requirement parser with pattern matching
-```
+
+```text
 
 ### compare-specs.sh Usage
 
 ```bash
 ./skills/spec-compliance/scripts/compare-specs.sh openspec/ specs/archive/
 # Output: formatted table of SPEC_FILE, archived/current requirement counts, FOUND markers, and STATUS comparison values (NEW/GROWTH/REGRESSION/BALANCED)
-```
+```text
 
 ### extract-requirements.sh Usage
 
 ```bash
 ./skills/spec-compliance/scripts/extract-requirements.sh openspec/auth.spec
 # Output: LINE_NUM|PATTERN_TYPE|EXTRACTED_TEXT per requirement
-```
+```text

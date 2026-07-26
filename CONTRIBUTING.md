@@ -6,7 +6,8 @@ This repo distributes reusable OpenCode skill markdown files. No production code
 
 ## Skill Location
 
-Skills are at `skills/<skill-name>/SKILL.md`. User-installed skills at `~/.config/opencode/skills/` override project-local copies.
+Skills live at `skills/<skill-name>/SKILL.md`. User-installed skills at
+`~/.config/opencode/skills/` override project-local copies.
 
 ## Skill Anatomy
 
@@ -20,7 +21,7 @@ description: "One-line description for skill catalog. Use when user says '<trigg
 # Skill Title
 
 Detailed instructional content for the agent...
-```
+```text
 
 ### Frontmatter Schema
 
@@ -39,9 +40,10 @@ The `description` field determines when your skill activates. Triggers should be
 - **Specific** — avoid generic triggers like "help" or "code"
 
 Example:
+
 ```yaml
 description: "Use when the user asks about debugging, troubleshooting, or diagnosing issues. Triggers: 'debug this', 'why is X not working', 'hanging', 'trace this bug', 'silent failure', 'HTTP 200 but empty'."
-```
+```text
 
 ### Skill Content Guidelines
 
@@ -84,7 +86,7 @@ bats tests/bats/test-scan-tests.bats
 
 # Or run everything at once
 bash tests/run-tests.sh
-```
+```text
 
 All validations must pass before merging.
 
@@ -130,22 +132,22 @@ Maintainers evaluate PRs on:
 
 ## Directory Structure
 
-```
+```text
 skills/
 └── <skill-name>/
     ├── SKILL.md              # REQUIRED — skill instruction markdown
     ├── scripts/              # OPTIONAL — helper scripts
     ├── references/           # OPTIONAL — supporting docs/data
     └── .claude/              # OPTIONAL — Claude Code integration
-```
+```text
 
 Root-level directories:
 
-```
+```text
 scripts/              # Validation and utility scripts
 tests/                # bats test suites and fixtures
 .github/workflows/    # CI/CD pipeline definitions
-```
+```text
 
 Avoid adding large binary files, credentials, or dependency installations (`node_modules/`, `venv/`) to the repo.
 

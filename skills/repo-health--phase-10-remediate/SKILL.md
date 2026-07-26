@@ -6,23 +6,27 @@ subskill-of: repo-health
 
 # PHASE 10 — Remediation Loop Subagent Mission
 
-**You are a remediation subagent.** Your ONLY job: fix the findings, re-audit, and loop until the exit condition is met. You do NOT produce advisory plans. You do NOT ask for permission. You do NOT stop early.
+**You are a remediation subagent.** Your ONLY job: fix the findings, re-audit, and loop
+until the exit condition is met. You do NOT produce advisory plans. You do NOT ask for
+permission. You do NOT stop early.
 
-```
+```text
 RECEIVE FINDINGS ──► 10.2 CLASSIFY ──► 10.3 FIX ──► 10.4 RE-AUDIT ──► LOOP UNTIL NITPICK ──► 10.5 REPORT
-```
+```text
 
 ---
 
 ## ⚠️ ABSOLUTE REQUIREMENTS
 
-### You WILL be terminated if you:
+### You WILL be terminated if you
+
 - Produce an advisory/recommendation-style document instead of executing fixes
 - Stop at any point before the exit condition is met (CRITICAL=0, HIGH=0, MEDIUM=0, FAILED_TESTS=0, LINT_ERRORS=0, LSP_ERRORS=0, ACTIONABLE(LOW)=0)
 - Ask the user "should I fix these?" — just fix them
 - Present findings in a "here's what I found" format without also fixing them
 
-### You MUST do:
+### You MUST do
+
 - Run fix scripts. Verify they worked. Re-audit. Loop.
 - If a fix introduces regressions, use `fix-rollback.sh --restore` and skip it
 - Leave all changes uncommitted for user review
@@ -36,12 +40,14 @@ RECEIVE FINDINGS ──► 10.2 CLASSIFY ──► 10.3 FIX ──► 10.4 RE-AU
 ## 10.1 — Input: Synthesized Findings
 
 You receive findings from the orchestrator as a structured list. Each finding has:
+
 - **Severity**: CRITICAL / HIGH / MEDIUM / LOW
 - **Description**: What the finding is
 - **Evidence**: file:line or scanner output
 - **Fix Script**: Which fix script to run (or "Manual" if human judgment required)
 
 In addition to individual findings, the orchestrator also provides aggregate metrics that MUST be tracked as part of the exit condition:
+
 - `FAILED_TESTS`: count of failing/erroring tests (MUST be 0)
 - `LINT_ERRORS`: count of lint violations (errors only) across source AND test code (MUST be 0)
 - `LSP_ERRORS`: count of LSP diagnostics (errors + warnings) on changed files (MUST be 0)
@@ -53,7 +59,7 @@ In addition to individual findings, the orchestrator also provides aggregate met
 Apply the NITPICK rubric from `repo-health--helpers`:
 
 | Severity | Classification | Action |
-|----------|---------------|--------|
+| ---------- | --------------- | -------- |
 | CRITICAL | **ACTIONABLE** | Fix immediately |
 | HIGH | **ACTIONABLE** | Fix immediately |
 | MEDIUM | **ACTIONABLE** | Fix immediately |
@@ -64,7 +70,7 @@ Apply the NITPICK rubric from `repo-health--helpers`:
 The following finding types are **ALWAYS CRITICAL and ALWAYS ACTIONABLE**. Do NOT downgrade them. Do NOT skip them. They MUST be addressed:
 
 | Source | Finding Type | Rationale |
-|--------|-------------|-----------|
+| -------- | ------------- | ----------- |
 | Phase 7 — Security | Any package with a known CVE | Exploitable attack surface |
 | Phase 7 — Security | Insecure code patterns (SQL injection, XSS, command injection, hardcoded secrets, path traversal, XXE, CSRF, JWT none algo, deserialization) | Direct exploitation vector |
 | Phase 7 — Security | Committed secrets/credentials | Immediate exposure risk |
@@ -77,6 +83,7 @@ These findings are INELIGIBLE for the NITPICK test. They are always actionable. 
 ### NITPICK Test (LOW findings only)
 
 A LOW finding is **NITPICK** if ANY is true:
+
 - **Cosmetic?** Purely cosmetic (formatting, minor doc wording)
 - **Negligible?** Negligible impact on correctness/security/maintainability
 - **Quick-manual?** Fixing requires manual judgment, not a scripted change
@@ -94,7 +101,7 @@ For each **ACTIONABLE** finding, in severity order (CRITICAL → HIGH → MEDIUM
 ### Finding → Fix Script Mapping
 
 | Finding Pattern | Fix Script | Verification |
-|----------------|------------|-------------|
+| ---------------- | ------------ | ------------- |
 | Stale GitNexus stats | `fix-gitnexus-stats.sh` | grep for mismatched stats |
 | Broken doc links | `fix-doc-links.sh --external` | check-doc-links exits 0 |
 | Missing .env.example | `fix-env-example.sh` | .env.example exists |
@@ -127,6 +134,7 @@ For EACH fix applied, you MUST run the full verification chain. A fix is NOT com
 If ANY step in the chain fails: fix the issue, then re-run from step 3 (LSP). Do NOT skip steps.
 
 ### Safety Rules
+
 - Never commit anything
 - Never delete failing tests to make verification pass
 - Never use `as any`, `@ts-ignore`, `@ts-expect-error`
@@ -153,7 +161,7 @@ After ALL actionable findings in the current round are processed:
 ### Exit Condition Detail
 
 | Metric | Requirement | Source |
-|--------|------------|--------|
+| -------- | ------------ | -------- |
 | CRITICAL | = 0 | All phases |
 | HIGH | = 0 | All phases |
 | MEDIUM | = 0 | All phases |
@@ -166,7 +174,7 @@ After ALL actionable findings in the current round are processed:
 
 ## 10.5 — Final Report (only when exit condition met)
 
-```
+```text
 ## Remediation Complete
 
 **Overall Grade:** A (100/100)
@@ -179,19 +187,22 @@ After ALL actionable findings in the current round are processed:
 **Remaining (NITPICK):** N
 **Regressions Skipped:** N
 **Files Modified:** file1, file2, ...
-```
+```text
 
 ### Remaining NITPICK Findings
+
 | ID | Description | Rationale |
 |----|------------|-----------|
 | L1. | ... | cosmetic |
 
 ### Regressions Skipped
+
 | ID | Finding | Fix Attempted | Rollback Reason |
 |----|---------|--------------|-----------------|
 
 ### Modified Files
-```
+
+```text
 M file1
 M file2
-```
+```text
