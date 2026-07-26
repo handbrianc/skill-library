@@ -76,11 +76,10 @@ teardown() {
   [ "$result" = "original content" ]
 }
 
-@test "fix_rollback with no snapshot returns error" {
-  source "$FIX_COMMON"
-  rm -rf "$SNAPSHOT_DIR"
-  run fix_rollback "$FIX_REPO_ROOT/test.txt"
+@test "fix_rollback with no snapshot reports error but returns success" {
+  run bash -c "source \"$FIX_COMMON\"; rm -rf \"$SNAPSHOT_DIR\"; fix_rollback \"$FIX_REPO_ROOT/test.txt\" 2>&1"
   [ "$status" -eq 0 ]
+  [[ "$output" == *"no snapshot for"* ]]
 }
 
 @test "fix-rollback.sh --list runs" {
