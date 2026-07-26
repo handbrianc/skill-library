@@ -139,3 +139,48 @@ All lint violations (source + test) are tracked under the `LINT_ERRORS` metric i
 
 - Linter configured and clean (0 violations on source AND test) → +2 bonus
 - Type checker configured and passing → +1 bonus
+
+---
+
+## ⚠️ Known Failure Modes
+
+### scan-linters.sh may not detect shellcheck/markdownlint
+
+The `scan-linters.sh` script auto-detects ESLint, Ruff, flake8, etc. but may NOT detect
+shellcheck or markdownlint, which are the primary linters for bash/markdown repos.
+
+**Fallback:** If `scan-linters.sh` returns empty or produces no output, run linters directly:
+
+```bash
+# Shellcheck all bash scripts
+shellcheck --severity=warning $(find . -name '*.sh' -type f)
+
+# Markdownlint on skill files
+markdownlint 'skills/*/SKILL.md' --config .markdownlint.json
+```
+
+### Shellcheck config may mask violations
+
+The `.shellcheckrc` file disables specific rules (SC1091, SC2086, SC2012, SC2001, SC2126).
+Some of these may be covering up real issues.
+
+**Mitigation:** Run shellcheck WITH and WITHOUT the config to detect masked violations:
+
+```bash
+# With config (normal run)
+shellcheck --severity=warning file.sh
+
+# Without config (detects masked violations)
+shellcheck --norc --severity=warning file.sh
+
+# Report any NEW violations that appear in the --norc run as separate LOW-severity findings
+```
+
+### scan-complexity.sh may not flag bash-specific patterns
+
+The complexity scanner targets TypeScript/JavaScript/Python. For bash repos, also check:
+
+```bash
+# Count functions per file as a proxy for complexity
+grep -c '^[[:space:]]*[a-zA-Z_][a-zA-Z0-9_]*()' *.sh | sort -t: -k2 -rn | head -5
+```

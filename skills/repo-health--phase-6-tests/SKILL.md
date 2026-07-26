@@ -85,4 +85,33 @@ All test failures are tracked under the `FAILED_TESTS` metric in the Phase 10 ex
 
 ```bash
 ./skills/repo-health/scripts/find-uncovered.sh /tmp/coverage/
-```text
+```
+
+---
+
+## ⚠️ Known Failure Modes
+
+### parse-test-results.sh may auto-detect wrong framework
+
+The `parse-test-results.sh` script attempts to auto-detect the test framework from test
+output. For bash-only repos (bats), it may fail with "Couldn't auto-detect framework."
+
+**Fallback:** Manually parse the test runner output:
+
+```bash
+# Run bats tests directly
+bash tests/run-tests.sh
+EXIT_CODE=$?
+echo "EXIT_CODE: $EXIT_CODE"
+echo "PASSED: $(grep -c '^ok' /tmp/test-output.txt 2>/dev/null || echo 0)"
+echo "FAILED: $(grep -c '^not ok' /tmp/test-output.txt 2>/dev/null || echo 0)"
+```
+
+### scan-tests.sh sub-scripts may not exist
+
+The `scan-tests.sh` script dispatches to sub-scripts (`scan-tests-presence.sh`,
+`scan-tests-coverage.sh`, `scan-tests-parse.sh`, `scan-tests-slow.sh`). If any of these
+are missing, that step silently produces no output.
+
+**Mitigation:** After running `scan-tests.sh`, verify each step produced output. If a
+step is empty, run the corresponding check directly (e.g., `ls tests/` for presence).text

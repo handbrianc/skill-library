@@ -42,3 +42,43 @@ All CRITICAL SBOM/CVE findings MUST flow into the remediation loop (Phase 10). D
 | Artistic-2.0 | LOW | Mostly permissive |
 | MIT/BSD/ISC | NONE | Permissive |
 | Apache-2.0 | NONE | Permissive, includes patent grant |
+
+---
+
+## ⚠️ Known Failure Modes
+
+### syft may not be installed
+
+The `scan-sbom.sh` script depends on `syft` for SBOM generation. If `syft` is not
+available (Phase 0 check shows `TOOL_MISSING: syft`), the entire scan-sbom.sh run
+produces no useful output.
+
+**Fallback — Manual dependency inventory:** When syft is missing, do not run scan-sbom.sh.
+Instead, manually inventory dependencies:
+
+```bash
+# Find all package manifests
+echo "=== MANUAL DEPENDENCY INVENTORY ==="
+find . -name 'package.json' -not -path '*/node_modules/*' -maxdepth 3
+find . -name 'requirements.txt' -not -path '*/node_modules/*' -maxdepth 3
+find . -name 'Cargo.toml' -not -path '*/target/*' -maxdepth 3
+find . -name 'go.mod' -not -path '*/vendor/*' -maxdepth 3
+find . -name 'Gemfile' -maxdepth 3
+find . -name 'Pipfile' -maxdepth 3
+
+# For each found manifest, extract dependency names and versions
+# Report: "No package manager at root — SBOM N/A" if none found
+```
+
+### scan-licenses.sh also depends on SBOM output
+
+The `scan-licenses.sh` script reads SBOM output to check license compliance. If the SBOM
+step was skipped (no syft), license compliance must also be done manually:
+
+```bash
+# Manual license check for root project
+head -5 LICENSE 2>/dev/null || echo "No LICENSE file found"
+
+# Check for GPL/AGPL in any dependency documentation
+grep -rl 'GPL' --include='LICENSE*' --include='LICENCE*' . 2>/dev/null | head -5
+```
