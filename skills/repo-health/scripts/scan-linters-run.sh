@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -euo pipefail
 #
 # scan-linters-run.sh
 # Run detected linters against the project and output violation counts.
