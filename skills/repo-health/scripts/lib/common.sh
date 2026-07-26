@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 # lib/common.sh — Shared utilities for repo-health scripts
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC2034 # used by consumers that source this library
