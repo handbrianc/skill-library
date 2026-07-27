@@ -64,7 +64,7 @@ install_syft() {
 install_grype() {
   if ! tool_missing grype; then ok "grype already installed"; return 0; fi
   case "$OS" in
-    linux) curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin 2>&1 | tail -1 ;;
+    linux) as_root bash -c "curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin" 2>&1 | tail -1 ;;
     macos) as_root brew install grype ;;
   esac
 }
@@ -177,7 +177,7 @@ install_jscpd() {
 install_golangci_lint() {
   if ! tool_missing golangci-lint; then ok "golangci-lint already installed"; return 0; fi
   case "$OS" in
-    linux) curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b /usr/local/bin 2>&1 | tail -1 ;;
+    linux) as_root bash -c "curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b /usr/local/bin" 2>&1 | tail -1 ;;
     macos) as_root brew install golangci-lint ;;
   esac
 }
