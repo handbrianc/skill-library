@@ -61,15 +61,19 @@ dispatch() {
   fi
 
   local START
-  START=$(date +%s.%N)
+  START=$(python3 -c "import time; print(time.time())" 2>/dev/null || date +%s 2>/dev/null || echo "0")
   if bash "$SCRIPT" "$@" 2>&1 | tee "$ARTIFACT_DIR/$OUTFILE"; then
     LOG "$LABEL" "Done."
   else
     LOG "$LABEL" "Warning: exited non-zero."
   fi
   local ELAPSED
-  ELAPSED=$(echo "$(date +%s.%N) - $START" | bc 2>/dev/null || echo "N/A")
-  LOG "$LABEL" "Elapsed: ${ELAPSED}s"
+  if command -v python3 &>/dev/null; then
+    ELAPSED=$(python3 -c "import time; e=time.time() - $START; print(f'{e:.2f}s')" 2>/dev/null || echo "N/A")
+  else
+    ELAPSED="N/A"
+  fi
+  LOG "$LABEL" "Elapsed: ${ELAPSED}"
 }
 
 SCRIPT_BASE="$(dirname "$0")"
