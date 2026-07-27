@@ -56,7 +56,7 @@ install_semgrep() {
 install_syft() {
   if ! tool_missing syft; then ok "syft already installed"; return 0; fi
   case "$OS" in
-    linux) curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin 2>&1 | tail -1 ;;
+    linux) as_root bash -c "curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin" 2>&1 | tail -1 ;;
     macos) as_root brew install syft ;;
   esac
 }
