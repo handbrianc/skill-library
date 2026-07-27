@@ -189,9 +189,7 @@ node_modules/
 
 .omo/
 !.omo/project-memory.md
-.claude/                  # Claude Code workspace directory
-.claude/projects/         # Claude project memories
-.claude/sessions/         # Session transcripts
+.claude/                  # Claude Code workspace directory (covers all subdirs)
 claudecode_history        # Legacy claude code history
 
 # Workspace-specific state
