@@ -34,11 +34,25 @@ then proceed. Only abort if core utilities are irrecoverably missing.
 ## Run
 
 ```bash
+# Step 0.0 — Ensure GNU toolchain on macOS (auto-setup)
+# If on macOS, the install-missing-tools.sh will detect and install GNU grep +
+# coreutils via Homebrew if not present. This is required for grep -P and realpath -m.
+./skills/repo-health/scripts/install-missing-tools.sh gnu-grep coreutils gnu-date 2>&1 | tail -5
+
+# Export GNU tools PATH (macOS Homebrew installs them with 'g' prefix by default;
+# gnubin wrappers provide standard names)
+if command -v ggrep &>/dev/null && ! echo "test" | grep -P 't' &>/dev/null 2>&1; then
+  export PATH="$(brew --prefix 2>/dev/null)/opt/grep/libexec/gnubin:$PATH"
+fi
+if command -v grealpath &>/dev/null && ! realpath -m . &>/dev/null 2>&1; then
+  export PATH="$(brew --prefix 2>/dev/null)/opt/coreutils/libexec/gnubin:$PATH"
+fi
+
 # Step 0.1 — Check what's present
 ./skills/repo-health/scripts/scan-environment.sh --check-tools
 ```
 
-**If any core utility prints `MISSING/BROKEN`, or any helper script prints `SKILL_ERR` / `SKILL_MISSING`:**
+**If any core utility prints `MISSING/BROKEN`** (bash, node, npm, npx, git, jq, find):
 
 - Collect all missing/malformed core items into a single block
 - **ABORT — do not proceed to PHASE 1**
@@ -54,6 +68,16 @@ The following tools are missing or broken. Install them before re-running:
 | bash | MISSING | (system package manager) |
 | ...  | ...    | ...             |
 ```
+
+**If `grep -P` or `realpath -m` are the ONLY missing items** (macOS GNU toolchain):
+
+- Do NOT abort. These are NOT core utilities — they are platform-specific conveniences.
+- Run auto-install if not already attempted:
+  ```bash
+  ./skills/repo-health/scripts/install-missing-tools.sh gnu-grep coreutils gnu-date
+  ```
+- If install succeeds, continue. If it fails, proceed to Phase 1 anyway — scanners
+  will use fallback detection for `grep -P` and `realpath -m`.
 
 **If only optional tools are missing** (MISSING (optional)):
 
