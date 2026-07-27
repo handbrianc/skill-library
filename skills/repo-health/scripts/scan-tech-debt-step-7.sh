@@ -21,46 +21,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/common.sh"
 
 # ---- Config ---------------------------------------------------------------
 SRC_DIR="${1:-src}"
-
-# Colours for headings (disabled if not a terminal)
-if [[ -t 1 ]]; then
-  BOLD='\033[1m'
-  GREEN='\033[0;32m'
-  YELLOW='\033[0;33m'
-  RED='\033[0;31m'
-  CYAN='\033[0;36m'
-  NC='\033[0m'
-else
-  BOLD='' GREEN='' YELLOW='' RED='' CYAN='' NC=''
-fi
-
-section()   { echo -e "\n${BOLD}${CYAN}====${NC} ${BOLD}$*${NC}${BOLD}${CYAN} ====${NC}"; }
-sub()       { echo -e "  ${GREEN}$*${NC}"; }
-warn()      { echo -e "  ${YELLOW}$*${NC}"; }
-err()       { echo -e "  ${RED}$*${NC}" >&2; }
-kv()        { echo "  $1: $2"; }
-
-# ---- Helpers --------------------------------------------------------------
-
-# Count debt markers of a given keyword (case-insensitive grep)
-count_markers() {
-  local marker="$1"
-  grep -rni "$marker" "$SRC_DIR" \
-    --include='*.js' --include='*.ts' --include='*.tsx' --include='*.jsx' \
-    --include='*.py' --include='*.go' --include='*.rs' --include='*.java' \
-    --include='*.rb' --include='*.php' --include='*.cs' --include='*.kt' \
-    --include='*.swift' --include='*.dart' \
-    2>/dev/null \
-    | grep -v 'node_modules\|\.git\|/test/\|/tests/\|/spec/' \
-    | grep -vic 'nocheck\|eslint-disable\|pragma' \
-    | wc -l
-}
-
-# Safe bc arithmetic (returns 0 or value)
-calc() {
-  local expr="$1"
-  echo "$expr" | bc 2>/dev/null || echo "0"
-}
+TEST_OUTPUT="${2:-/tmp/test-output.txt}"
 
 # Trap to ensure exit 0 always
 trap 'exit 0' EXIT
@@ -73,13 +34,13 @@ trap '' PIPE
 section "STEP 3.7 — Technical Debt Profile"
 
 # Re-count markers for the report table
-todo_cnt=$(count_markers "TODO")
-fixme_cnt=$(count_markers "FIXME")
-hack_cnt=$(count_markers "HACK")
-xxx_cnt=$(count_markers "XXX")
-workaround_cnt=$(count_markers "WORKAROUND")
-temp_cnt=$(count_markers "TEMPORARY")
-kludge_cnt=$(count_markers "KLUDGE")
+todo_cnt=$(count_markers "TODO" "$SRC_DIR")
+fixme_cnt=$(count_markers "FIXME" "$SRC_DIR")
+hack_cnt=$(count_markers "HACK" "$SRC_DIR")
+xxx_cnt=$(count_markers "XXX" "$SRC_DIR")
+workaround_cnt=$(count_markers "WORKAROUND" "$SRC_DIR")
+temp_cnt=$(count_markers "TEMPORARY" "$SRC_DIR")
+kludge_cnt=$(count_markers "KLUDGE" "$SRC_DIR")
 grand_total=$((todo_cnt + fixme_cnt + hack_cnt + xxx_cnt + workaround_cnt + temp_cnt + kludge_cnt))
 
 # Re-derive total_lines for density (mirrors step-1)

@@ -50,3 +50,49 @@ or lower. This finding MUST be addressed in the remediation loop (Phase 10).
 ```
 
 Any committed secret = **CRITICAL** — escalate to immediate remediation.
+
+---
+
+## ⚠️ Known Failure Modes
+
+### semgrep registry rules may fail to resolve
+
+The `scan-security.sh` script uses `semgrep --config=auto` which downloads rules from the
+Semgrep Registry. This may fail due to:
+
+- Network restrictions (air-gapped environments, corporate proxies)
+- Rate limiting from the Semgrep registry
+- Outdated semgrep CLI version
+
+**Fallback:** If `semgrep --config=auto` fails, use targeted grep patterns instead:
+
+```bash
+# Command injection
+grep -rnP 'eval\s*\(' --include='*.sh' --include='*.py' .
+grep -rnP 'exec\s*\$\(' --include='*.sh' .
+
+# Hardcoded secrets
+grep -rnP '(password|secret|api_key|token)\s*[:=]\s*["'"'"']' --include='*.{sh,py,js,ts}' . | grep -v '\.env\.'
+
+# Unsafe temp files
+grep -rnP '/tmp/' --include='*.sh' . | grep -v 'mktemp' | grep -v 'example'
+
+# eval with variable interpolation
+grep -rnP 'eval\s+"?\$' --include='*.sh' .
+```
+
+### scan-security.sh --credential-exposure may miss secrets on shallow clones
+
+The credential exposure check uses `git log --all --full-history`. On shallow clones
+(common in CI), this may return no results even if secrets exist in full history.
+
+**Mitigation:** Also check the working tree for credentials:
+
+```bash
+# Check current HEAD for .env files
+find . -name '.env' -not -path './.env.example' | head -5
+
+# Check for API keys in current files
+grep -rnP 'AKIA[0-9A-Z]{16}' --include='*' . 2>/dev/null | head -10
+grep -rnP '-----BEGIN (RSA |EC |)PRIVATE KEY-----' --include='*' . 2>/dev/null | head -10
+```

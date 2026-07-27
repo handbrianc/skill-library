@@ -117,12 +117,15 @@ check_tools_phase() {
     echo "TOOL_OK: go $(go env GOVERSION 2>/dev/null || go version | awk '{print $3}')"
   else
     echo "TOOL_MISSING: go (optional)"
+    echo "INSTALL_CMD: curl -sL https://go.dev/dl/go1.22.5.linux-amd64.tar.gz | sudo tar -C /usr/local -xzf - && export PATH=\$PATH:/usr/local/go/bin"
+    echo "INSTALL_CMD: brew install go (macOS)"
   fi
 
   if command -v cargo >/dev/null 2>&1 && cargo --version >/dev/null 2>&1; then
     echo "TOOL_OK: cargo $(cargo --version 2>/dev/null)"
   else
     echo "TOOL_MISSING: cargo (optional)"
+    echo "INSTALL_CMD: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
   fi
 
   echo ""
@@ -137,6 +140,7 @@ check_tools_phase() {
     detect-dead-code.sh \
     find-duplicates.sh \
     find-uncovered.sh \
+    install-missing-tools.sh \
     parse-test-results.sh \
     run-scan-suite.sh \
     scan-12factor.sh \
@@ -174,48 +178,61 @@ check_tools_phase() {
     echo "TOOL_OK: vitest $(vitest --version 2>/dev/null)"
   else
     echo "TOOL_MISSING: vitest (optional)"
+    echo "INSTALL_CMD: npm install -g vitest"
+    echo "INSTALL_CMD: npm install --save-dev vitest (project-local)"
   fi
 
   if command -v jest >/dev/null 2>&1; then
     echo "TOOL_OK: jest $(jest --version 2>/dev/null)"
   else
     echo "TOOL_MISSING: jest (optional)"
+    echo "INSTALL_CMD: npm install -g jest"
+    echo "INSTALL_CMD: npm install --save-dev jest (project-local)"
   fi
 
   if command -v pytest >/dev/null 2>&1; then
     echo "TOOL_OK: pytest $(pytest --version 2>/dev/null | head -1)"
   else
     echo "TOOL_MISSING: pytest (optional)"
+    echo "INSTALL_CMD: pip3 install pytest"
   fi
 
   if command -v eslint >/dev/null 2>&1; then
     echo "TOOL_OK: eslint $(eslint --version 2>/dev/null)"
   else
     echo "TOOL_MISSING: eslint (optional)"
+    echo "INSTALL_CMD: npm install -g eslint"
   fi
 
   if command -v jscpd >/dev/null 2>&1; then
     echo "TOOL_OK: jscpd $(jscpd --version 2>/dev/null)"
   else
     echo "TOOL_MISSING: jscpd (optional)"
+    echo "INSTALL_CMD: npm install -g jscpd"
   fi
 
   if command -v semgrep >/dev/null 2>&1; then
     echo "TOOL_OK: semgrep $(semgrep --version 2>/dev/null)"
   else
     echo "TOOL_MISSING: semgrep (optional)"
+    echo "INSTALL_CMD: pip3 install semgrep"
+    echo "INSTALL_CMD: brew install semgrep (macOS)"
   fi
 
   if command -v syft >/dev/null 2>&1; then
     echo "TOOL_OK: syft $(syft version 2>/dev/null | head -1)"
   else
     echo "TOOL_MISSING: syft (optional)"
+    echo "INSTALL_CMD: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin"
+    echo "INSTALL_CMD: brew install syft (macOS)"
   fi
 
   if command -v grype >/dev/null 2>&1; then
     echo "TOOL_OK: grype $(grype version 2>/dev/null | head -1)"
   else
     echo "TOOL_MISSING: grype (optional)"
+    echo "INSTALL_CMD: curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin"
+    echo "INSTALL_CMD: brew install grype (macOS)"
   fi
 
   # GitNexus (via PATH)
@@ -223,6 +240,7 @@ check_tools_phase() {
     echo "TOOL_OK: gitnexus (available via PATH)"
   else
     echo "TOOL_MISSING: gitnexus (PATH)"
+    echo "INSTALL_CMD: npm install -g gitnexus"
   fi
 
   # GitNexus (via npx local)
@@ -230,6 +248,7 @@ check_tools_phase() {
     echo "TOOL_OK: gitnexus (available via npx local)"
   else
     echo "TOOL_MISSING: gitnexus (npx local)"
+    echo "INSTALL_CMD: npm install -g gitnexus"
   fi
 
   echo ""

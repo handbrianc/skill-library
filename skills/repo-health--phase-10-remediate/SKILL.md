@@ -31,6 +31,7 @@ RECEIVE FINDINGS ──► 10.2 CLASSIFY ──► 10.3 FIX ──► 10.4 RE-AU
 - If a fix introduces regressions, use `fix-rollback.sh --restore` and skip it
 - Leave all changes uncommitted for user review
 - Snapshot files before modifying (`source lib/fix-common.sh; fix_snapshot file...`)
+- **Run `git status` before starting AND after completing** — verify no unintended file changes (deleted files, detached HEAD, untracked files appearing unexpectedly)
 - **Run `lsp_diagnostics` on every changed file** — fix ALL errors and warnings
 - **Run linters on BOTH source and test code** — fix ALL violations
 - **Run the test suite after every fix round** — fix ALL failures
@@ -133,9 +134,28 @@ For EACH fix applied, you MUST run the full verification chain. A fix is NOT com
 
 If ANY step in the chain fails: fix the issue, then re-run from step 3 (LSP). Do NOT skip steps.
 
+### Parallelization Guidance
+
+When applying multiple fixes, group INDEPENDENT fixes and apply them simultaneously:
+
+| Independent Group | Files | Can Run Together? |
+|------------------|-------|-------------------|
+| Markdownlint fixes on doc A | `AGENTS.md` | YES — no shared dependencies |
+| Shellcheck fixes on script B | `install-missing-tools.sh` | YES — no shared dependencies |
+| Temp file fixes on script C | `scan-sbom.sh` | YES — no shared dependencies |
+
+**Independent means:** different files, no shared state, no ordering requirement. Apply
+these in a single batch pass rather than one-at-a-time.
+
+**DO NOT parallelize if:** fixes touch the same file, or one fix's output is input to
+another (e.g., extracting a shared preamble THEN updating callers).
+
 ### Safety Rules
 
 - Never commit anything
+- **Never run any git command** (add, rm, mv, reset, checkout, stash, rebase, merge, branch)
+- **Never modify .gitignore**
+- **If `git status` shows unexpected changes** (deleted files, detached HEAD) — STOP and report immediately
 - Never delete failing tests to make verification pass
 - Never use `as any`, `@ts-ignore`, `@ts-expect-error`
 - Never suppress LSP diagnostics with ignore comments
@@ -147,7 +167,7 @@ If ANY step in the chain fails: fix the issue, then re-run from step 3 (LSP). Do
 
 After ALL actionable findings in the current round are processed:
 
-1. **Re-index**: `npx gitnexus analyze --force`
+1. **Re-index**: `npx gitnexus analyze --force --skip-agents-md`
 2. **Run test suite**: Confirm `FAILED=0`, `ERRORS=0`, exit code 0
 3. **Run linters on BOTH source and test code**: Confirm `LINT_ERRORS=0`
 4. **Run `lsp_diagnostics` on all changed files**: Confirm `LSP_ERRORS=0` (0 errors AND 0 warnings)

@@ -23,6 +23,7 @@ skills/repo-health/scripts/
 ├── fix-gitnexus-stats.sh         # (FIX) Sync GitNexus stats across docs
 ├── fix-lint.sh                   # (FIX) Auto-fix lint violations
 ├── fix-rollback.sh               # (FIX) Snapshot rollback + regression detection
+├── install-missing-tools.sh      # (INSTALL) OS-agnostic tool installer
 ├── parse-test-results.sh         # Test output parser
 ├── run-scan-suite.sh             # Master script — runs all deterministically
 ├── scan-12factor.sh              # Twelve-Factor App compliance checks
@@ -134,5 +135,20 @@ If ALL three are false → classify as **ACTIONABLE** (even though LOW severity)
 
 ### Exit Condition
 
-The iterative loop exits when ALL findings in the action plan are classified as **NITPICK** (i.e., CRITICAL=0, HIGH=0, MEDIUM=0, ACTIONABLE(LOW)=0).
+The iterative loop exits when ALL findings in the action plan are classified as **NITPICK**:
+
+```text
+CRITICAL=0 AND HIGH=0 AND MEDIUM=0 AND FAILED_TESTS=0 AND LINT_ERRORS=0 AND LSP_ERRORS=0 AND ACTIONABLE(LOW)=0
+```
+
+|Metric|Requirement|Source|
+|------|-----------|------|
+|CRITICAL|= 0|All phases|
+|HIGH|= 0|All phases|
+|MEDIUM|= 0|All phases|
+|FAILED_TESTS|= 0|Test suite run (FAILED + ERRORS)|
+|LINT_ERRORS|= 0|Linters on src/ + test/ dirs|
+|LSP_ERRORS|= 0|`lsp_diagnostics` on changed files|
+|ACTIONABLE(LOW)|= 0|NITPICK-classified LOW findings remain OK|
+
 ```text

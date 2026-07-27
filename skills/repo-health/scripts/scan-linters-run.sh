@@ -11,7 +11,7 @@
 #   /tmp/eslint-violations.txt, /tmp/ruff-violations.txt, etc.
 #
 
-set -uo pipefail
+set -euo pipefail
 
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/common.sh"
 set +e
