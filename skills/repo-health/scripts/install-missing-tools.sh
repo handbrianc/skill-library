@@ -151,6 +151,9 @@ INSTALLERS=(
   [dotnet]=install_dotnet
   [ktlint]=install_ktlint
   [swiftlint]=install_swiftlint
+  [gnu-grep]=install_gnu_grep
+  [coreutils]=install_coreutils
+  [gnu-date]=install_gnu_date
 )
 
 # ---- META: Tool Categories & Descriptions -----------------------------------
@@ -250,12 +253,25 @@ TOOL_CATEGORY[swiftlint]="linter"
 TOOL_DESC[swiftlint]="Swift linter"
 TOOL_CMD[swiftlint]="swiftlint --version"
 
+TOOL_CATEGORY[gnu-grep]="utility"
+TOOL_DESC[gnu-grep]="GNU grep with PCRE (-P) support (macOS: brew install grep)"
+TOOL_CMD[gnu-grep]="grep --version"
+
+TOOL_CATEGORY[coreutils]="utility"
+TOOL_DESC[coreutils]="GNU coreutils (realpath -m) (macOS: brew install coreutils)"
+TOOL_CMD[coreutils]="realpath --version"
+
+TOOL_CATEGORY[gnu-date]="utility"
+TOOL_DESC[gnu-date]="GNU date with %N support (macOS: brew install coreutils)"
+TOOL_CMD[gnu-date]="date --version"
+
 ALL_TOOLS=(
   go cargo           # runtimes
   semgrep syft grype # security/sbom
   flake8 black       # python
   prettier typescript vitest jest ts-prune npm-check-updates jscpd  # node
   bc zip xmlstarlet  # system
+  gnu-grep coreutils gnu-date # GNU toolchain (macOS)
   golangci-lint rubocop checkstyle dotnet ktlint swiftlint # language-specific
 )
 
@@ -356,9 +372,12 @@ SKIPPED=0
 FAILED=0
 
 for target in "${TARGETS[@]}"; do
-  # Resolve bin name — typescript -> tsc
+  # Resolve bin name — some tools install under different binary names
   bin_name="$target"
   [[ "$target" == "typescript" ]] && bin_name="tsc"
+  [[ "$target" == "gnu-grep" ]] && bin_name="ggrep"
+  [[ "$target" == "coreutils" ]] && bin_name="grealpath"
+  [[ "$target" == "gnu-date" ]] && bin_name="gdate"
 
   if command -v "$bin_name" &>/dev/null; then
     ok "$target already installed"
