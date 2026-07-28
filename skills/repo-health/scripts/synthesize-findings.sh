@@ -73,6 +73,7 @@ NORMALIZED=$(echo "$COMBINED" | jq '
   map(
     .normalized = ((.description // "") | ascii_downcase | gsub("[^a-z0-9]"; ""))
   )
+  | sort_by(.normalized)
 ')
 
 # ==== Deduplicate ====
