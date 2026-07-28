@@ -22,6 +22,7 @@ set -euo pipefail
 
 # ---- Paths & Config ---------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck disable=SC2034 # used by sourced lib/installers.sh
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 
 DRY_RUN=false
@@ -76,6 +77,7 @@ detect_os() {
       OS="macos"
       if command -v brew &>/dev/null; then
         PKG_MANAGER="brew"
+        # shellcheck disable=SC2034 # used by sourced lib/installers.sh
         PKG_INSTALL="brew install"
       else
         warn "Homebrew not found. Install from https://brew.sh"
@@ -159,111 +161,84 @@ INSTALLERS=(
 # ---- META: Tool Categories & Descriptions -----------------------------------
 declare -A TOOL_CATEGORY
 declare -A TOOL_DESC
-declare -A TOOL_CMD
 
 TOOL_CATEGORY[go]="runtime"
 TOOL_DESC[go]="Go programming language"
-TOOL_CMD[go]="go version"
 
 TOOL_CATEGORY[cargo]="runtime"
 TOOL_DESC[cargo]="Rust package manager + compiler"
-TOOL_CMD[cargo]="cargo --version"
 
 TOOL_CATEGORY[semgrep]="security"
 TOOL_DESC[semgrep]="Static analysis security scanner (SAST)"
-TOOL_CMD[semgrep]="semgrep --version"
 
 TOOL_CATEGORY[syft]="sbom"
 TOOL_DESC[syft]="SBOM generator (Anchore)"
-TOOL_CMD[syft]="syft version"
 
 TOOL_CATEGORY[grype]="security"
 TOOL_DESC[grype]="Vulnerability scanner (Anchore)"
-TOOL_CMD[grype]="grype version"
 
 TOOL_CATEGORY[flake8]="linter"
 TOOL_DESC[flake8]="Python linter"
-TOOL_CMD[flake8]="flake8 --version"
 
 TOOL_CATEGORY[black]="formatter"
 TOOL_DESC[black]="Python formatter"
-TOOL_CMD[black]="black --version"
 
 TOOL_CATEGORY[prettier]="formatter"
 TOOL_DESC[prettier]="Multi-language code formatter"
-TOOL_CMD[prettier]="prettier --version"
 
 TOOL_CATEGORY[typescript]="linter"
 TOOL_DESC[typescript]="TypeScript compiler (tsc)"
-TOOL_CMD[typescript]="tsc --version"
 
 TOOL_CATEGORY[vitest]="test"
 TOOL_DESC[vitest]="JavaScript/TypeScript test runner (Vite-based)"
-TOOL_CMD[vitest]="vitest --version"
 
 TOOL_CATEGORY[jest]="test"
 TOOL_DESC[jest]="JavaScript test runner"
-TOOL_CMD[jest]="jest --version"
 
 TOOL_CATEGORY[npm-check-updates]="utility"
 TOOL_DESC[npm-check-updates]="npm dependency version checker"
-TOOL_CMD[npm-check-updates]="npm-check-updates --version"
 
 TOOL_CATEGORY[ts-prune]="linter"
 TOOL_DESC[ts-prune]="TypeScript unused export detector"
-TOOL_CMD[ts-prune]="ts-prune --version"
 
 TOOL_CATEGORY[bc]="utility"
 TOOL_DESC[bc]="Arbitrary precision calculator"
-TOOL_CMD[bc]="bc --version"
 
 TOOL_CATEGORY[zip]="utility"
 TOOL_DESC[zip]="Compression utility"
-TOOL_CMD[zip]="zip --version"
 
 TOOL_CATEGORY[xmlstarlet]="utility"
 TOOL_DESC[xmlstarlet]="XML/coverage report parser"
-TOOL_CMD[xmlstarlet]="xmlstarlet --version"
 
 TOOL_CATEGORY[jscpd]="utility"
 TOOL_DESC[jscpd]="Copy-paste detection"
-TOOL_CMD[jscpd]="jscpd --version"
 
 TOOL_CATEGORY[golangci-lint]="linter"
 TOOL_DESC[golangci-lint]="Go linter aggregator"
-TOOL_CMD[golangci-lint]="golangci-lint --version"
 
 TOOL_CATEGORY[rubocop]="linter"
 TOOL_DESC[rubocop]="Ruby linter"
-TOOL_CMD[rubocop]="rubocop --version"
 
 TOOL_CATEGORY[checkstyle]="linter"
 TOOL_DESC[checkstyle]="Java linter"
-TOOL_CMD[checkstyle]="checkstyle --version"
 
 TOOL_CATEGORY[dotnet]="runtime"
 TOOL_DESC[dotnet]=".NET SDK"
-TOOL_CMD[dotnet]="dotnet --version"
 
 TOOL_CATEGORY[ktlint]="linter"
 TOOL_DESC[ktlint]="Kotlin linter"
-TOOL_CMD[ktlint]="ktlint --version"
 
 TOOL_CATEGORY[swiftlint]="linter"
 TOOL_DESC[swiftlint]="Swift linter"
-TOOL_CMD[swiftlint]="swiftlint --version"
 
 TOOL_CATEGORY[gnu-grep]="utility"
 TOOL_DESC[gnu-grep]="GNU grep with PCRE (-P) support (macOS: brew install grep)"
-TOOL_CMD[gnu-grep]="grep --version"
 
 TOOL_CATEGORY[coreutils]="utility"
 TOOL_DESC[coreutils]="GNU coreutils (realpath -m) (macOS: brew install coreutils)"
-TOOL_CMD[coreutils]="realpath --version"
 
 TOOL_CATEGORY[gnu-date]="utility"
 TOOL_DESC[gnu-date]="GNU date with %N support (macOS: brew install coreutils)"
-TOOL_CMD[gnu-date]="date --version"
 
 ALL_TOOLS=(
   go cargo           # runtimes
