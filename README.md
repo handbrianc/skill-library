@@ -44,7 +44,7 @@ callable by the orchestrator. Phases:
 | 9 | 12-Factor Compliance | `repo-health--phase-9-12factor` |
 | 10 | Remediation Loop | `repo-health--phase-10-remediate` |
 
-Also ships 24 Bash helper scripts under `scripts/` (detector, scanner, auditor,
+Also ships Bash helper scripts under `scripts/` (detector, scanner, auditor,
 classifier, and synthesizer variants) used by the subskills, plus:
 
 - **`compute-grade.sh`** — Automated grade computation with NITPICK awareness

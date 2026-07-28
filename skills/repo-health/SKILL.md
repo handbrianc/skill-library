@@ -302,7 +302,20 @@ Before passing findings to Phase 10, run the automated synthesis pipeline:
 
 ```bash
 # Step 4.5.1 — Write composite audit output to a temp file
-echo 'COMPOSITE_AUDIT_JSON' > /tmp/repo-health-raw-findings.json
+# Replace the heredoc body below with the actual findings JSON collected from all phases
+cat > /tmp/repo-health-raw-findings.json << 'TEMPLATE'
+{
+  "findings": [
+    { "phase": 2, "severity": "HIGH", "description": "Example finding", "evidence": "..." }
+  ],
+  "metrics": {
+    "FAILED_TESTS": 0,
+    "LINT_ERRORS": 0,
+    "LSP_ERRORS": 0,
+    "COVERAGE": 0
+  }
+}
+TEMPLATE
 
 # Step 4.5.2 — Run synthesis: dedup, resolve conflicts, classify, compute grade
 ./skills/repo-health/scripts/synthesize-findings.sh \

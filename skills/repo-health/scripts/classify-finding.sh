@@ -122,30 +122,30 @@ CLASSIFIED=$(echo "$JSON" | jq \
     end
     # Step 2: NITPICK test for LOW findings
     | if .severity == "LOW" and .classification == "ACTIONABLE" and
-         (.description | test("(?i)formatting|whitespace|trailing space|missing blank|minor doc|cosmetic|naming preference|spelling|typo")) then
+         ((.description // "") | test("(?i)formatting|whitespace|trailing space|missing blank|minor doc|cosmetic|naming preference|spelling|typo")) then
       .classification = "NITPICK"
     | .classificationReason = "cosmetic"
     elif .severity == "LOW" and .classification == "ACTIONABLE" and
-         (.description | test("(?i)low-confidence|vulture|negligible|marginal|insignificant|trivial")) then
+         ((.description // "") | test("(?i)low-confidence|vulture|negligible|marginal|insignificant|trivial")) then
       .classification = "NITPICK"
     | .classificationReason = "negligible-impact"
     elif .severity == "LOW" and .classification == "ACTIONABLE" and
-         (.description | test("(?i)TODO marker|development marker|manual judgment|requires user|requires manual")) then
+         ((.description // "") | test("(?i)TODO marker|development marker|manual judgment|requires user|requires manual")) then
       .classification = "NITPICK"
     | .classificationReason = "quick-manual-judgment"
     elif .severity == "LOW" and .classification == "ACTIONABLE" and
-         (.description | test("(?i)NOASSERTION|license.*unknown|lockfile|pip-compile|lockfile strategy")) then
+         ((.description // "") | test("(?i)NOASSERTION|license.*unknown|lockfile|pip-compile|lockfile strategy")) then
       .classification = "NITPICK"
     | .classificationReason = "quick-manual-judgment"
     elif .severity == "LOW" and .classification == "ACTIONABLE" and
-         (.description | test("(?i)architectural debt|god module|hotspot|high import count|change frequency")) then
+         ((.description // "") | test("(?i)architectural debt|god module|hotspot|high import count|change frequency")) then
       .classification = "NITPICK"
     | .classificationReason = "quick-manual-judgment"
     else
       .
     end
     # Step 3: Non-negotiable override — always ACTIONABLE
-    | if (.description | test("(?i)" + $nn_pattern)) then
+    | if ((.description // "") | test("(?i)" + $nn_pattern)) then
       .classification = "ACTIONABLE"
     | .classificationReason = "non-negotiable-" + (.severity | ascii_downcase)
     else

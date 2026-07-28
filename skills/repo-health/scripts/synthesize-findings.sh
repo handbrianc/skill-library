@@ -61,7 +61,7 @@ if [[ ${#INPUT_FILES[@]} -gt 0 ]]; then
   done
 elif [[ ! -t 0 ]]; then
   RAW=$(cat)
-  COMBINED=$(echo "$RAW" | jq '[.findings[]] // [.]')
+  COMBINED=$(echo "$RAW" | jq 'if type == "array" then . else (.findings // []) end')
 else
   err "Usage: $0 --input f1.json [--input f2.json ...] or pipe JSON to stdin"
   exit 1
@@ -71,7 +71,7 @@ fi
 # Ensure each finding has a normalized description for dedup matching
 NORMALIZED=$(echo "$COMBINED" | jq '
   map(
-    .normalized = (.description | ascii_downcase | gsub("[^a-z0-9]"; ""))
+    .normalized = ((.description // "") | ascii_downcase | gsub("[^a-z0-9]"; ""))
   )
 ')
 
@@ -130,6 +130,20 @@ for f in "${INPUT_FILES[@]}"; do
     COVERAGE_COUNT=$((COVERAGE_COUNT + 1))
   fi
 done
+
+# If reading from stdin (no --input files), extract metrics from stdin JSON (objects only)
+if [[ ${#INPUT_FILES[@]} -eq 0 && -n "${RAW:-}" ]]; then
+  if echo "$RAW" | jq -e 'type == "object"' > /dev/null 2>&1; then
+    TOTAL_FAILED=$(echo "$RAW" | jq '.metrics.FAILED_TESTS // 0')
+    TOTAL_LINT=$(echo "$RAW" | jq '.metrics.LINT_ERRORS // 0')
+    TOTAL_LSP=$(echo "$RAW" | jq '.metrics.LSP_ERRORS // 0')
+    CV=$(echo "$RAW" | jq '.metrics.COVERAGE // 0')
+    if echo "$CV > 0" | bc 2>/dev/null | grep -q 1; then
+      TOTAL_COVERAGE=$CV
+      COVERAGE_COUNT=1
+    fi
+  fi
+fi
 
 AVG_COVERAGE=0
 if [[ "$COVERAGE_COUNT" -gt 0 ]]; then
