@@ -21,6 +21,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/common.sh"
 
 # ---- Config ---------------------------------------------------------------
 SRC_DIR="${1:-src}"
+# shellcheck disable=SC2034 # accepted as positional arg for interface consistency with other step scripts
 TEST_OUTPUT="${2:-/tmp/test-output.txt}"
 
 # Trap to ensure exit 0 always

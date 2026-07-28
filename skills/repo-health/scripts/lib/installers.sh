@@ -228,3 +228,104 @@ install_swiftlint() {
     warn "swiftlint: install via mint: mint install realm/SwiftLint"
   fi
 }
+
+# ---- GNU toolchain (macOS: brew install grep, coreutils) ----
+
+install_gnu_grep() {
+  # Check if grep -P works first (macOS brew grep installs as ggrep with wrapper)
+  if echo "test" | grep -P 't.st' &>/dev/null 2>&1; then
+    ok "grep -P (PCRE) already available"
+    return 0
+  fi
+  # Check for Homebrew ggrep
+  if command -v ggrep &>/dev/null && echo "test" | ggrep -P 't.st' &>/dev/null 2>&1; then
+    warn "grep -P available as ggrep — add gnubin to PATH: export PATH=\"$(brew --prefix)/opt/grep/libexec/gnubin:\$PATH\""
+    return 0
+  fi
+  case "$PKG_MANAGER" in
+    brew) as_root brew install grep 2>&1 | tail -2 ;;
+    linux)
+      # On modern Linux, default grep IS GNU grep and already supports -P.
+      # If it doesn't work, the system uses a non-GNU build (e.g., BusyBox).
+      # Try pcregrep as alternative, then warn.
+      if command -v pcregrep &>/dev/null; then
+        warn "grep -P not available, but pcregrep is — use pcregrep as fallback"
+        return 0
+      fi
+      warn "grep -P not available on this system — install pcregrep or GNU grep manually"
+      warn "  apt: apt-get install pcregrep   dnf: dnf install pcregrep"
+      return 1
+      ;;
+    *)
+      warn "gnu-grep: install manually; on macOS: brew install grep; Linux: pcregrep"
+      return 1
+      ;;
+  esac
+  # Verify
+  if echo "test" | grep -P 't.st' &>/dev/null 2>&1; then
+    ok "grep -P installed"
+  elif command -v ggrep &>/dev/null && echo "test" | ggrep -P 't.st' &>/dev/null 2>&1; then
+    warn "grep -P available as ggrep — add gnubin to PATH: export PATH=\"$(brew --prefix)/opt/grep/libexec/gnubin:\$PATH\""
+  else
+    err "grep -P still not available after install"
+    return 1
+  fi
+}
+
+install_coreutils() {
+  # Check if realpath -m works
+  if command -v realpath &>/dev/null && realpath -m . &>/dev/null 2>&1; then
+    ok "realpath -m already available"
+    return 0
+  fi
+  # Check for grealpath
+  if command -v grealpath &>/dev/null && grealpath -m . &>/dev/null 2>&1; then
+    warn "realpath -m available as grealpath — add gnubin to PATH: export PATH=\"$(brew --prefix)/opt/coreutils/libexec/gnubin:\$PATH\""
+    return 0
+  fi
+  case "$PKG_MANAGER" in
+    brew) as_root brew install coreutils 2>&1 | tail -2 ;;
+    apt) as_root apt-get install -y -qq coreutils 2>&1 | tail -1 ;;
+    dnf|yum) as_root "$PKG_INSTALL" coreutils 2>&1 | tail -1 ;;
+    apk) as_root apk add -q coreutils 2>&1 | tail -1 ;;
+    zypper) as_root zypper install -y coreutils 2>&1 | tail -1 ;;
+    *)
+      warn "coreutils: install manually; on macOS: brew install coreutils"
+      return 1
+      ;;
+  esac
+  # Verify
+  if command -v realpath &>/dev/null && realpath -m . &>/dev/null 2>&1; then
+    ok "realpath -m installed"
+  elif command -v grealpath &>/dev/null && grealpath -m . &>/dev/null 2>&1; then
+    warn "realpath -m available as grealpath — add gnubin to PATH: export PATH=\"$(brew --prefix)/opt/coreutils/libexec/gnubin:\$PATH\""
+  else
+    err "realpath -m still not available after install"
+    return 1
+  fi
+}
+
+# ---- GNU date (macOS: brew install coreutils provides gdate) ----
+
+install_gnu_date() {
+  # Check if date +%s.%N works
+  if date +%s.%N &>/dev/null 2>&1; then
+    ok "date +%s.%N (GNU format) already available"
+    return 0
+  fi
+  # Check for gdate
+  if command -v gdate &>/dev/null && gdate +%s.%N &>/dev/null 2>&1; then
+    warn "GNU date available as gdate — add gnubin to PATH: export PATH=\"$(brew --prefix)/opt/coreutils/libexec/gnubin:\$PATH\""
+    return 0
+  fi
+  case "$PKG_MANAGER" in
+    brew) as_root brew install coreutils 2>&1 | tail -2 ;;
+    *) warn "gnu-date: install coreutils for your platform"; return 1 ;;
+  esac
+  if gdate +%s.%N &>/dev/null 2>&1; then
+    ok "GNU date (gdate) installed"
+  else
+    err "GNU date still not available"
+    return 1
+  fi
+}

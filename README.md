@@ -24,7 +24,7 @@ Provides a sharp-tongued commentary mode for agents. Activates when users say th
 like *"you're so slow"*, *"are you serious"*, or any phrase warranting merciless
 sarcasm. Keeps responses punchy, emoji-free, and confrontationally indifferent.
 
-### `repo-health` (skill + 10 subskills)
+### `repo-health` (skill + 10 subskills + 3 automation scripts)
 
 An **orchestrator skill** (`skill(name="repo-health")`) that delegates to 10 phase
 subskills (`repo-health--phase-{N}-{name}`) + one helpers subskill. Subskills are only
@@ -44,9 +44,25 @@ callable by the orchestrator. Phases:
 | 9 | 12-Factor Compliance | `repo-health--phase-9-12factor` |
 | 10 | Remediation Loop | `repo-health--phase-10-remediate` |
 
-Also ships 21 Bash helper scripts under `scripts/` (detector, scanner, auditor variants)
-used by the subskills, and a `repo-health--helpers` subskill containing the grading
-rubric + script reference.
+Also ships Bash helper scripts under `scripts/` (detector, scanner, auditor,
+classifier, and synthesizer variants) used by the subskills, plus:
+
+- **`compute-grade.sh`** — Automated grade computation with NITPICK awareness
+  (excludes NITPICK findings from deductions). Authoritative replacement for manual
+  subagent grading.
+- **`classify-finding.sh`** — Applies the NITPICK rubric + non-negotiable CRITICAL
+  rules deterministically via jq.
+- **`synthesize-findings.sh`** — Deduplicates, resolves conflicts, classifies, and
+  grades findings in one pipeline (Step A4.5 in the orchestrator workflow).
+
+A `repo-health--helpers` subskill contains the grading rubric + script reference.
+
+#### Cross-Platform Support
+
+The GNU toolchain auto-installer (`install-missing-tools.sh`) now handles macOS
+Homebrew-prefixed tools (`ggrep`, `grealpath`, `gdate`) with PATH hints. On Linux,
+uses `pcregrep` as a fallback for PCRE matching. See
+`repo-health--phase-0-environment` for details.
 
 ## Skill Installation Paths
 

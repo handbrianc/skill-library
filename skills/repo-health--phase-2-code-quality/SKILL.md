@@ -87,6 +87,37 @@ Linting violations in test files are equally important as violations in source f
 
 If both `src/` and test directories exist, you MUST run both scans. Report findings from BOTH. Any lint violation in either source or test code is reportable.
 
+### Step 2.8b — Language-Specific Linters (Python: ruff + mypy)
+
+For Python projects (detected via `pyproject.toml`, `setup.py`, `setup.cfg`, `requirements.txt`),
+run these additional linters that `scan-linters.sh` may not auto-detect:
+
+```bash
+# ruff (modern Python linter — catches import sorting, naming, complexity)
+ruff check src/ --output-format=concise 2>/dev/null || echo "ruff not found or not configured"
+
+# mypy (type checker — counts toward type-checker bonus)
+mypy src/ --show-error-codes 2>/dev/null || echo "mypy not found or not configured"
+
+# Also run ruff on test code
+ruff check tests/ --output-format=concise 2>/dev/null || true
+```
+
+**Report both ruff and mypy violations as combined LINT_ERRORS in the metrics.**
+If ruff produces >0 errors OR mypy produces >0 errors, that's a HIGH finding.
+If both are clean, that's the +2 linter bonus + +1 type checker bonus.
+
+### Step 2.8c — Shell Script Linting (fallback)
+
+`scan-linters.sh` may not detect shellcheck. Run it directly:
+
+```bash
+shellcheck --severity=warning $(find . -name '*.sh' -type f) 2>/dev/null || true
+shellcheck --norc --severity=warning $(find . -name '*.sh' -type f) 2>/dev/null || true
+```
+
+The second run (without config) catches violations masked by `.shellcheckrc`.
+
 ### Linting Report Format
 
 ```text

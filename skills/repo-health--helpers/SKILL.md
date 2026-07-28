@@ -61,42 +61,81 @@ If a finding cannot be deterministically reproduced, mark it `[NON-DETERMINISTIC
 
 ## Grading Rubric
 
-### Scoring Weights
+### ⚠️ NITPICK-Aware Scoring (MANDATORY)
+
+The grade is computed against **ACTIONABLE findings only**. NITPICK-classified findings MUST
+be excluded from deductions. This prevents the grade from being misleading — a project
+with only cosmetic NITPICK findings scores 100/100 (A), not 89/100 (B) or worse.
+
+### Scoring Deductions (ACTIONABLE findings only)
 
 | Finding Type | Points Deducted |
 | --- | --- |
-| CRITICAL | -25 |
-| HIGH | -10 |
-| MEDIUM | -3 |
-| LOW | -1 |
+| CRITICAL (ACTIONABLE) | -25 |
+| HIGH (ACTIONABLE) | -10 |
+| MEDIUM (ACTIONABLE) | -3 |
+| LOW (ACTIONABLE) | -1 |
 
-| Bonuses | Points Added |
+**NITPICK findings (regardless of original severity) are NOT deducted.** See the
+NITPICK test below for classification rules.
+
+### Bonuses
+
+| Condition | Points Added |
 | --- | --- |
 | Clean test run (0 failed/errors) | +5 |
 | Line coverage >= 80% | +3 |
-| Line coverage >= 90% | +3 (additional) |
-| Zero CRITICALs | +2 |
-| Zero HIGHs | +2 |
-| Linter configured and clean (0 violations) | +2 |
+| Line coverage >= 90% | +3 (additional, stacks with >=80%) |
+| Zero CRITICAL findings (ACTIONABLE only) | +2 |
+| Zero HIGH findings (ACTIONABLE only) | +2 |
+| Linter configured and clean (0 violations on source AND test code) | +2 |
 | Type checker (tsc/mypy) configured and passing | +1 |
-| Zero 12-Factor FAIL findings | +2 |
+| Zero 12-Factor FAIL findings (actionable) | +2 |
 | All 12-Factor factors PASS or N/A with rationale | +3 |
 
 ### Grade Computation
 
 ```text
-POINTS = 100
-POINTS -= (CRITICAL × 25) + (HIGH × 10) + (MEDIUM × 3) + (LOW × 1)
-POINTS += BONUSES as applicable
-POINTS = clamp(POINTS, 0, 100)
+1. COUNT actionable findings by severity:
+     C = count of CRITICAL findings classified ACTIONABLE
+     H = count of HIGH findings classified ACTIONABLE
+     M = count of MEDIUM findings classified ACTIONABLE
+     L = count of LOW findings classified ACTIONABLE
 
-GRADE = POINTS >= 90 ? "A"
-      : POINTS >= 70 ? "B"
-      : POINTS >= 50 ? "C"
-      : POINTS >= 25 ? "D"
-      : "F"
+2. COMPUTE deductions:
+     POINTS = 100
+     POINTS -= (C × 25) + (H × 10) + (M × 3) + (L × 1)
 
-Output: **Overall Grade:** {GRADE} ({POINTS}/100)
+3. ADD bonuses (each applies at most once):
+     POINTS += BONUSES as applicable
+
+4. CLAMP to valid range:
+     POINTS = max(POINTS, 0)
+     POINTS = min(POINTS, 100)
+
+5. MAP to letter grade:
+     GRADE = POINTS >= 90 ? "A"
+           : POINTS >= 70 ? "B"
+           : POINTS >= 50 ? "C"
+           : POINTS >= 25 ? "D"
+           : "F"
+
+6. OUTPUT:
+     **Overall Grade:** {GRADE} ({POINTS}/100)
+     **Actionable:** C CRITICAL, H HIGH, M MEDIUM, L LOW
+     **NITPICK:** N findings excluded from grade
+```
+
+### Automated Script
+
+A deterministic compute script is available:
+
+```bash
+./skills/repo-health/scripts/compute-grade.sh --findings findings.json
+```
+
+This is the **authoritative** grade computation. Subagents MUST NOT compute grades
+manually — always use the script.
 
 ## Finding Classification Rubric
 
@@ -150,5 +189,3 @@ CRITICAL=0 AND HIGH=0 AND MEDIUM=0 AND FAILED_TESTS=0 AND LINT_ERRORS=0 AND LSP_
 |LINT_ERRORS|= 0|Linters on src/ + test/ dirs|
 |LSP_ERRORS|= 0|`lsp_diagnostics` on changed files|
 |ACTIONABLE(LOW)|= 0|NITPICK-classified LOW findings remain OK|
-
-```text

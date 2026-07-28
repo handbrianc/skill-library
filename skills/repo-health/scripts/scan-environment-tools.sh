@@ -85,15 +85,19 @@ check_tools_phase() {
   # grep PCRE support (used by several scanners via grep -P)
   if echo "test" | grep -P 't.st' >/dev/null 2>&1; then
     echo "TOOL_OK: grep -P (PCRE supported)"
+  elif command -v ggrep >/dev/null 2>&1 && echo "test" | ggrep -P 't.st' >/dev/null 2>&1; then
+    echo "TOOL_OK: grep -P via ggrep (add gnubin to PATH: export PATH=\"$(brew --prefix 2>/dev/null)/opt/grep/libexec/gnubin:\$PATH\")"
   else
-    echo "TOOL_MISSING: grep -P not supported (install GNU grep; macOS: brew install grep)"
+    echo "TOOL_MISSING: grep -P not supported (install GNU grep; macOS: brew install grep; then add gnubin to PATH)"
   fi
 
   # realpath -m support (used for path normalization)
   if command -v realpath >/dev/null 2>&1 && realpath -m . >/dev/null 2>&1; then
     echo "TOOL_OK: realpath -m"
+  elif command -v grealpath >/dev/null 2>&1 && grealpath -m . >/dev/null 2>&1; then
+    echo "TOOL_OK: realpath -m via grealpath (add gnubin to PATH: export PATH=\"$(brew --prefix 2>/dev/null)/opt/coreutils/libexec/gnubin:\$PATH\")"
   else
-    echo "TOOL_MISSING: realpath -m not supported (install coreutils; macOS: brew install coreutils)"
+    echo "TOOL_MISSING: realpath -m not supported (install coreutils; macOS: brew install coreutils; then add gnubin to PATH)"
   fi
 
   echo ""

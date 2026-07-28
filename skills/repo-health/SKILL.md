@@ -21,9 +21,9 @@ The remediation loop is NOT optional. Do NOT ask the user for permission. Do NOT
 findings and stop. Phase 10 is a single unified pipeline that synthesizes, classifies,
 fixes, and loops — it does NOT produce an advisory plan.
 
-```text
+```
 AUDIT (Phases 0-10) ──► 10.1 SYNTHESIZE ──► 10.2 CLASSIFY ──► 10.3 FIX ──► 10.4 RE-AUDIT ──► LOOP UNTIL NITPICK ──► 10.5 REPORT
-```text
+```
 
 ---
 
@@ -91,17 +91,29 @@ Six fix scripts live under `skills/repo-health/scripts/`:
 
 1. Ensure `npx gitnexus analyze --force` ran on the target repo
 2. Load the helpers subskill: `skill(name="repo-health--helpers")`
-3. Load ALL phase subskills: `skill(name="repo-health--phase-{N}-{name}")` for N=0..10
+3. Load PHASE 1 subskill: `skill(name="repo-health--phase-1-discovery")`
+   (Do NOT load all phase subskills — only Phase 1 runs first. The composite
+   subagent loads the phase subskills it needs internally.)
 
 ### Step A2 — Phase 0 (Gate + Auto-Install)
 
 ```bash
+# Step 0.0 — Ensure GNU toolchain on macOS (auto-install if needed)
+./skills/repo-health/scripts/install-missing-tools.sh gnu-grep coreutils gnu-date 2>&1 | tail -5
+```
+
+On macOS, the GNU toolchain (grep -P, realpath -m) is auto-installed via Homebrew when
+missing. The installer detects Homebrew-prefixed `ggrep`/`grealpath` and reports the
+exact PATH to add. If install fails, proceed anyway — scanners use fallback patterns.
+
+```bash
 # Step 0.1 — Check what's present
 ./skills/repo-health/scripts/scan-environment.sh --check-tools
-```text
+```
 
-**If any core utility is MISSING/BROKEN** (bash, node, npm, npx, git, jq, find, grep,
-realpath) → **ABORT. Do not proceed.** The audit cannot run without them.
+**If any core utility is MISSING/BROKEN** (bash, node, npm, npx, git, jq, find) →
+**ABORT. Do not proceed.** The audit cannot run without them.
+*(grep -P and realpath -m are NOT core utilities — see note above.)*
 
 **If only optional tools are missing** (test runners, linters, security scanners, etc.):
 
@@ -116,7 +128,7 @@ realpath) → **ABORT. Do not proceed.** The audit cannot run without them.
 
 # Step 0.3 — Re-verify after install
 ./skills/repo-health/scripts/scan-environment.sh --check-tools
-```text
+```
 
 If any optional tool still cannot be installed, proceed to Phase 1 anyway — the
 corresponding scanner section will produce reduced output with adjusted findings.
@@ -146,7 +158,7 @@ command -v grype >/dev/null 2>&1 && echo "TOOL_OK: grype" || echo "TOOL_MISSING:
 command -v syft >/dev/null 2>&1 && echo "TOOL_OK: syft" || echo "TOOL_MISSING: syft — Phase 8 SBOM skipped; fall back to manual dependency inventory"
 
 echo "=== PRE-FLIGHT COMPLETE ==="
-```text
+```
 
 **Known failure modes and fallbacks:**
 
@@ -170,7 +182,7 @@ skill-library repos where Phases 5, 8, 9 are N/A).
 ```bash
 # Step 3.1 — Run Phase 1 discovery
 ./skills/repo-health/scripts/scan-setup.sh --mode=discovery
-```text
+```
 
 **Extract applicable phases from the discovery output:**
 
@@ -196,109 +208,132 @@ Instead, launch a **single synchronous composite subagent** that runs ONLY the a
 
 **Include pre-flight validation results and known failure modes in the prompt** so the subagent knows which tools are missing and can use fallbacks.
 
-```text
-const auditResults = await task(
-  category="deep",
-  load_skills=[
+```json
+{
+  "category": "deep",
+  "load_skills": [
     "repo-health--helpers",
     // Only include phases that are applicable (Phase 1 already ran separately)
     // Dynamic: add/remove based on discovery output from Step A3
-    "repo-health--phase-2-code-quality",     // Include if source code exists
-    // "repo-health--phase-3-tech-debt",     // Include only if Phase 2 + Phase 6 ran
-    "repo-health--phase-4-docs",             // Include if docs exist
-    // "repo-health--phase-5-specs",         // Include only if specs/ dir exists
-    "repo-health--phase-6-tests",            // Include if test files exist
-    "repo-health--phase-7-security",         // Always include (runs on any code)
-    // "repo-health--phase-8-sbom",          // Include only if dependency manifest exists
-    // "repo-health--phase-9-12factor"       // Include only if runtime app
+    "repo-health--phase-2-code-quality",
+    "repo-health--phase-4-docs",
+    "repo-health--phase-6-tests",
+    "repo-health--phase-7-security"
+    // Conditionally add:
+    // "repo-health--phase-3-tech-debt"   // only if Phase 2 + Phase 6 ran
+    // "repo-health--phase-5-specs"       // only if specs/ dir exists
+    // "repo-health--phase-8-sbom"        // only if dependency manifest exists
+    // "repo-health--phase-9-12factor"    // only if runtime app
   ],
-  run_in_background=false,   // SYNCHRONOUS — orchestrator waits for complete result
-  prompt=`
-TASK: Run applicable audit phases (Phase 1 already completed separately). Execute scanners via the \`bash\` tool (no nested \`task()\` calls). Return a synthesized JSON findings list with all findings plus aggregate metrics.
+  "run_in_background": false,
+  "prompt": "Run applicable audit phases... (see template below)"
+}
+```
+
+The orchestrator waits synchronously. When the result comes back, it contains all
+findings including Phase 3. Zero continuation gaps because the composite subagent
+uses `bash` tool calls only — no `task()`, no background work at any level.
+
+**Composite audit prompt template** (replace placeholders `[WORKING_DIR]`,
+`[APPLICABLE_PHASES]`, `[PRE_FLIGHT_RESULTS]`):
+
+```markdown
+TASK: Run applicable audit phases (Phase 1 already completed separately).
+Execute scanners via the \`bash\` tool (no nested \`task()\` calls).
+Return a structured JSON findings list with all findings plus aggregate metrics.
 
 WORKING DIRECTORY: [WORKING_DIR]
 
-PRE-FLIGHT VALIDATION RESULTS (tool availability):
-[INCLUDE OUTPUT FROM STEP A2.5 HERE — e.g., TOOL_OK: shellcheck, TOOL_MISSING: syft]
+APPLICABLE PHASES: [APPLICABLE_PHASES] (e.g., "2,4,6,7,3" — skip all others)
 
-KNOWN FAILURE MODES — read these BEFORE running each phase:
+PRE-FLIGHT VALIDATION RESULTS:
+[PRE_FLIGHT_RESULTS]
+
+KNOWN FAILURE MODES (read BEFORE running each phase):
 
 PHASE 2 (Code Quality):
-- \`scan-linters.sh\` may NOT detect shellcheck/markdownlint (it targets ESLint/Ruff etc.)
-  Fallback: If scan-linters.sh returns empty, run manually:
-  \`shellcheck --severity=warning \$(find . -name '*.sh' -type f)\`
-- PHASE 2 LINTING: ALSO run \`markdownlint 'skills/*/SKILL.md' --config .markdownlint.json\`
-- Shellcheck config check: Run shellcheck WITH config THEN WITHOUT (\`--norc\`) to detect masked violations
+- scan-linters.sh may NOT detect shellcheck/markdownlint
+  → Also run: shellcheck --severity=warning ./*.sh
+- Also run markdownlint on .md files
+- For Python projects: run ruff check src/ AND mypy src/ explicitly
+- Shellcheck: run WITH config THEN WITHOUT (--norc) to detect masked violations
 
 PHASE 6 (Tests):
-- \`parse-test-results.sh\` may auto-detect the wrong framework and return "Couldn't auto-detect"
-  Fallback: Manually parse test output for PASSED/FAILED/ERRORS counts
-- \`scan-tests.sh\` scripts may not exist or return empty for bash-only repos
-  Fallback: Run \`bash tests/run-tests.sh\` directly and parse exit code + output
+- parse-test-results.sh may auto-detect wrong framework
+  → Manually parse PASSED/FAILED/ERRORS from raw output
 
 PHASE 7 (Security):
-- \`semgrep --config=auto\` may fail to resolve registry rules
-  Fallback: Write targeted \`grep -P\` patterns for command injection, hardcoded secrets, eval, unsafe temp files
-- \`scan-security.sh --credential-exposure\` uses git history scan — on shallow clones, this returns nothing
-  Fallback: Check HEAD for .env files, API keys, and private key patterns via grep
+- semgrep --config=auto may fail (network/rate limiting)
+  → Fallback: grep -P for command injection, hardcoded secrets
 
 PHASE 8 (SBOM):
-- If \`syft\` is not installed (TOOL_MISSING above), skip scan-sbom.sh entirely
-  Fallback: Manual dependency inventory via \`find . -name 'package.json' -o -name 'requirements.txt' -o -name 'Cargo.toml'\`
-- \`scan-licenses.sh\` also depends on SBOM output — skip both if syft missing
+- If syft missing, skip SBOM. Fallback: manual find for manifests.
 
-CRITICAL CONSTRAINT: You MAY call \`skill(...)\` to load phase instructions, but you MUST run every phase's scanner scripts via the \`bash\` tool. Do NOT use \`task()\` or any other subagent mechanism — that will create a continuation gap and the user has to manually continue. All phases run sequentially in this single session using \`bash\` tool calls.
+PHASE SEQUENCE (run only APPLICABLE phases, sequentially, via bash):
 
-EXPECTED OUTCOME: A JSON object with fields:
-  { "findings": [{ "phase": number, "severity": "CRITICAL|HIGH|MEDIUM|LOW", "description": "...", "evidence": "...", "fixScript": "..." }], "metrics": { "FAILED_TESTS": number, "LINT_ERRORS": number, "LSP_ERRORS": number } }
-
-PHASE SEQUENCE (run only applicable phases, in this order, sequentially, via bash tool calls):
-
-1. Phase 2 — Code Quality: run scan-dead-code, scan-complexity, scan-cognitive-complexity, scan-linters + shellcheck + markdownlint fallbacks, audit-dependency-usage
-2. Phase 4 — Docs: \`bash ./skills/repo-health/scripts/scan-docs.sh\`
-3. Phase 5 — Specs (if applicable): \`bash ./skills/repo-health/scripts/scan-setup.sh --mode=specs\`
-4. Phase 6 — Tests: \`bash ./skills/repo-health/scripts/scan-tests.sh\` + fallback \`bash tests/run-tests.sh\`
-5. Phase 7 — Security: \`bash ./skills/repo-health/scripts/scan-security.sh\` + semgrep/grep fallbacks
-6. Phase 8 — SBOM (if applicable): \`bash ./skills/repo-health/scripts/scan-sbom.sh\` or manual dependency inventory
-7. Phase 9 — 12-Factor (if applicable): \`bash ./skills/repo-health/scripts/scan-12factor.sh\`
-8. Phase 3 — Tech Debt (if applicable): \`bash ./skills/repo-health/scripts/scan-tech-debt.sh\` (depends on Phase 2 + Phase 6 context — pass their results when interpreting)
+1. Phase 2 — Code Quality
+2. Phase 4 — Docs
+3. Phase 5 — Specs (if applicable)
+4. Phase 6 — Tests
+5. Phase 7 — Security
+6. Phase 8 — SBOM (if applicable)
+7. Phase 9 — 12-Factor (if applicable)
+8. Phase 3 — Tech Debt (if applicable — depends on Phase 2 + Phase 6 output)
 9. Synthesize all findings into structured JSON
 
-TIP: For each phase, first load its subskill via \`skill(name="repo-health--phase-{N}-{name}")\` to get the full scanner instructions, then run the bash commands it specifies. Check the KNOWN FAILURE MODES above BEFORE running each phase.
-
 MUST DO:
-- Load each phase subskill via \`skill(...)\` before running its bash commands
-- Load helpers subskill via \`skill(name="repo-health--helpers")\`
-- Run \`bash\` commands ONLY — each tool call runs synchronously and returns the output
-- Collect scanner output, interpret it against the subskill's rubric, produce findings
-- Track aggregate metrics from test output, lint output, and LSP diagnostics
-- If a scanner returns empty or errors, use the KNOWN FAILURE MODES fallback above
-- Return ONLY the JSON object — no prose, no markdown formatting around it
+- Load each phase subskill via skill(...) before running its commands
+- Run bash commands ONLY (no task() delegations)
+- For Python: explicitly run ruff check src/ AND mypy src/ in Phase 2
+- Track metrics: FAILED_TESTS, LINT_ERRORS, LSP_ERRORS
+- Return ONLY the JSON object — no prose, no markdown
 
 MUST NOT DO:
-- Do NOT call \`task()\` with any \`run_in_background\` value — that creates a continuation gap
-- Do NOT present findings in a report or narrative format — return raw JSON only
-- Do NOT ask the user for anything
-- Do NOT edit any files during this phase (Phase 10 handles remediation)
-- Do NOT end your response early — run ALL applicable phases in sequence before returning
-`
-)
-```text
+- Do NOT call task() with any run_in_background value
+- Do NOT present findings in a narrative format
+- Do NOT ask for permission
+- Do NOT edit any files (Phase 10 handles remediation)
+- Do NOT end early — run all applicable phases before returning
+```
 
-The orchestrator waits synchronously. When \`auditResults\` comes back, it contains all findings including Phase 3. Zero continuation gaps because the composite subagent uses \`bash\` tool calls only — no \`task()\`, no background work at any level.
+### Step A4.5 — Findings Synthesis & Deduplication (AUTOMATED)
 
-### Step A4.5 — Findings Synthesis & Deduplication (NEW)
+Before passing findings to Phase 10, run the automated synthesis pipeline:
 
-Before passing findings to Phase 10, run a synthesis step to ensure consistency:
+```bash
+# Step 4.5.1 — Write composite audit output to a temp file
+# Replace the heredoc body below with the actual findings JSON collected from all phases
+cat > /tmp/repo-health-raw-findings.json << 'TEMPLATE'
+{
+  "findings": [
+    { "phase": 2, "severity": "HIGH", "description": "Example finding", "evidence": "..." }
+  ],
+  "metrics": {
+    "FAILED_TESTS": 0,
+    "LINT_ERRORS": 0,
+    "LSP_ERRORS": 0,
+    "COVERAGE": 0
+  }
+}
+TEMPLATE
 
-```text
-1. COLLECT all findings from the composite subagent result
-2. DEDUPLICATE: If the same finding appears across multiple phases (e.g., SC2286 flagged by both Phase 2 and Phase 3), keep the HIGHEST severity version
-3. RESOLVE CONFLICTS: If Phase 2 scores SC2286 as MEDIUM (-3) and Phase 3 scores it as HIGH (-10), use HIGH
-4. MERGE: Combine overlapping findings into a single entry with cross-phase references
-5. CLASSIFY: Apply the NITPICK rubric to all LOW findings
-6. OUTPUT: Produced deduplicated findings list + aggregate metrics
-```text
+# Step 4.5.2 — Run synthesis: dedup, resolve conflicts, classify, compute grade
+./skills/repo-health/scripts/synthesize-findings.sh \
+  --input /tmp/repo-health-raw-findings.json \
+  --classify \
+  --output /tmp/repo-health-synthesized.json
+
+# Step 4.5.3 — Read the synthesized result
+cat /tmp/repo-health-synthesized.json | jq '.'
+```
+
+The `synthesize-findings.sh` script handles:
+1. **DEDUPLICATE**: Same description (normalized) across multiple phases → keep highest severity
+2. **RESOLVE CONFLICTS**: If Phase 2 scores as MEDIUM and Phase 3 as HIGH → use HIGH
+3. **MERGE**: Combine overlapping evidence into a single entry with cross-phase references
+4. **CLASSIFY**: `classify-finding.sh` applies the NITPICK rubric to all LOW findings
+5. **COMPUTE GRADE**: `compute-grade.sh` computes the grade using ACTIONABLE findings only
+6. **OUTPUT**: Deduplicated findings + aggregate metrics + grade
 
 **Example of deduplication:**
 
@@ -309,7 +344,7 @@ Phase 7: "No command injection vectors found" (didn't catch this)
 
 SYNTHESIS: Keep Phase 3's HIGH severity. Merge evidence from Phase 2 (line numbers).
 Single entry severity: HIGH.
-```text
+```
 
 This prevents Phase 10 from seeing the same finding 3 times with inconsistent
 scores. It also prevents Phase 10 from over-counting findings toward the grade.
@@ -345,48 +380,65 @@ in the next step.**
 remediation subagent to complete before proceeding. Do NOT use background execution
 — the exit condition must be met before moving on.
 
-Construct a `task()` call with findings embedded in the prompt. Replace
-`FINDINGS_JSON` with the actual synthesized findings JSON. Replace `WORKING_DIR`
-with the actual working directory path.
+**Before delegating,** the orchestrator MUST have run Step A4.5 to produce a
+synthesized, classified, and graded findings file at
+`/tmp/repo-health-synthesized.json`. Pass this file's contents as `INPUT_FINDINGS`.
 
-```typescript
-const result = await task(
-  category="deep",
-  load_skills=["repo-health--phase-10-remediate"],
-  run_in_background=false,   // MUST be synchronous — orchestrator waits for completion
-  prompt=`
+Construct the `task()` call with the synthesized findings embedded in the prompt:
+
+```json
+{
+  "category": "deep",
+  "load_skills": ["repo-health--phase-10-remediate"],
+  "run_in_background": false,
+  "prompt": "TASK: Execute mandatory remediation loop... (see template below)"
+}
+```
+
+**Phase 10 delegation prompt template** (replace `[SYNTHESIZED_FINDINGS_JSON]`
+and `[WORKING_DIR]` with actual values):
+
+```markdown
 TASK: Execute the remediation loop for the findings below.
-
 INPUT FINDINGS:
-[FINDINGS_JSON]
+[SYNTHESIZED_FINDINGS_JSON]
 
-EXPECTED OUTCOME: All actionable findings fixed, codebase modified, exit condition met (CRITICAL=0, HIGH=0, MEDIUM=0, FAILED_TESTS=0, LINT_ERRORS=0, LSP_ERRORS=0, ACTIONABLE(LOW)=0).
+EXPECTED OUTCOME: All actionable findings fixed, codebase modified, exit condition
+met (CRITICAL=0, HIGH=0, MEDIUM=0, FAILED_TESTS=0, LINT_ERRORS=0, LSP_ERRORS=0,
+ACTIONABLE(LOW)=0).
 
-REQUIRED TOOLS: bash, test runner (npm test / pytest / etc.), linter (eslint / ruff / shellcheck), lsp_diagnostics, npx gitnexus (re-index)
+The INPUT FINDINGS above already have classification and grade computed. Use the
+existing classification field to determine what to fix:
+- ACTIONABLE = fix immediately
+- NITPICK = skip (do not modify code)
+
+REQUIRED TOOLS: bash, test runner (/ pytest / etc.), linter (ruff / shellcheck / etc.),
+lsp_diagnostics, npx gitnexus (re-index)
 
 MUST DO:
-- Load the repo-health--phase-10-remediate subskill: skill(name="repo-health--phase-10-remediate")
+- Load the repo-health--phase-10-remediate subskill via skill(...)
 - Follow the subskill's 10.2 → 10.3 → 10.4 → 10.5 pipeline exactly
 - Snapshot files before modifying (source lib/fix-common.sh; fix_snapshot)
-- **Parallelize independent fixes** — e.g., markdownlint fixes on doc A are independent of shellcheck fixes on script B. Apply them simultaneously rather than sequentially.
-- Run fix scripts, verify LSP is clean, verify lint on source AND test code, verify tests pass, regression guard, re-audit, loop
+- Parallelize independent fixes (different files, no shared state)
+- Run LSP diagnostics on all changed files — 0 errors AND 0 warnings
+- Run linters on BOTH src/ and tests/ — 0 violations
+- Run full test suite after every fix round — 0 failures
+- Re-index gitnexus after each round
 - If iteration >= 5, stop and flag INCOMPLETE
 
 MUST NOT DO:
 - DO NOT produce an advisory/recommendation document
 - DO NOT ask for permission to fix things
 - DO NOT stop before exit condition is met
-- **DO NOT run any git command** (add, rm, mv, reset, checkout, stash, rebase, merge)
-- **DO NOT modify .gitignore**
-- **DO run git status BEFORE starting AND AFTER completing** to verify no unintended file changes
-- **If git state changes unexpectedly** (files deleted, detached HEAD, untracked files appearing), STOP and report immediately
-- DO NOT commit changes
+- DO NOT run any git command (add, rm, mv, reset, checkout, stash, rebase, merge)
+- DO NOT modify .gitignore
+- DO run git status BEFORE starting AND AFTER completing
 - DO NOT use as any, @ts-ignore, @ts-expect-error
+- DO NOT re-classify or re-grade — use the classifications from INPUT FINDINGS
 
-CONTEXT: Working directory is [WORKING_DIR]. All scripts are under skills/repo-health/scripts/. Run tests with the project's test command. Lint both src/ and test/ directories.
-`
-)
-```text
+CONTEXT: Working directory is [WORKING_DIR]. Scripts under skills/repo-health/scripts/.
+Run tests with the project's test command. Lint both src/ and test/ directories.
+```
 
 #### Step A6.3 — Collect Result
 
