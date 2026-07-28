@@ -149,6 +149,11 @@ fi
 AVG_COVERAGE=0
 if [[ "$COVERAGE_COUNT" -gt 0 ]]; then
   AVG_COVERAGE=$(echo "$TOTAL_COVERAGE / $COVERAGE_COUNT" | bc 2>/dev/null || echo 0)
+elif [[ ${#INPUT_FILES[@]} -eq 0 && -n "${RAW:-}" ]]; then
+  TOTAL_FAILED=$(echo "$RAW" | jq '.metrics.FAILED_TESTS // 0')
+  TOTAL_LINT=$(echo "$RAW" | jq '.metrics.LINT_ERRORS // 0')
+  TOTAL_LSP=$(echo "$RAW" | jq '.metrics.LSP_ERRORS // 0')
+  AVG_COVERAGE=$(echo "$RAW" | jq '.metrics.COVERAGE // 0')
 fi
 
 COMB_LEN=$(echo "$COMBINED" | jq 'length')
