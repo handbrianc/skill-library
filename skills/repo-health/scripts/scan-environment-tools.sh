@@ -239,22 +239,6 @@ check_tools_phase() {
     echo "INSTALL_CMD: brew install grype (macOS)"
   fi
 
-  # GitNexus (via PATH)
-  if command -v gitnexus >/dev/null 2>&1; then
-    echo "TOOL_OK: gitnexus (available via PATH)"
-  else
-    echo "TOOL_MISSING: gitnexus (PATH)"
-    echo "INSTALL_CMD: npm install -g gitnexus"
-  fi
-
-  # GitNexus (via npx local)
-  if npx --yes --no-install gitnexus --version >/dev/null 2>&1; then
-    echo "TOOL_OK: gitnexus (available via npx local)"
-  else
-    echo "TOOL_MISSING: gitnexus (npx local)"
-    echo "INSTALL_CMD: npm install -g gitnexus"
-  fi
-
   echo ""
   echo "--- PHASE 0 complete ---"
 }

@@ -66,7 +66,6 @@ Before opening a PR, verify:
 - [ ] No credentials, secrets, or project-specific paths hardcoded
 - [ ] Installs cleanly: `ln -s skills/my-skill ~/.config/opencode/skills/my-skill`
 - [ ] Loads without errors when OpenCode activates the skill
-- [ ] If editing `AGENTS.md`, `CLAUDE.md`, or `README.md`, run `npx gitnexus analyze` afterward and regenerate the `<!-- gitnexus:start -->…<!-- gitnexus:end -->` block with fresh statistics (never paste stale counts)
 - [ ] Run `bash tests/run-tests.sh` and confirm all tests pass
 
 ## Automated Validation
@@ -104,7 +103,7 @@ All validations must pass before merging.
 1. Fork the repository
 2. Create a feature branch: `git checkout -b skill/add-my-skill`
 3. Add your skill to `skills/<my-skill>/SKILL.md`
-4. Optionally add tests/helpers under `skills/<my-skill>/` (supported: `.claude/`, `scripts/`, `references/`)
+4. Optionally add tests/helpers under `skills/<my-skill>/` (supported: `scripts/`, `references/`)
 5. Open a pull request to `main`
 6. Respond to review feedback
 
@@ -136,9 +135,8 @@ Maintainers evaluate PRs on:
 skills/
 └── <skill-name>/
     ├── SKILL.md              # REQUIRED — skill instruction markdown
-    ├── scripts/              # OPTIONAL — helper scripts
+    ├── scripts/               # OPTIONAL — helper scripts
     ├── references/           # OPTIONAL — supporting docs/data
-    └── .claude/              # OPTIONAL — Claude Code integration
 ```text
 
 Root-level directories:

@@ -130,20 +130,6 @@ All scripts source: lib/common.sh
 
 ---
 
-## GitNexus Integration
-
-The repository is indexed by GitNexus as `skill-library`. See `AGENTS.md` for the current symbol/relationship statistics.
-usage for impact analysis before editing any symbol.
-
-Workflow:
-
-1. `npx gitnexus analyze --force` (refresh index)
-2. `npx gitnexus status` (check freshness)
-3. `gitnexus_impact({target: "symbolName", direction: "upstream"})` (pre-edit)
-4. `gitnexus_detect_changes()` (pre-commit)
-
----
-
 ## Git Workflow
 
 - Main branch: `main`

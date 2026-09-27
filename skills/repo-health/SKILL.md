@@ -9,8 +9,8 @@ A rigorous, deterministic repository audit covering nine dimensions with **manda
 auto-remediation. The audit detects issues, classifies them, fixes them, re-audits, and
 loops until only trivial nitpicks remain.
 
-> **Prerequisite:** Run `npx gitnexus analyze --force` on the target repo before starting.
-> Do NOT skip this — the remediation loop depends on a fresh index.
+> **Prerequisite:** None. The audit detects issues, classifies them, fixes them, re-audits, and
+> loops until only trivial nitpicks remain.
 
 ---
 
@@ -47,7 +47,7 @@ AUDIT (Phases 0-10) ──► 10.1 SYNTHESIZE ──► 10.2 CLASSIFY ──► 
 - Never suppress type errors with `as any`, `@ts-ignore`, or `@ts-expect-error`
 - Never delete failing tests to make a build pass
 - Never commit changes (leave uncommitted for user review)
-- Never edit any symbol without first running `gitnexus_impact(target, direction: "upstream")`
+- Never edit any symbol without understanding its callers first
 - Never treat an N/A dimension as a failure — document rationale
 
 ---
@@ -76,7 +76,6 @@ Six fix scripts live under `skills/repo-health/scripts/`:
 
 | Script | Purpose | Finding Types |
 | -------- | --------- | --------------- |
-| `fix-gitnexus-stats.sh` | Sync GitNexus stats across AGENTS.md/CLAUDE.md/ARCHITECTURE.md | Stale gitnexus blocks |
 | `fix-doc-links.sh` | Check + report broken external/internal links in docs | Broken links |
 | `fix-env-example.sh` | Generate/update .env.example from code-scanned env vars | Missing .env.example |
 | `fix-lint.sh` | Run linters with --fix (ESLint, Ruff, gofmt, etc.) | Lint violations |
@@ -89,8 +88,7 @@ Six fix scripts live under `skills/repo-health/scripts/`:
 
 ### Step A1 — Prerequisite & Helpers
 
-1. Ensure `npx gitnexus analyze --force` ran on the target repo
-2. Load the helpers subskill: `skill(name="repo-health--helpers")`
+1. Load the helpers subskill: `skill(name="repo-health--helpers")`
 3. Load PHASE 1 subskill: `skill(name="repo-health--phase-1-discovery")`
    (Do NOT load all phase subskills — only Phase 1 runs first. The composite
    subagent loads the phase subskills it needs internally.)
@@ -413,7 +411,7 @@ existing classification field to determine what to fix:
 - NITPICK = skip (do not modify code)
 
 REQUIRED TOOLS: bash, test runner (/ pytest / etc.), linter (ruff / shellcheck / etc.),
-lsp_diagnostics, npx gitnexus (re-index)
+lsp_diagnostics
 
 MUST DO:
 - Load the repo-health--phase-10-remediate subskill via skill(...)
@@ -423,7 +421,6 @@ MUST DO:
 - Run LSP diagnostics on all changed files — 0 errors AND 0 warnings
 - Run linters on BOTH src/ and tests/ — 0 violations
 - Run full test suite after every fix round — 0 failures
-- Re-index gitnexus after each round
 - If iteration >= 5, stop and flag INCOMPLETE
 
 MUST NOT DO:

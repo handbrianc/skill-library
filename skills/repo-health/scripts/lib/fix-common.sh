@@ -7,7 +7,7 @@
 #   - fix_rollback()   — restore files from snapshot
 #   - fix_verify()     — run a verification command and report pass/fail
 #   - fix_apply()      — apply a sed expression with snapshot + rollback on failure
-#   - fix_replace_block() — replace a delimited block in a file (e.g. gitnexus:start..end)
+#   - fix_replace_block() — replace a delimited block in a file (e.g. markers)
 #   - fix_has_ungit()  — detect uncommitted changes to abort early
 #   - SNAPSHOT_DIR     — where snapshots live
 

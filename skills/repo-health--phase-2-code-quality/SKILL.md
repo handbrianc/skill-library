@@ -6,15 +6,7 @@ subskill-of: repo-health
 
 # PHASE 2 — Code Quality Analysis
 
-Uses GitNexus + static analysis scripts for deterministic results.
-
-## Step 2.1 — Ensure Fresh GitNexus Index
-
-```bash
-npx gitnexus status
-```text
-
-If stale: `npx gitnexus analyze --force`
+Uses static analysis scripts for deterministic results.
 
 ## Step 2.2 — Dead/Unused Code
 
@@ -36,13 +28,6 @@ Flag: >15 MEDIUM, >25 HIGH, >40 CRITICAL.
 ./skills/repo-health/scripts/scan-cognitive-complexity.sh src/
 ```text
 
-Manual spot-check via GitNexus:
-
-```text
-query({search_query: "deeply nested callback hell", limit: 5})
-query({search_query: "monstrous switch statement", limit: 5})
-```text
-
 ## Step 2.5 — Duplicated Code
 
 ```bash
@@ -53,12 +38,10 @@ Report duplicates > 50 lines identical.
 
 ## Step 2.6 — Architecture Weakness
 
-Use GitNexus clusters:
+Use static analysis to assess architectural weakness:
 
 ```bash
-query({search_query: "arch component module service layer"})
-READ gitnexus://repo/{name}/clusters
-READ gitnexus://repo/{name}/processes
+./skills/repo-health/scripts/scan-complexity.sh
 ```text
 
 Flag clusters with LOW cohesion or no natural grouping.

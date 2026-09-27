@@ -20,7 +20,6 @@ skills/repo-health/scripts/
 ├── find-uncovered.sh             # Uncovered line finder
 ├── fix-doc-links.sh              # (FIX) Check + report broken doc links
 ├── fix-env-example.sh            # (FIX) Generate/update .env.example
-├── fix-gitnexus-stats.sh         # (FIX) Sync GitNexus stats across docs
 ├── fix-lint.sh                   # (FIX) Auto-fix lint violations
 ├── fix-rollback.sh               # (FIX) Snapshot rollback + regression detection
 ├── install-missing-tools.sh      # (INSTALL) OS-agnostic tool installer

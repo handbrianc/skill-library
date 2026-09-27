@@ -35,7 +35,6 @@ echo "Capturing environment..." >&2
   echo "Python: $(python3 --version 2>/dev/null || echo 'N/A')"
   echo "Go: $(go version 2>/dev/null || echo 'N/A')"
   echo "Git commit: $(git rev-parse HEAD 2>/dev/null || echo 'N/A')"
-  echo "GitNexus: $(npx gitnexus --version 2>/dev/null || echo 'N/A')"
   echo ""
   echo "Package manager:"
   [ -f package-lock.json ] && echo "  npm (package-lock.json found)"
@@ -125,26 +124,6 @@ echo "" >&2
 LOG "MAIN" "=== 12-Factor Compliance ==="
 dispatch "$SCRIPT_BASE/scan-12factor.sh" "12FACTOR" "scan-09-12factor.log"
 
-# ---- GitNexus contextual analysis (if available) ----
-echo "" >&2
-LOG "MAIN" "=== GitNexus Knowledge Graph Analysis ==="
-if npx gitnexus status &>/dev/null; then
-  {
-    echo "# GitNexus Context Snapshot"
-    echo "# Generated: $(date)"
-    npx gitnexus status 2>&1 || true
-    echo ""
-    echo "# Clusters:"
-    # We'll call gitnexus context via a subshell placeholder comment
-    echo "# NOTE: For full cluster data, run in a Claude Code session with GitNexus MCP."
-    echo "# Tool: READ gitnexus://repo/{name}/clusters"
-    echo "# Tool: READ gitnexus://repo/{name}/processes"
-  } > "$ARTIFACT_DIR/gitnexus-context.txt"
-  LOG "GitNexus" "Context snapshot saved."
-else
-  LOG "GitNexus" "SKIPPED (not indexed or gitnexus not available)"
-fi
-
 # ---- Bundle Artifacts ----
 echo "" >&2
 LOG "MAIN" "Bundling artifacts..."
@@ -167,7 +146,7 @@ echo "  Project:   $PROJECT_NAME" >&2
 echo "  Date:      $(date)" >&2
 echo "==============================================" >&2
 echo "" >&2
-echo "Next: Load the output files into Claude Code and run the repo-health skill" >&2
+echo "Next: Run the repo-health skill on the output files" >&2
 echo "for consolidated analysis and action plan creation." >&2
 
 exit 0

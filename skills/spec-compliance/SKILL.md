@@ -9,9 +9,6 @@ Checks that application code and test suites provably satisfy specifications def
 `openspec/` or `specs/` folders. Operates bidirectionally: (1) specs → code evidence and
 (2) specs → test evidence.
 
-> **Prerequisite:** Run `npx gitnexus analyze --force` on the target repo before starting
-> to ensure the knowledge graph is fresh.
-
 ## Critical Constraints
 
 ### MUST DO
@@ -37,7 +34,7 @@ Every requirement has **two independent compliance axes**:
 
 | Axis                    | Question                                                              | Detection Method                                                                             |
 | ----------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| **Code Compliance**     | Does production code implement the requirement?                       | `query(search_query:)` for requirement keywords → `gitnexus_context()` on matched symbols    |
+| **Code Compliance**     | Does production code implement the requirement?                       | grep for requirement keywords → read matched symbols                          |
 | **Test Compliance**     | Do tests prove the code satisfies the requirement's intent?           | Test file analysis linked to requirement-verifying functions                                 |
 
 **Combined Status:**
@@ -151,10 +148,10 @@ done
 ```text
 For each requirement_text:
   1. Strip noise words: "shall", "must", "should", "will", "the", "that"
-  2. Build search query from key nouns/verbs
-  3. Run query({search_query: cleaned_keywords, goal: "implementation"})
+  2. Build search keywords from key nouns/verbs
+  3. grep for the cleaned keywords in production code
   4. If results found → record file locations, symbol names
-  5. If no results → run query with alternate phrasing
+  5. If no results → search with alternate phrasing
   6. If still no results → mark as MISSING_CODE_COMPLIANCE
 ```text
 
@@ -165,32 +162,25 @@ For each requirement_text:
 # Example: "The system shall enforce rate limiting of 100 req/min"
 # → KEYWORDS: "rate limiting", "req/min", "throttle", "rate limit enforcement"
 
-# Phase 3 Step 2: Primary GitNexus query
-query({
-  search_query: "rate limiting throttle enforcement",
-  goal: "find code that implements rate limiting/throttling",
-  limit: 5
-})
+# Phase 3 Step 2: Primary search
+grep -rn "rate.limiting\|throttle" --include='*.py' --include='*.ts' src/ 2>/dev/null | head -20
 
-# Phase 3 Step 3: Fallback queries with synonyms
-query({ search_query: "request throttling", goal: "alternate phrasing" })
-query({ search_query: "api limits enforced", goal: "variant wording" })
+# Phase 3 Step 3: Fallback searches with synonyms
+grep -rni "throttling" --include='*.py' src/ 2>/dev/null | head -10
+grep -rni "api limits enforced" src/ 2>/dev/null | head -10
 
-# Phase 3 Step 4: Symbol drill-down (if query returned results)
-gitnexus_context({
-  name: "rateLimit",
-  include_content: true
-})
+# Phase 3 Step 4: Symbol drill-down (if search returned results)
+# Open the matched files and read the relevant functions/classes
 ```text
 
 **Compliance Determination:**
 
 ```text
-FULL_CODE_EVIDENCE  — query() call returned ≥1 high-confidence result AND
-                       gitnexus_context confirmed production code involvement
-PARTIAL_CODE_EVIDENCE — query returned fuzzy match (confidence < 0.7)
+FULL_CODE_EVIDENCE  — search returned ≥1 high-confidence result AND
+                       reading the matched code confirmed production code involvement
+PARTIAL_CODE_EVIDENCE — search returned only fuzzy/loosely-related matches
                         OR only infrastructure/config files (not core logic)
-MISSING_CODE_COMPLIANCE — Zero results across all query variations
+MISSING_CODE_COMPLIANCE — Zero results across all search variations
 ```text
 
 **Example Tracking Table:**
@@ -228,13 +218,6 @@ For each requirement with FULL_CODE_EVIDENCE or PARTIAL_CODE_EVIDENCE:
 **Test Discovery Methods:**
 
 ```bash
-# Via GitNexus (if indexed):
-query({
-  search_query: "ratelimit test spec-compliant",
-  goal: "find tests that verify rate limiting behavior",
-  limit: 5
-})
-
 # Via file system patterns:
 find . -type f \( -name "*.test.*" -o -name "*.spec.*" -o -name "*_test.*" -o -name "*-test.*" \) \
   ! -path "./node_modules/*" 2>/dev/null | head -50

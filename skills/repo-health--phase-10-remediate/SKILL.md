@@ -103,7 +103,6 @@ For each **ACTIONABLE** finding, in severity order (CRITICAL → HIGH → MEDIUM
 
 | Finding Pattern | Fix Script | Verification |
 | ---------------- | ------------ | ------------- |
-| Stale GitNexus stats | `fix-gitnexus-stats.sh` | grep for mismatched stats |
 | Broken doc links | `fix-doc-links.sh --external` | check-doc-links exits 0 |
 | Missing .env.example | `fix-env-example.sh` | .env.example exists |
 | Lint violations — source code | `fix-lint.sh` `src/` | `lsp_diagnostics` 0 errors, scan-linters 0 errors |
@@ -167,13 +166,12 @@ another (e.g., extracting a shared preamble THEN updating callers).
 
 After ALL actionable findings in the current round are processed:
 
-1. **Re-index**: `npx gitnexus analyze --force --skip-agents-md`
-2. **Run test suite**: Confirm `FAILED=0`, `ERRORS=0`, exit code 0
-3. **Run linters on BOTH source and test code**: Confirm `LINT_ERRORS=0`
-4. **Run `lsp_diagnostics` on all changed files**: Confirm `LSP_ERRORS=0` (0 errors AND 0 warnings)
-5. **Re-run relevant scanners** from phases 1-9
-6. **Re-classify**: Run step 10.2 again
-7. **Check exit condition**: `CRITICAL=0 AND HIGH=0 AND MEDIUM=0 AND FAILED_TESTS=0 AND LINT_ERRORS=0 AND LSP_ERRORS=0 AND ACTIONABLE(LOW)=0?`
+1. **Run test suite**: Confirm `FAILED=0`, `ERRORS=0`, exit code 0
+2. **Run linters on BOTH source and test code**: Confirm `LINT_ERRORS=0`
+3. **Run `lsp_diagnostics` on all changed files**: Confirm `LSP_ERRORS=0` (0 errors AND 0 warnings)
+4. **Re-run relevant scanners** from phases 1-9
+5. **Re-classify**: Run step 10.2 again
+6. **Check exit condition**: `CRITICAL=0 AND HIGH=0 AND MEDIUM=0 AND FAILED_TESTS=0 AND LINT_ERRORS=0 AND LSP_ERRORS=0 AND ACTIONABLE(LOW)=0?`
    - YES → proceed to 10.5
    - NO → go to 10.3 for next round
    - Iteration >= 5 → output partial, flag INCOMPLETE, stop

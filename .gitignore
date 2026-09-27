@@ -178,19 +178,10 @@ node_modules/
 .pkg-cache/
 
 
-# !== Git Nexus Indexing ===
-
-.gitnexus/
-!.gitnexus/cache/
-.gitnexus/lbug
-
-
-# !== OpenCode / Claude Code ===
+# !== OpenCode ===
 
 .omo/
 !.omo/project-memory.md
-.claude/                  # Claude Code workspace directory (covers all subdirs)
-claudecode_history        # Legacy claude code history
 
 # Workspace-specific state
 .workspace_cache/

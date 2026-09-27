@@ -48,9 +48,9 @@ for ext in "${!PATTERNS[@]}"; do
   # Find files with the extension
   while IFS= read -r -d '' file; do
     rel="${file#"$FIX_REPO_ROOT"/}"
-    # Skip node_modules, .git, .gitnexus
+    # Skip node_modules, .git
     case "$rel" in
-      node_modules/*|.git/*|.gitnexus/*) continue ;;
+      node_modules/*|.git/*) continue ;;
     esac
     ((TOTAL_FILES++)) || true
     matches=$(grep -oP "$pattern" "$file" 2>/dev/null || true)

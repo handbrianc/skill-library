@@ -48,18 +48,6 @@ trap '' PIPE
 
 section "STEP 3.2 — Architectural Analysis"
 
-sub "GitNexus Clusters"
-if has_cmd npx; then
-  npx gitnexus status 2>/dev/null || npx gitnexus analyze --force --skip-agents-md 2>/dev/null || true
-  npx gitnexus cypher \
-    "MATCH (c:Community) RETURN c.heuristicLabel, c.symbolCount, c.cohesion, c.keywords ORDER BY c.symbolCount DESC" \
-    2>/dev/null \
-    | head -30 \
-    || warn "GitNexus: not available or no clusters for this repo"
-else
-  warn "npx not available — skipping GitNexus queries"
-fi
-
 echo ""
 sub "Circular Dependency Check"
 if has_cmd npx; then
