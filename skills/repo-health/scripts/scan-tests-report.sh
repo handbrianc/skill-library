@@ -58,6 +58,19 @@ coverage_report() {
     echo "  $pytest_total"
   fi
 
+  # pytest-cov fail-under summary: "Required test coverage of 80.0% reached. Total coverage: 85.43%"
+  local cov_req cov_total_pct
+  cov_req=$(grep -oE 'Required test coverage of [0-9.]+% (reached|not met)' "$TEST_OUTPUT" 2>/dev/null | head -1 || true)
+  if [[ -n "$cov_req" ]]; then
+    cov_found=true
+    echo "  $cov_req"
+  fi
+  cov_total_pct=$(grep -oE 'Total coverage: [0-9.]+%' "$TEST_OUTPUT" 2>/dev/null | head -1 || true)
+  if [[ -n "$cov_total_pct" ]]; then
+    cov_found=true
+    echo "  $cov_total_pct"
+  fi
+
   # "Coverage:" summary line
   local cov_summary
   cov_summary=$(grep -iE "(Coverage|Total)" "$TEST_OUTPUT" 2>/dev/null | tail -5 || true)

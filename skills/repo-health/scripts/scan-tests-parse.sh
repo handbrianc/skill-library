@@ -32,6 +32,11 @@ parse_results() {
     failed=$(grep -cE '^\s*(✗|FAIL)' "$TEST_OUTPUT" 2>/dev/null || echo "0")
     errors=$(grep -cE '^\s*(×|ERROR)' "$TEST_OUTPUT" 2>/dev/null || echo "0")
     skipped=$(grep -cE '^\s*(○|SKIP|skipped)' "$TEST_OUTPUT" 2>/dev/null || echo "0")
+    # pytest-style summary line (e.g. "2844 passed, 3 failed in 9.8s")
+    if grep -qE '[0-9]+ (passed|failed)' "$TEST_OUTPUT" 2>/dev/null; then
+      passed=$(grep -oE '[0-9]+ passed' "$TEST_OUTPUT" 2>/dev/null | head -1 | grep -oE '[0-9]+' || echo "0")
+      failed=$(grep -oE '[0-9]+ failed' "$TEST_OUTPUT" 2>/dev/null | head -1 | grep -oE '[0-9]+' || echo "0")
+    fi
 
     echo "PASSED: $passed"
     echo "FAILED: $failed"

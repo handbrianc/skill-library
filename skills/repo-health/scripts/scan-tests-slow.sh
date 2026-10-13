@@ -39,6 +39,15 @@ slow_tests() {
       | awk '{ printf "  %.3fs\n", $1 }'
   fi
 
+  # Format: pytest --durations table: "0.05s call     tests/test_x.py::test_y"
+  if grep -qE '^[0-9]+(\.[0-9]+)?s\s+(call|setup|teardown)\s' "$TEST_OUTPUT" 2>/dev/null; then
+    timing_found=true
+    echo ""
+    echo "--- pytest --durations (slowest first) ---"
+    grep -E '^[0-9]+(\.[0-9]+)?s\s+(call|setup|teardown)\s' "$TEST_OUTPUT" 2>/dev/null \
+      | sort -rn | head -20 | sed 's/^/  /' || true
+  fi
+
   # Format: "✓ test name (Nms)" (common format)
   if grep -qE '\([0-9]+ms\)' "$TEST_OUTPUT" 2>/dev/null; then
     timing_found=true
@@ -68,7 +77,7 @@ slow_tests() {
     timing_found=true
     echo ""
     echo "--- Lines mentioning timing (slow/timing/duration) ---"
-    grep -iE '(slow|SLOW|TIME|duration)' "$TEST_OUTPUT" 2>/dev/null | head -20 | sed 's/^/  /'
+    grep -iE '(slow|SLOW|TIME|duration)' "$TEST_OUTPUT" 2>/dev/null | head -20 | sed 's/^/  /' || true
   fi
 
   if ! $timing_found; then

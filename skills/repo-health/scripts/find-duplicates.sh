@@ -37,13 +37,17 @@ TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
 FILES="$TMPDIR/files.txt"
-find "$TARGET" -type f \
-  \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" -o -name "*.go" -o -name "*.java" \) \
-  -path "*/node_modules" -prune -o -path "*/.git" -prune -o -path "*/dist" -prune -o \
-  -path "*/build" -prune -o -path "*/vendor" -prune -o -print \
+find "$TARGET" \
+  \( -type d \( -path "*/node_modules" -o -path "*/.git" -o -path "*/dist" -o -path "*/build" -o -path "*/vendor" \
+       -o -path "*/.venv" -o -path "*/venv" -o -name "__pycache__" -o -path "*/site-packages" \
+       -o -name "*.dist-info" -o -name "*.egg-info" -o -path "*/.tox" -o -path "*/.mypy_cache" \
+       -o -path "*/.ruff_cache" -o -path "*/.hypothesis" \) -prune \) \
+  -o \( -type f \
+       \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" -o -name "*.go" -o -name "*.java" \) \
+       -print \) \
   > "$FILES"
 
-FILE_COUNT=$(wc -l < "$FILES")
+FILE_COUNT=$(awk 'END{print NR+0}' "$FILES")
 echo "Files to scan: $FILE_COUNT" >&2
 
 # --- Normalize a multiline string: strip comments, collapse whitespace ---

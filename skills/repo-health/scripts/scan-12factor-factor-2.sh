@@ -1,32 +1,51 @@
 #!/usr/bin/env bash
 # scan-12factor-factor-2.sh — Factor 2: Dependencies
+# Usage: ./scan-12factor-factor-2.sh [target-dir]   (default: current directory)
 set -euo pipefail
 
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/common.sh"
+
+TARGET="${1:-$PWD}"
+if [[ -d "$TARGET" ]]; then
+  TARGET="$(cd "$TARGET" && pwd)"
+else
+  echo "FACTOR_2: N/A - target directory not found: ${1:-<none>}"
+  exit 0
+fi
+trap 'exit 0' EXIT
 
 factor_2_dependencies() {
   local detail=""
   local status="PASS"
 
-  local manifest_found=false
+  local manifest="none"
+  local m
+  for m in package.json pyproject.toml requirements.txt Cargo.toml go.mod Gemfile composer.json Pipfile; do
+    if [[ -f "$TARGET/$m" ]]; then
+      manifest="$m"
+      break
+    fi
+  done
 
-  # Check manifest files
-  if has_files "package.json" || has_files "yarn.lock" || has_files "pnpm-lock.yaml" || \
-     has_files "requirements.txt" || has_files "pyproject.toml" || \
-     has_files "Cargo.toml" || has_files "go.mod" || \
-     has_files "Gemfile" || has_files "composer.json"; then
-    manifest_found=true
-    detail="Manifest found"
+  if [[ "$manifest" != "none" ]]; then
+    detail="Manifest found ($manifest)"
   else
     detail="No dependency manifest found"
     status="FAIL"
   fi
 
   # Check lockfiles
-  if has_files "package-lock.json" || has_files "yarn.lock" || has_files "pnpm-lock.yaml" || \
-     has_files "Cargo.lock" || has_files "Gemfile.lock" || \
-     has_files "composer.lock" || has_files "poetry.lock"; then
-    detail+=" | Lockfile present"
+  local lockfile="none"
+  local l
+  for l in package-lock.json yarn.lock pnpm-lock.yaml Cargo.lock Gemfile.lock composer.lock poetry.lock uv.lock Pipfile.lock; do
+    if [[ -f "$TARGET/$l" ]]; then
+      lockfile="$l"
+      break
+    fi
+  done
+
+  if [[ "$lockfile" != "none" ]]; then
+    detail+=" | Lockfile present ($lockfile)"
   else
     detail+=" | WARNING: No lockfile — dependencies not pinned"
     if [[ "$status" = "PASS" ]]; then
@@ -34,7 +53,7 @@ factor_2_dependencies() {
     fi
   fi
 
-  if ! $manifest_found; then
+  if [[ "$manifest" = "none" ]]; then
     status="FAIL"
   fi
 

@@ -18,7 +18,7 @@ set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/common.sh"
 
 # ---- Config ---------------------------------------------------------------
-# shellcheck disable=SC2034 # used by section/sub/warn helpers referencing SRC_DIR
+# shellcheck disable=SC2034 # kept for interface consistency with other steps
 SRC_DIR="${1:-src}"
 
 # Colours for headings (disabled if not a terminal)
@@ -43,6 +43,13 @@ kv()        { echo "  $1: $2"; }
 trap 'exit 0' EXIT
 trap '' PIPE
 
+# ---- Helpers ---------------------------------------------------------------
+# npx tool available offline? (never trigger a network install)
+npx_has() {
+  has_cmd npx || return 1
+  npx --no-install "$1" --version &>/dev/null
+}
+
 # ===========================================================================
 # STEP 3.3 — Framework and Language Runtime Currency
 # ===========================================================================
@@ -51,24 +58,42 @@ section "STEP 3.3 — Technology Currency Check"
 
 sub "Node.js"
 if [[ -f "package.json" ]]; then
-  node_required=$(jq -r '.engines.node // "not specified"' package.json)
+  node_required=$(jq -r '.engines.node // "not specified"' package.json 2>/dev/null || echo "not specified")
   kv "Node required" "$node_required"
   kv "Node current" "$(node --version 2>/dev/null || echo 'N/A')"
-  if has_cmd npx; then
-    kv "Node LTS" "$(npx semver --lts 2>/dev/null || echo 'check https://nodejs.org')"
-  fi
+else
+  warn "No package.json — Node.js currency N/A"
 fi
 
 sub "TypeScript"
 if [[ -f "tsconfig.json" ]]; then
-  kv "TypeScript version" "$(npx tsc --version 2>/dev/null || echo 'N/A')"
+  if npx_has tsc; then
+    kv "TypeScript version" "$(timeout 60 npx --no-install tsc --version 2>/dev/null || echo 'N/A')"
+  else
+    warn "TypeScript not installed (npx --no-install) — version check N/A"
+  fi
   echo "  tsconfig files: $(ls tsconfig*.json 2>/dev/null | tr '\n' ' ')"
+else
+  warn "No tsconfig.json — TypeScript currency N/A"
 fi
 
 sub "Python"
 if [[ -f "pyproject.toml" || -f "requirements.txt" ]]; then
-  kv "Python required" "$(grep -E 'python_requires' pyproject.toml 2>/dev/null || echo 'not specified')"
+  if [[ -f "pyproject.toml" ]]; then
+    py_req=$(grep -hE '^[[:space:]]*(requires-python|python_requires)[[:space:]]*=' pyproject.toml 2>/dev/null | head -1 || true)
+    kv "Python required" "${py_req:-not specified}"
+  else
+    kv "Python required" "not specified (requirements.txt only)"
+  fi
   kv "Python current" "$(python3 --version 2>/dev/null || echo 'N/A')"
+  # Lockfile / pinning signal
+  locks=""
+  for lf in uv.lock poetry.lock Pipfile.lock requirements.txt; do
+    if [[ -f "$lf" ]]; then locks="${locks:+$locks, }$lf"; fi
+  done
+  kv "Dependency lock/pin files" "${locks:-none found}"
+else
+  warn "No pyproject.toml/requirements.txt — Python currency N/A"
 fi
 
 sub "Go"
@@ -80,7 +105,7 @@ fi
 sub "Rust"
 if [[ -f "Cargo.toml" ]]; then
   if grep -qE 'edition\s*=' Cargo.toml 2>/dev/null; then
-    kv "Rust edition" "$(grep -E 'edition\s*=' Cargo.toml 2>/dev/null)"
+    kv "Rust edition" "$(grep -hE 'edition\s*=' Cargo.toml 2>/dev/null | head -1)"
   else
     warn "Rust edition not set (defaults to 2015)"
   fi
@@ -91,7 +116,11 @@ sub "Major Dependency Versions"
 if [[ -f "package.json" ]]; then
   jq -r '.dependencies // {} | to_entries[] | select(.value | test("^\\^0\\.|^\\^1\\.[0-9]|^\\^2\\.[0-9]")) | "- \(.key): \(.value)"' package.json 2>/dev/null | head -20 || true
   echo ""
-  if command -v npm &>/dev/null; then
-    npm outdated --long 2>/dev/null | head -30 || warn "npm outdated failed (run npm install first?)"
+  if has_cmd npm; then
+    rc=0
+    timeout 60 npm outdated --long 2>/dev/null | head -30 || rc=$?
+    [[ "$rc" -ne 0 && "$rc" -ne 124 ]] && warn "npm outdated failed (run npm install first?)"
   fi
+else
+  warn "No package.json — npm dependency freshness N/A (Python projects: review uv.lock / requirements pins manually)"
 fi

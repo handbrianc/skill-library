@@ -27,10 +27,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/scan-tests-report.sh"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Target dir: env override > current directory. (The previous computation
+# `$SCRIPT_DIR/../../..` resolved to the skill's own config tree, so every
+# sub-scan looked for tests in ~/.config — never in the audited project.)
 # shellcheck disable=SC2034 # used by sourced sub-scripts
-REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+REPO_ROOT="${REPO_HEALTH_TARGET_DIR:-$PWD}"
 # shellcheck disable=SC2034 # used by sourced sub-scripts
-TEST_OUTPUT="/tmp/test-output.txt"
+TEST_OUTPUT="${TEST_OUTPUT:-/tmp/test-output.txt}"
 
 # --- Main ---
 

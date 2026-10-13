@@ -16,11 +16,12 @@
 # Usage:
 #   ./skills/repo-health/scripts/scan-tech-debt.sh [src-dir] [test-output-file]
 #
-#   src-dir defaults to "src/" if not provided.
+#   src-dir defaults to "src/" if not provided (pass "." to scan the whole
+#   tree — vendor directories such as .venv/node_modules are always excluded).
 #   test-output-file defaults to /tmp/test-output.txt if not provided.
 #
 # Exits 0 always — findings are data, not failures.
-# Requires: bash >= 4.0, git, jq, npx (for madge/dpdm/ts-prune)
+# Requires: bash >= 4.0, git; jq/npx optional (missing tools degrade to N/A).
 # ---------------------------------------------------------------------------
 
 set -euo pipefail
@@ -38,10 +39,31 @@ trap '' PIPE
 
 # ---- Run all 7 steps in order ---------------------------------------------
 
-"$SCRIPT_DIR/scan-tech-debt-step-1.sh" "$SRC_DIR"
-"$SCRIPT_DIR/scan-tech-debt-step-2.sh" "$SRC_DIR"
-"$SCRIPT_DIR/scan-tech-debt-step-3.sh" "$SRC_DIR"
-"$SCRIPT_DIR/scan-tech-debt-step-4.sh" "$SRC_DIR" "$TEST_OUTPUT"
-"$SCRIPT_DIR/scan-tech-debt-step-5.sh" "$SRC_DIR"
-"$SCRIPT_DIR/scan-tech-debt-step-6.sh" "$SRC_DIR"
-"$SCRIPT_DIR/scan-tech-debt-step-7.sh" "$SRC_DIR"
+echo "=== TECHNICAL DEBT SCAN ==="
+echo "Target: $SRC_DIR"
+echo "Test output: $TEST_OUTPUT"
+
+step() {
+  local script="$1"
+  local label="$2"
+  shift 2
+  if [[ ! -f "$script" ]]; then
+    err "MISSING: $script — skipping $label"
+    return 0
+  fi
+  echo "" >&2
+  if ! "$script" "$@"; then
+    err "$label exited non-zero (continuing with remaining steps)"
+  fi
+}
+
+step "$SCRIPT_DIR/scan-tech-debt-step-1.sh" "Step 3.1" "$SRC_DIR"
+step "$SCRIPT_DIR/scan-tech-debt-step-2.sh" "Step 3.2" "$SRC_DIR"
+step "$SCRIPT_DIR/scan-tech-debt-step-3.sh" "Step 3.3" "$SRC_DIR"
+step "$SCRIPT_DIR/scan-tech-debt-step-4.sh" "Step 3.4" "$SRC_DIR" "$TEST_OUTPUT"
+step "$SCRIPT_DIR/scan-tech-debt-step-5.sh" "Step 3.5" "$SRC_DIR"
+step "$SCRIPT_DIR/scan-tech-debt-step-6.sh" "Step 3.6" "$SRC_DIR"
+step "$SCRIPT_DIR/scan-tech-debt-step-7.sh" "Step 3.7" "$SRC_DIR" "$TEST_OUTPUT"
+
+echo ""
+echo "TECH_DEBT_SCAN_COMPLETE"

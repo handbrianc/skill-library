@@ -18,7 +18,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # ---- Source directory detection ----
-TARGET_DIR="${1:-}"
+TARGET_DIR="${1:-${REPO_HEALTH_TARGET_DIR:-}}"
 if [[ -z "$TARGET_DIR" ]]; then
   TARGET_DIR="."
   for d in src lib app; do

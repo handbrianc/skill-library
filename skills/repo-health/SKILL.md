@@ -249,23 +249,33 @@ PRE-FLIGHT VALIDATION RESULTS:
 
 KNOWN FAILURE MODES (read BEFORE running each phase):
 
+NOTE (2026-10-13): The scanner family was fixed for multi-stack (Python/Go/Rust/JVM) repos —
+scan-setup.sh, scan-tests*.sh, scan-docs.sh, scan-security.sh, scan-linters*.sh,
+parse-test-results.sh, scan-complexity*.sh, scan-tech-debt*.sh, scan-12factor*.sh,
+compare-specs.sh, detect-dead-code.sh, audit-dependency-usage.sh, find-duplicates.sh.
+Invocation convention: scripts target $PWD (cwd), or set REPO_HEALTH_TARGET_DIR; run them
+FROM the audited repo root. scan-setup.sh's $1 is a mode flag, not the target.
+Vendor trees (.venv, node_modules, site-packages, __pycache__) are pruned from all scans.
+
 PHASE 2 (Code Quality):
-- scan-linters.sh may NOT detect shellcheck/markdownlint
-  → Also run: shellcheck --severity=warning ./*.sh
-- Also run markdownlint on .md files
-- For Python projects: run ruff check src/ AND mypy src/ explicitly
+- For Python projects: scan-linters.sh now runs ruff (check + format), mypy, bandit,
+  shellcheck, markdownlint — still fine to double-run the critical ones explicitly
 - Shellcheck: run WITH config THEN WITHOUT (--norc) to detect masked violations
 
 PHASE 6 (Tests):
-- parse-test-results.sh may auto-detect wrong framework
-  → Manually parse PASSED/FAILED/ERRORS from raw output
+- parse-test-results.sh now detects pytest FIRST (parses `N passed/failed`,
+  collect-only, `-ra` failure lines). Manual parsing only needed for exotic formats.
 
 PHASE 7 (Security):
 - semgrep --config=auto may fail (network/rate limiting)
   → Fallback: grep -P for command injection, hardcoded secrets
+- scan-secrets.sh does NOT prune .venv (known limitation) — scan-security.sh works
+  around it by targeting src/lib/app; for flat layouts use the staged-copy path
 
 PHASE 8 (SBOM):
 - If syft missing, skip SBOM. Fallback: manual find for manifests.
+- Even with syft, SPDX output may be all-NOASSERTION — cross-check licenses from
+  site-packages .dist-info METADATA License-Expression fields.
 
 PHASE SEQUENCE (run only APPLICABLE phases, sequentially, via bash):
 
