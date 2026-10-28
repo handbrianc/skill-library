@@ -74,17 +74,15 @@ Ambiguous requests default to `report` — remediation never runs unless you ask
 repo's `AGENTS.md`, which points them at `skills/repo-health/SKILL.md` as the workflow;
 mode still resolves from your words (e.g. "run the repo-health audit in fix mode").
 
-**VS Code (GitHub Copilot Chat):** workspace prompt files register slash commands —
-`/repo-health` (report mode default; `/repo-health fix` for remediation) and
-`/repo-health-fix` (always remediation, no argument needed). `install-skills.sh` also
-installs both prompt files globally into the VS Code user prompts folder
-(`~/.config/Code/User/prompts/` on Linux; the script handles macOS/Windows and
-Insiders/VSCodium) so the commands work in any project — the prompts read the repo's
-skill copy when present, else `~/.copilot/skills/repo-health/`. Prompt files run in
-Chat view sessions only; CLI and other harnesses use the installed skill instead.
-If `/repo-health fix` runs in report mode, check the prompt's source via
-**Chat: Configure Prompt Files** (hover to see it) — a user-level copy of the same
-name shadows the workspace one.
+**VS Code (GitHub Copilot Chat):** slash commands now come from skills, so they work in
+every VS Code harness, the Copilot CLI and the Copilot app. `/repo-health` is served by
+the audit skill itself (auto- or manually invoked; append "fix" to remediate), while
+`/repo-health-fix` is a manual-only wrapper (`disable-model-invocation: true`) that
+`install-skills.sh` generates under `~/.copilot/skills/` from
+`.github/prompts/repo-health-fix.prompt.md`. The in-repo `.github/prompts/*.prompt.md`
+files still register both commands for this workspace's Chat view (Local) — skip VS
+Code's prompt→skills migration button, since its `repo-health` conversion conflicts
+with the installed skill.
 
 Also ships Bash helper scripts under `scripts/` (detector, scanner, auditor,
 classifier, and synthesizer variants) used by the subskills, plus:

@@ -6,9 +6,9 @@
 # (~/.config/opencode/skills/<skill-name>/) and, by default, into the personal
 # GitHub Copilot skills directory (~/.copilot/skills/), which the Copilot
 # extension in VS Code (plus Copilot CLI and the Copilot app) reads automatically.
-# Also installs the VS Code Copilot Chat prompt files (.github/prompts/*.prompt.md)
-# globally into the VS Code user prompts folder so the /repo-health and
-# /repo-health-fix slash commands work in every project.
+# From .github/prompts/*.prompt.md it also generates a global wrapper skill under
+# ~/.copilot/skills/ (e.g. repo-health-fix) so the /repo-health-fix slash command
+# works in every VS Code harness, the Copilot CLI and the Copilot app.
 # Supports symlinks (for development) or copy (for stable deployment).
 #
 # Usage:
@@ -18,8 +18,7 @@
 #   ./install-skills.sh --dry-run    # Show what would be done
 #   ./install-skills.sh --list       # List installable skills and exit
 #   ./install-skills.sh --skip       # Skip existing, only install new
-#   ./install-skills.sh --no-copilot # Skip ~/.copilot/skills AND the prompt dest
-#   ./install-skills.sh --no-prompts # Skip the VS Code prompt files
+#   ./install-skills.sh --no-copilot # Skip ~/.copilot/skills (skills AND wrapper)
 #   ./install-skills.sh --dest ~/some/dir
 #                                    # Install ONLY to the given path
 #                                    # (overrides both default destinations)
@@ -35,6 +34,15 @@ DEFAULT_DEST="${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills"
 COPILOT_DEST="$HOME/.copilot/skills"
 PROMPTS_SOURCE="$SCRIPT_DIR/.github/prompts"
 
+# Files an older installer version copied into the VS Code user prompts folder
+# (and, in some setups, ~/.copilot/prompts/). Removed on install — these exact
+# filenames only, never glob-deleted. VS Code's prompt→skills migration would
+# otherwise conflict with the installed/generated skills.
+LEGACY_PROMPT_FILES=(
+  "repo-health.prompt.md"
+  "repo-health-fix.prompt.md"
+)
+
 # ── Help ────────────────────────────────────────────────────────────────────
 
 usage() {
@@ -49,8 +57,8 @@ DRY_RUN=false
 LIST_ONLY=false
 SKIP_EXISTING=false
 NO_COPILOT=false
-NO_PROMPTS=false
 CUSTOM_DEST=""
+WRAPPERS_INSTALLED=()   # wrapper skill names actually generated (for hints)
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -61,7 +69,6 @@ while [[ $# -gt 0 ]]; do
     -l|--list)     LIST_ONLY=true ; shift ;;
     -S|--skip)     SKIP_EXISTING=true ; shift ;;
     -n|--no-copilot) NO_COPILOT=true ; shift ;;
-    -p|--no-prompts) NO_PROMPTS=true ; shift ;;
     -D|--dest)
       shift
       CUSTOM_DEST="$(realpath -m "$1")"
@@ -82,61 +89,16 @@ else
   $NO_COPILOT || DESTS+=("$COPILOT_DEST")
 fi
 
-# VS Code Copilot Chat prompt files (.github/prompts/*.prompt.md) install globally
-# into the VS Code user prompts folder, so the /repo-health and /repo-health-fix
-# slash commands work in every project (VS Code discovers *.prompt.md there without
-# any settings). Skipped with --dest, --no-prompts, or --no-copilot.
-PROMPTS_DESTS=()
-PROMPTS_SKIP_NOTE=""
-PROMPTS_NO_SOURCE=false
-CREATED_DEFAULT_PROMPTS=false
-
+# The prompt files are NOT installed globally anymore. Each *.prompt.md becomes
+# a generated Copilot wrapper skill under ~/.copilot/skills/ instead (see the
+# wrapper section below); the files themselves stay in this repo, where they
+# still register the commands for this workspace's Chat view.
 PROMPT_FILES=()
 for prompt_src in "$PROMPTS_SOURCE"/*.prompt.md; do
   if [[ -f "$prompt_src" ]]; then
     PROMPT_FILES+=("$prompt_src")
   fi
 done
-
-if [[ -z "$CUSTOM_DEST" ]] && ! $NO_PROMPTS && ! $NO_COPILOT; then
-  if [[ ${#PROMPT_FILES[@]} -eq 0 ]]; then
-    # No source files — reported later; skills must still install.
-    PROMPTS_NO_SOURCE=true
-  else
-    # VS Code profile user-data root varies by OS and variant (Code,
-    # Code - Insiders, VSCodium): <root>/<variant>/User/prompts.
-    case "$(uname -s)" in
-      Darwin)
-        UD_ROOT="$HOME/Library/Application Support" ;;
-      MINGW*|MSYS*|CYGWIN*)
-        UD_ROOT="${APPDATA:-}" ;;
-      *)
-        UD_ROOT="${XDG_CONFIG_HOME:-$HOME/.config}" ;;
-    esac
-    if [[ -n "$UD_ROOT" ]]; then
-      PROMPT_CANDIDATES=(
-        "$UD_ROOT/Code/User/prompts"
-        "$UD_ROOT/Code - Insiders/User/prompts"
-        "$UD_ROOT/VSCodium/User/prompts"
-      )
-      found_user_dir=false
-      for cand in "${PROMPT_CANDIDATES[@]}"; do
-        if [[ -d "$(dirname "$cand")" ]]; then
-          PROMPTS_DESTS+=("$cand")
-          found_user_dir=true
-        fi
-      done
-      if ! $found_user_dir; then
-        # No VS Code user profile found yet — target the stable default (Code);
-        # created during install and noted in the final hints.
-        PROMPTS_DESTS=("${PROMPT_CANDIDATES[0]}")
-        CREATED_DEFAULT_PROMPTS=true
-      fi
-    else
-      PROMPTS_SKIP_NOTE="\$APPDATA is not set, so no VS Code user prompts folder could be located"
-    fi
-  fi
-fi
 
 # ── Discover skills ─────────────────────────────────────────────────────────
 
@@ -188,15 +150,6 @@ if ! $DRY_RUN; then
       exit 1
     fi
   done
-  if [[ ${#PROMPTS_DESTS[@]} -gt 0 ]]; then
-    for dest in "${PROMPTS_DESTS[@]}"; do
-      mkdir -p "$dest"
-      if [[ ! -w "$dest" ]]; then
-        echo "Error: Prompt destination $dest is not writable." >&2
-        exit 1
-      fi
-    done
-  fi
 fi
 
 # ── Install ──────────────────────────────────────────────────────────────────
@@ -265,31 +218,116 @@ install_into() {
   # ── Summary (per destination) ────────────────────────────────────────────
 
   echo
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo "  Destination:    $dest"
   echo "  Mode:           $MODE"
   echo "  Installed:      $installed"
   echo "  Skipped:        $skipped"
   echo "  Failed:         $failed"
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo
 }
 
-install_prompt_files() {
-  local dest="$1"
-  local name src dst reply
+cleanup_legacy_prompt_files() {
+  # Remove the .prompt.md files older installer versions placed into the VS Code
+  # user prompts folders (<UD_ROOT>/<variant>/User/prompts) and, if present,
+  # ~/.copilot/prompts/. Exact filenames only; emptied dirs are removed after.
+  local ud_root dir file removed
+  local -a prompt_dirs=()
+
+  case "$(uname -s)" in
+    Darwin)
+      ud_root="$HOME/Library/Application Support" ;;
+    MINGW*|MSYS*|CYGWIN*)
+      ud_root="${APPDATA:-}" ;;
+    *)
+      ud_root="${XDG_CONFIG_HOME:-$HOME/.config}" ;;
+  esac
+  if [[ -n "$ud_root" ]]; then
+    prompt_dirs=(
+      "$ud_root/Code/User/prompts"
+      "$ud_root/Code - Insiders/User/prompts"
+      "$ud_root/VSCodium/User/prompts"
+    )
+  fi
+  prompt_dirs+=("$HOME/.copilot/prompts")
+
+  for dir in "${prompt_dirs[@]}"; do
+    [[ -d "$dir" ]] || continue
+    removed=false
+    for file in "${LEGACY_PROMPT_FILES[@]}"; do
+      if [[ -e "$dir/$file" || -L "$dir/$file" ]]; then
+        if $DRY_RUN; then
+          echo "  [dry-run] rm $dir/$file"
+        else
+          rm -f "$dir/$file"
+          echo "  [cleanup] removed $dir/$file (replaced by generated wrapper skill)"
+        fi
+        removed=true
+      fi
+    done
+    if $removed && ! $DRY_RUN && [[ "$dir" == */User/prompts ]]; then
+      # Only the VS Code user prompts dirs get emptied-and-removed
+      rmdir --ignore-fail-on-non-empty "$dir" 2>/dev/null || true
+    fi
+  done
+}
+
+install_wrapper_skills() {
+  # Generate a Copilot wrapper skill per .github/prompts/*.prompt.md under
+  # ~/.copilot/skills/ so the /<name> slash command works in every VS Code
+  # harness, the Copilot CLI and the Copilot app. Wrappers are manual-invoke
+  # only (disable-model-invocation: true) and always copied, regardless of MODE.
+  local src name dst reply description arg_hint existing
   local installed=0
   local skipped=0
   local failed=0
 
+  if [[ ${#PROMPT_FILES[@]} -eq 0 ]]; then
+    echo "Error: no *.prompt.md files found in $PROMPTS_SOURCE" >&2
+    return 0
+  fi
+
   for src in "${PROMPT_FILES[@]}"; do
-    name="$(basename "$src")"
-    dst="$dest/$name"
+    # Derive the skill name: basename minus .prompt.md, lowercased, spaces → hyphens
+    name="$(basename "$src" .prompt.md)"
+    name="$(printf '%s' "$name" | tr '[:upper:] ' '[:lower:]-')"
+    if [[ ! "$name" =~ ^[a-z0-9][a-z0-9-]*$ ]]; then
+      echo "Warning: skipping $(basename "$src") — derived skill name '$name' is not a valid Copilot skill name (lowercase letters, digits, hyphens)." >&2
+      continue
+    fi
+
+    # Never touch a destination that belongs to a real repo skill — that skill
+    # itself serves the /<name> command (e.g. the repo-health audit skill).
+    for existing in "${SKILLS[@]}"; do
+      if [[ "$existing" == "$name" ]]; then
+        echo "Warning: skipping wrapper '$name' ($(basename "$src")) — collides with repo skill 'skills/$name'; the installed skill serves /$name itself." >&2
+        continue 2
+      fi
+    done
+
+    # Extract description / argument-hint from the prompt's YAML frontmatter
+    # (raw remainder after the key, any quoting kept)
+    description="$(awk '
+      { sub(/\r$/, "") }
+      NR==1 && /^---[ \t]*$/ { infm=1; next }
+      infm && /^---[ \t]*$/ { exit }
+      infm && /^description:/ { sub(/^description:[ \t]*/, ""); print; exit }
+    ' "$src")"
+    [[ -n "$description" ]] || description="Manual wrapper: $name audit command."
+    arg_hint="$(awk '
+      { sub(/\r$/, "") }
+      NR==1 && /^---[ \t]*$/ { infm=1; next }
+      infm && /^---[ \t]*$/ { exit }
+      infm && /^argument-hint:/ { sub(/^argument-hint:[ \t]*/, ""); print; exit }
+    ' "$src")"
+
+    dst="$COPILOT_DEST/$name"
 
     # ── Check if destination exists ─────────────────────────────────
     if [[ -e "$dst" || -L "$dst" ]]; then
       if $DRY_RUN; then
-        echo "  [dry-run] $name  ->  $dst  (would replace existing, mode: $MODE)"
+        echo "  [dry-run] $name  ->  $dst  (would replace existing, mode: copy)"
         ((installed++)) || true
         continue
       fi
@@ -302,37 +340,51 @@ install_prompt_files() {
         echo "  [exist]  $name  already installed at $dst"
         echo "           Use --force to overwrite, --skip to skip existing,"
         echo "           or remove it manually: rm -rf \"$dst\""
-        echo -n "           Overwrite at $dest? [y/N] "
+        echo -n "           Overwrite at $COPILOT_DEST? [y/N] "
         read -r reply < /dev/tty 2>/dev/null || true
         case "${reply:-n}" in
           y|Y|yes|YES) ;;
           *) echo "           Skipping $name." ; ((skipped++)) || true ; continue ;;
         esac
       fi
-      # Remove existing (file or symlink)
+      # Remove existing (wrapper skills are directories)
       rm -rf "$dst"
     fi
 
     # ── Install ────────────────────────────────────────────────────
     if $DRY_RUN; then
-      echo "  [dry-run] $name  ->  $dst  (mode: $MODE)"
+      echo "  [dry-run] $name  ->  $dst  (mode: copy)"
       ((installed++)) || true
       continue
     fi
 
-    if [[ "$MODE" == "symlink" ]]; then
-      # PROMPT_FILES entries are absolute, so the symlink is absolute
-      ln -sf "$src" "$dst"
-      echo "  [link]   $name  ->  $dst"
-    else
-      cp -a "$src" "$dst"
-      echo "  [copy]   $name  ->  $dst"
-    fi
+    mkdir -p "$dst"
+    {
+      printf '%s\n' '---'
+      printf 'name: %s\n' "$name"
+      printf 'description: %s\n' "$description"
+      if [[ -n "$arg_hint" ]]; then
+        printf 'argument-hint: %s\n' "$arg_hint"
+      fi
+      printf '%s\n' 'disable-model-invocation: true'
+      printf '%s\n' '---'
+      # Prompt body: everything after the frontmatter close, verbatim
+      # (with no frontmatter at all, the whole file is the body)
+      awk '
+        { sub(/\r$/, "") }
+        NR==1 && /^---[ \t]*$/ { infm=1; next }
+        infm && /^---[ \t]*$/ { infm=0; body=1; next }
+        infm { next }
+        { print }
+      ' "$src"
+    } > "$dst/SKILL.md"
+    echo "  [copy]   $name  ->  $dst"
     ((installed++)) || true
+    WRAPPERS_INSTALLED+=("$name")
 
     # ── Post-install sanity ─────────────────────────────────────────
-    if [[ ! -f "$dst" ]]; then
-      echo "  Warning: prompt file not found at $dst — installation may be incomplete." >&2
+    if [[ ! -f "$dst/SKILL.md" ]]; then
+      echo "  Warning: SKILL.md not found at $dst/SKILL.md — wrapper may be incomplete." >&2
     fi
   done
 
@@ -340,8 +392,8 @@ install_prompt_files() {
 
   echo
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "  Destination:    $dest  (VS Code Copilot Chat prompt files — slash commands, all projects)"
-  echo "  Mode:           $MODE"
+  echo "  Destination:    $COPILOT_DEST  (Copilot wrapper skills generated from .github/prompts — /name slash commands, all harnesses)"
+  echo "  Mode:           copy"
   echo "  Installed:      $installed"
   echo "  Skipped:        $skipped"
   echo "  Failed:         $failed"
@@ -353,20 +405,13 @@ for dest in "${DESTS[@]}"; do
   install_into "$dest"
 done
 
-# ── VS Code Copilot Chat prompt files ────────────────────────────────────────
+# ── Legacy prompt cleanup + Copilot wrapper skills ───────────────────────────
+# Runs unless --dest or --no-copilot. Output reads top-down: skills → cleanup
+# → wrappers.
 
-if [[ ${#PROMPTS_DESTS[@]} -eq 0 ]]; then
-  # Opted out (--dest, --no-prompts, --no-copilot) → skip silently; otherwise
-  # PROMPTS_NO_SOURCE / PROMPTS_SKIP_NOTE explain why nothing was installed.
-  if $PROMPTS_NO_SOURCE; then
-    echo "Error: no *.prompt.md files found in $PROMPTS_SOURCE" >&2
-  elif [[ -n "$PROMPTS_SKIP_NOTE" ]]; then
-    echo "Note: skipping VS Code prompt files — $PROMPTS_SKIP_NOTE" >&2
-  fi
-else
-  for dest in "${PROMPTS_DESTS[@]}"; do
-    install_prompt_files "$dest"
-  done
+if [[ -z "$CUSTOM_DEST" ]] && ! $NO_COPILOT; then
+  cleanup_legacy_prompt_files
+  install_wrapper_skills
 fi
 
 if $DRY_RUN; then
@@ -389,18 +434,19 @@ for dest in "${DESTS[@]}"; do
   fi
 done
 
-if [[ ${#PROMPTS_DESTS[@]} -gt 0 ]]; then
+if [[ -z "$CUSTOM_DEST" ]] && ! $NO_COPILOT; then
   echo
-  echo "VS Code Copilot Chat prompt files installed:"
-  for dest in "${PROMPTS_DESTS[@]}"; do
-    echo "  $dest  (VS Code user prompts — Copilot Chat slash commands in every project)"
-  done
-  if $CREATED_DEFAULT_PROMPTS; then
-    echo "  Note: no VS Code user prompts folder existed; created the default one above."
+  if [[ ${#WRAPPERS_INSTALLED[@]} -gt 0 ]]; then
+    echo "Copilot wrapper skills generated (manual invoke only — disable-model-invocation: true):"
+    for wname in "${WRAPPERS_INSTALLED[@]}"; do
+      echo "  $COPILOT_DEST/$wname  (/$wname)"
+    done
+  else
+    echo "No Copilot wrapper skills were generated from $PROMPTS_SOURCE."
   fi
-  echo
-  echo "No settings needed — chat.promptFilesLocations is only required for custom"
-  echo "prompt folders, not the user prompts folder used here."
+  echo "  /repo-health is served by the audit skill itself; /repo-health-fix by its"
+  echo "  wrapper. In this workspace, .github/prompts/*.prompt.md still register the"
+  echo "  commands for the Chat view (Local)."
 fi
 
 if [[ -z "$CUSTOM_DEST" ]] && ! $NO_COPILOT; then
