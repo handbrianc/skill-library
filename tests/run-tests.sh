@@ -88,6 +88,23 @@ for script in "${VALIDATION_TESTS[@]}"; do
   fi
 done
 
+# ── 3. Installer Integration Test ────────────────────────────────────────────
+
+echo "─── Step 3: installer script-accessibility test ───"
+echo ""
+
+INSTALLER_TEST="$SCRIPT_DIR/test-install-scripts.sh"
+if [[ -f "$INSTALLER_TEST" ]]; then
+  echo "  Running: $(basename "$INSTALLER_TEST")"
+  if bash "$INSTALLER_TEST"; then
+    echo "  ✓ Passed"
+  else
+    echo "  ✖ Failed"
+    FAILURES=$((FAILURES+1))
+  fi
+  echo ""
+fi
+
 # ── Summary ───────────────────────────────────────────────────────────────────
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

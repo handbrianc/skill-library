@@ -114,6 +114,28 @@ for you to copy/symlink into one of these):
 
 User-installed skills override project-local ones of the same name.
 
+### Scripts work from any working directory
+
+SKILL.md files reference their supporting scripts with repo-relative paths
+(`./skills/repo-health/scripts/scan-environment.sh`) so project-local skills
+resolve from the repo root. That breaks in other projects, where agents (VS Code
+Copilot, Copilot CLI/app, …) run with your project as the working directory.
+`install-skills.sh` closes this at install time, for every copy-installed
+destination (`~/.config/opencode/skills/`, `~/.copilot/skills/`, or a custom
+`--dest`):
+
+- every script reference in the installed SKILL.md files (full-path and bare
+  `./install-missing-tools.sh`-style entries alike) is rewritten to an absolute
+  path under the install destination — Copilot wrapper skills generated from
+  `.github/prompts/*.prompt.md` get the same treatment, and
+- every bundled script is made executable, so the whole support suite runs from
+  any directory: `~/.copilot/skills/repo-health/scripts/scan-environment.sh
+  --check-tools` works in any project, not just this repo.
+
+The rewrite is idempotent (re-runs change nothing) and symlink installs are
+left untouched — dev mode keeps repo-relative paths. `tests/test-install-scripts.sh`
+asserts all of the above.
+
 ## Validation & Testing
 
 ```bash
