@@ -12,7 +12,7 @@ An OpenCode skill distribution template. Packages reusable skill files for agent
 | ------ | --------- |
 | `skills/note-taker/` | Conference note-taking and synthesis skill for transforming transcripts into structured summaries |
 | `skills/sarcastic/` | A tone/sarcasm skill for agent use |
-| `skills/repo-health/` | Repo health audit orchestrator + 10 phase subskills + scripts for secrets, licenses, complexity, coverage, and more |
+| `skills/repo-health/` | Repo health audit orchestrator + 10 phase subskills + scripts for secrets, licenses, complexity, coverage, and more. Two modes: `report` (default, findings only) and `fix` (opt-in remediation loop) |
 | `skills/spec-compliance/` | Specification compliance verification skill |
 | User-installed skills | Located at `~/.config/opencode/skills/` — these take priority over project-local copies |
 
@@ -42,7 +42,43 @@ callable by the orchestrator. Phases:
 | 7 | Security Review | `repo-health--phase-7-security` |
 | 8 | SBOM & License Audit | `repo-health--phase-8-sbom` |
 | 9 | 12-Factor Compliance | `repo-health--phase-9-12factor` |
-| 10 | Remediation Loop | `repo-health--phase-10-remediate` |
+| 10 | Remediation Loop (mode=fix only) | `repo-health--phase-10-remediate` |
+
+#### Modes: report (default) vs fix
+
+`repo-health` takes one parameter, `mode`, resolved from your request — no CLI flags or
+config needed. The skill states the resolved mode at the start of each run.
+
+| mode | Behavior | How to trigger |
+| ------ | ----------- | ---------------- |
+| `report` **(default)** | Full audit + graded findings report. Read-only: no files modified. | "review this repo", "audit this project", "health check", "quality gate" |
+| `fix` | Everything above, plus the Phase 10 remediation loop: fixes findings, re-audits, iterates until only NITPICKs remain. No confirmation gates; changes left uncommitted for review. | "fix findings", "remediate issues", "auto-fix everything", or an explicit `mode=fix` |
+
+```text
+# Report mode (default) — findings only, nothing modified
+"Run a health check on this project."
+
+# Fix mode — audit + silent remediation loop
+"Audit this repo and fix everything you find."
+"Run repo-health with mode=fix."
+
+# Two-step: report first, then opt into fixes
+"Health check this repo."       # → graded findings report
+"Now fix the findings."         # → resumes from the synthesized report, no re-audit
+```
+
+Ambiguous requests default to `report` — remediation never runs unless you asked for it.
+
+**Other agents (GitHub Copilot, Claude Code, …):** the OpenCode entry points
+(`@repo-health`, `skill(...)`, `/commands`) don't exist there. These agents read the
+repo's `AGENTS.md`, which points them at `skills/repo-health/SKILL.md` as the workflow;
+mode still resolves from your words (e.g. "run the repo-health audit in fix mode").
+
+**VS Code (GitHub Copilot Chat):** workspace prompt files register slash commands —
+`/repo-health` (report mode default; `/repo-health fix` for remediation) and
+`/repo-health-fix` (always remediation, no argument needed). If `/repo-health fix`
+runs in report mode, check the prompt's source via **Chat: Configure Prompt Files**
+(hover to see it) — a user-level copy of the same name shadows the workspace one.
 
 Also ships Bash helper scripts under `scripts/` (detector, scanner, auditor,
 classifier, and synthesizer variants) used by the subskills, plus:
