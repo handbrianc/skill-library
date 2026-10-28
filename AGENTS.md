@@ -33,5 +33,7 @@ Claude Code, Gemini CLI, etc. — have no skill loader. **Read the file instead:
    - Ambiguous request → `report`. Never auto-fix unless the user asked for fixes.
 3. **VS Code Copilot Chat shortcut:** prompt files `.github/prompts/repo-health.prompt.md`
    (`/repo-health [fix]`) and `.github/prompts/repo-health-fix.prompt.md`
-   (`/repo-health-fix`) register this audit as slash commands. The installer also places
-   these prompt files in the VS Code user prompts folder so the commands work globally.
+   (`/repo-health-fix`) register this audit as slash commands. The installer does not
+   copy prompt files into VS Code's user prompts folder anymore; it generates a global
+   `repo-health-fix` wrapper skill (manual invoke, `disable-model-invocation: true`)
+   under `~/.copilot/skills/`, and the prompt files remain for this workspace only.
