@@ -1,6 +1,6 @@
 ---
 name: repo-health
-description: "Repository health audit with two modes. mode=report (DEFAULT): runs the audit pipeline (Phases 0-9), synthesizes, classifies, grades, and presents a findings report — no code changes. mode=fix (opt-in): after the audit, Phase 10 additionally runs a silent remediation loop that fixes findings, re-audits, and iterates until only NITPICKs remain — no user prompts, no confirmation gates. Resolve mode from the user's request: 'review this repo', 'audit this project', 'health check', 'quality gate' → mode=report; 'fix findings', 'remediate issues', 'auto-fix everything', or an explicit mode=fix → mode=fix. NOT for PR-scoped or incremental reviews."
+description: "Repository health audit with two modes. mode=report (DEFAULT): runs the audit pipeline (Phases 0-9), synthesizes, classifies, grades, and presents a findings report — no code changes. mode=fix (opt-in): after the audit, Phase 10 additionally runs a silent remediation loop that fixes findings, re-audits, and iterates until only NITPICKs remain — no user prompts, no confirmation gates. Resolve mode from the request: 'review this repo', 'audit this project', 'health check', 'quality gate' → mode=report; 'fix findings', 'remediate issues', 'auto-fix everything', or an explicit mode=fix → mode=fix. NOT for PR-scoped or incremental reviews."
 ---
 
 # Repository Health Audit
