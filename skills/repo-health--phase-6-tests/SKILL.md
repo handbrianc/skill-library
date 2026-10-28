@@ -35,7 +35,7 @@ TIMED_OUT: NN
 
 ## Step 6.3 — Test Failure Classification (MANDATORY)
 
-**Any FAILED or ERROR test → CRITICAL severity finding.** Each failing test is a separate CRITICAL finding. They are NOT eligible for downgrade or NITPICK classification. Test failures MUST be addressed in the remediation loop (Phase 10).
+**Any FAILED or ERROR test → CRITICAL severity finding.** Each failing test is a separate CRITICAL finding. They are NOT eligible for downgrade or NITPICK classification. Test failures MUST be addressed in the remediation loop (Phase 10 — runs only in mode=fix).
 
 | Condition | Severity | Action |
 | ----------- | ---------- | -------- |

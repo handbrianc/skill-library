@@ -16,7 +16,8 @@ Aggregate CVE findings: **Severity, Package, Current Version, Fixed Version, CWE
 
 **Any package with a known CVE → CRITICAL regardless of the CVE's reported severity.**
 A dependency with any CVE is an exploitable attack surface. Do NOT downgrade to HIGH
-or lower. This finding MUST be addressed in the remediation loop (Phase 10).
+or lower. This finding MUST be addressed in the remediation loop (Phase 10 — runs only
+in mode=fix).
 
 ## Step 7.2 — Static Code Security Scan
 

@@ -1,6 +1,6 @@
 ---
 name: repo-health--phase-10-remediate
-description: "INTERNAL SUBSKILL of repo-health. Self-contained remediation subagent. Receives synthesized findings, runs fix scripts, re-audits, and loops until only NITPICKs remain. Produces a fixed codebase, NOT an advisory plan. Not for direct invocation."
+description: "INTERNAL SUBSKILL of repo-health. Self-contained remediation subagent, loaded ONLY when the orchestrator resolved mode=fix. Receives synthesized findings, runs fix scripts, re-audits, and loops until only NITPICKs remain. Produces a fixed codebase, NOT an advisory plan. Not for direct invocation."
 subskill-of: repo-health
 ---
 

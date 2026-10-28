@@ -51,7 +51,7 @@ metrics miss. Requires PHASE 2 (code quality) and PHASE 6 (test suite) results.
 | Any language runtime outdated by major version | **CRITICAL** |
 | Any dependency outdated by major version | **CRITICAL** |
 
-**Rule:** Outdated major versions are CRITICAL because they accumulate unpatched CVEs and breaking-security gaps. Cross-reference with SBOM (Phase 8) for CVE-impacted outdated dependencies. Major-outdated findings MUST be addressed in the remediation loop (Phase 10).
+**Rule:** Outdated major versions are CRITICAL because they accumulate unpatched CVEs and breaking-security gaps. Cross-reference with SBOM (Phase 8) for CVE-impacted outdated dependencies. Major-outdated findings MUST be addressed in the remediation loop (Phase 10 — runs only in mode=fix).
 
 ### Test Debt
 
