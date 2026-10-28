@@ -76,9 +76,15 @@ mode still resolves from your words (e.g. "run the repo-health audit in fix mode
 
 **VS Code (GitHub Copilot Chat):** workspace prompt files register slash commands —
 `/repo-health` (report mode default; `/repo-health fix` for remediation) and
-`/repo-health-fix` (always remediation, no argument needed). If `/repo-health fix`
-runs in report mode, check the prompt's source via **Chat: Configure Prompt Files**
-(hover to see it) — a user-level copy of the same name shadows the workspace one.
+`/repo-health-fix` (always remediation, no argument needed). `install-skills.sh` also
+installs both prompt files globally into the VS Code user prompts folder
+(`~/.config/Code/User/prompts/` on Linux; the script handles macOS/Windows and
+Insiders/VSCodium) so the commands work in any project — the prompts read the repo's
+skill copy when present, else `~/.copilot/skills/repo-health/`. Prompt files run in
+Chat view sessions only; CLI and other harnesses use the installed skill instead.
+If `/repo-health fix` runs in report mode, check the prompt's source via
+**Chat: Configure Prompt Files** (hover to see it) — a user-level copy of the same
+name shadows the workspace one.
 
 Also ships Bash helper scripts under `scripts/` (detector, scanner, auditor,
 classifier, and synthesizer variants) used by the subskills, plus:

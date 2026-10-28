@@ -13,10 +13,11 @@ rule that matches:
 State the resolved mode in one line before doing anything else. If you cannot find any
 argument text in the user's message, use mode=report.
 
-STEP 2 — RUN THE AUDIT. Follow the repo-health workflow defined in
-[skills/repo-health/SKILL.md](../../skills/repo-health/SKILL.md) on this repository.
-Read that file first, including its phase subskills (`skills/repo-health--phase-*/SKILL.md`)
-and the scripts under `skills/repo-health/scripts/` (run them from the audited repo root).
+STEP 2 — RUN THE AUDIT. Follow the repo-health workflow defined in `skills/repo-health/SKILL.md`.
+Read this repository's copy if it exists; otherwise read the globally installed copy at
+`~/.copilot/skills/repo-health/SKILL.md`. Then read the phase subskills
+(`skills/repo-health--phase-*/SKILL.md`) and the scripts under `skills/repo-health/scripts/`
+from the same location as the SKILL.md you used (run scripts from the audited repo root).
 
 Mode behavior:
 
