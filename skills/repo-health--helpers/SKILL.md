@@ -138,7 +138,8 @@ manually — always use the script.
 
 ## Finding Classification Rubric
 
-Used by the Remediation Loop (Phase 10) to decide which findings must be auto-fixed vs skipped.
+Used by Phase 10 (mode=fix only) to decide which findings must be auto-fixed vs skipped,
+and in mode=report to split the final report into actionable findings vs NITPICKs.
 
 ### Severity → Classification Mapping
 
