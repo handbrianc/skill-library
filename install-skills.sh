@@ -23,6 +23,12 @@
 #                                    # Install ONLY to the given path
 #                                    # (overrides both default destinations)
 #
+# Installed copies are self-contained: after a copy install, script references
+# inside each installed SKILL.md are rewritten to absolute paths under the
+# install destination and every bundled script is made executable, so the
+# skills work from any working directory (VS Code, Copilot CLI/app and other
+# harnesses run the agent in your project, not in this repo). Symlink mode is
+# dev mode and keeps repo-relative paths.
 
 set -euo pipefail
 
@@ -33,6 +39,15 @@ SKILLS_SOURCE="$SCRIPT_DIR/skills"
 DEFAULT_DEST="${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills"
 COPILOT_DEST="$HOME/.copilot/skills"
 PROMPTS_SOURCE="$SCRIPT_DIR/.github/prompts"
+
+# Intermediate token used when rewriting script references in installed
+# SKILL.md files. Relative references are consumed into this token first and
+# expanded to the real destination only in a final pass — that keeps the
+# rewrite idempotent (a second run over already-rewritten files matches
+# nothing) and immune to destinations whose path ends in "/skills".
+SKILL_ROOT_TOKEN="__INSTALLED_SKILL_ROOT__"
+SED_PROGRAM_FILE=""
+declare -A SCRIPT_OWNER=()   # script basename -> owning skill, or __AMBIGUOUS__
 
 # Files an older installer version copied into the VS Code user prompts folder
 # (and, in some setups, ~/.copilot/prompts/). Removed on install — these exact
@@ -46,7 +61,7 @@ LEGACY_PROMPT_FILES=(
 # ── Help ────────────────────────────────────────────────────────────────────
 
 usage() {
-  sed -n '3,25p' "$0" | sed 's/^# \?//'
+  sed -n '3,31p' "$0" | sed 's/^# \?//'
 }
 
 # ── Parse args ──────────────────────────────────────────────────────────────
@@ -228,6 +243,130 @@ install_into() {
   echo
 }
 
+# ── Make installed scripts runnable from any working directory ───────────────
+#
+# Installed SKILL.md files are read by agents whose working directory is the
+# user's project (VS Code, Copilot CLI/app, any harness) — never this repo.
+# Repo-relative script references like ./skills/repo-health/scripts/scan-
+# environment.sh, or the bare ./install-missing-tools.sh entries of the
+# phase-0 auto-install table, would fail there with "No such file or
+# directory". After a copy install this step:
+#   1. rewrites every script reference in the installed SKILL.md to an
+#      absolute path under the install destination, and
+#   2. makes every bundled script executable,
+# so all supporting scripts are runnable from any directory at any time.
+# Symlink mode is dev mode (the files still live in this repo) and is left
+# as-is.
+#
+# Idempotency: the patterns only match repo-relative references —
+#   ./skills/<skill>/…,  skills/<skill>/…  (never directly preceded by '/'),
+#   and ./<script>.sh when that script name ships with exactly one installed
+# skill. They cannot re-match the absolute paths a previous run produced,
+# because in those a '/' always sits directly before "skills" (the
+# destination ends in /skills) or before the script name (/scripts/…). A
+# placeholder token absorbs the relative references first and is expanded to
+# the destination only after every relative pattern has been consumed.
+
+build_script_owner_map() {
+  # SCRIPT_OWNER[<script-basename>] = owning skill directory name, or the
+  # __AMBIGUOUS__ sentinel when two installed skills ship the same script name.
+  # Bare ./<script>.sh references are then left untouched; explicit
+  # skills/<skill>/scripts/ references are rewritten regardless.
+  local name script
+  SCRIPT_OWNER=()
+  for name in "${SKILLS[@]}"; do
+    [[ -d "$SKILLS_SOURCE/$name/scripts" ]] || continue
+    while IFS= read -r script; do
+      script="$(basename "$script")"
+      if [[ -n "${SCRIPT_OWNER[$script]:-}" && "${SCRIPT_OWNER[$script]}" != "$name" ]]; then
+        SCRIPT_OWNER[$script]="__AMBIGUOUS__"
+      else
+        SCRIPT_OWNER[$script]="$name"
+      fi
+    done < <(find "$SKILLS_SOURCE/$name/scripts" -type f -name '*.sh')
+  done
+}
+
+build_sed_program() {
+  # Write the sed program that rewrites script references for one destination.
+  # $1 = destination root whose installed skill copies references must point at.
+  local dest="$1" esc_dest name script owner
+  esc_dest="${dest//&/\\&}"
+  SED_PROGRAM_FILE="$(mktemp "${TMPDIR:-/tmp}/install-skills-sed.XXXXXX")"
+  {
+    # Repo-relative references, three spellings: "./skills/<skill>/…",
+    # "skills/<skill>/…" at line start, and "skills/<skill>/…" after a
+    # non-'/' character (inside `…`, after "source ", "see ", …). The non-'/'
+    # guard keeps already-absolute "<dest>/skills/<skill>/…" paths untouched.
+    for name in "${SKILLS[@]}"; do
+      printf 's#\\./skills/%s/scripts/#%s/%s/scripts/#g\n' \
+        "$name" "$SKILL_ROOT_TOKEN" "$name"
+      printf 's#^skills/%s/scripts/#%s/%s/scripts/#\n' \
+        "$name" "$SKILL_ROOT_TOKEN" "$name"
+      printf 's#\\([^/]\\)skills/%s/scripts/#\\1%s/%s/scripts/#g\n' \
+        "$name" "$SKILL_ROOT_TOKEN" "$name"
+    done
+    # Bare ./<script>.sh references (e.g. the phase-0 auto-install table),
+    # only when the script name is unique across the installed skills.
+    for script in "${!SCRIPT_OWNER[@]}"; do
+      owner="${SCRIPT_OWNER[$script]}"
+      [[ "$owner" == "__AMBIGUOUS__" ]] && continue
+      printf 's#\\./%s#%s/%s/scripts/%s#g\n' \
+        "$script" "$SKILL_ROOT_TOKEN" "$owner" "$script"
+    done
+    # Expand the token to the real destination — only after every relative
+    # pattern above has been consumed.
+    printf 's#%s#%s#g\n' "$SKILL_ROOT_TOKEN" "$esc_dest"
+  } > "$SED_PROGRAM_FILE"
+}
+
+rewrite_md_script_paths() {
+  # Rewrite script references in one installed markdown file, in place.
+  # Returns 0 only when the file changed (so callers can count rewrites).
+  local file="$1" tmp
+  tmp="$file.tmp.$$"
+  if sed -f "$SED_PROGRAM_FILE" "$file" > "$tmp" && ! cmp -s "$tmp" "$file"; then
+    mv -f "$tmp" "$file"
+    return 0
+  fi
+  rm -f "$tmp"
+  return 1
+}
+
+drop_sed_program() {
+  if [[ -n "$SED_PROGRAM_FILE" ]]; then
+    rm -f "$SED_PROGRAM_FILE"
+    SED_PROGRAM_FILE=""
+  fi
+}
+
+make_scripts_runnable() {
+  # Post-install step per destination. See the section comment above.
+  local dest="$1" name md_count=0 scripts_dir
+  if $DRY_RUN; then
+    echo "  [dry-run] would rewrite script paths in installed SKILL.md files to absolute paths under $dest and chmod +x every script"
+    return 0
+  fi
+  if [[ "$MODE" == "symlink" ]]; then
+    echo "  [note]   symlink mode — SKILL.md keeps repo-relative script paths (dev mode; run audits from this repo)"
+    return 0
+  fi
+  build_sed_program "$dest"
+  for name in "${SKILLS[@]}"; do
+    [[ -f "$dest/$name/SKILL.md" ]] || continue
+    if rewrite_md_script_paths "$dest/$name/SKILL.md"; then
+      ((md_count++)) || true
+    fi
+  done
+  drop_sed_program
+  # Executable bit on every bundled script (a +x on the sourced lib/*.sh files
+  # is harmless and keeps "every script is runnable" uniformly true).
+  while IFS= read -r -d '' scripts_dir; do
+    find "$scripts_dir" -type f -name '*.sh' -exec chmod +x {} +
+  done < <(find "$dest" -type d -name scripts -print0)
+  echo "  [scripts] $md_count SKILL.md file(s) now use absolute script paths; all scripts executable"
+}
+
 cleanup_legacy_prompt_files() {
   # Remove the .prompt.md files older installer versions placed into the VS Code
   # user prompts folders (<UD_ROOT>/<variant>/User/prompts) and, if present,
@@ -286,6 +425,13 @@ install_wrapper_skills() {
   if [[ ${#PROMPT_FILES[@]} -eq 0 ]]; then
     echo "Error: no *.prompt.md files found in $PROMPTS_SOURCE" >&2
     return 0
+  fi
+
+  # Wrappers are used in foreign workspaces where this repo is absent, so the
+  # script references in their bodies must point at the installed repo-health
+  # copy under ~/.copilot/skills/.
+  if ! $DRY_RUN; then
+    build_sed_program "$COPILOT_DEST"
   fi
 
   for src in "${PROMPT_FILES[@]}"; do
@@ -378,6 +524,9 @@ install_wrapper_skills() {
         { print }
       ' "$src"
     } > "$dst/SKILL.md"
+    # Same treatment as installed skills: the wrapper's script references must
+    # resolve in any workspace, not just in this repo.
+    rewrite_md_script_paths "$dst/SKILL.md" || true
     echo "  [copy]   $name  ->  $dst"
     ((installed++)) || true
     WRAPPERS_INSTALLED+=("$name")
@@ -399,10 +548,14 @@ install_wrapper_skills() {
   echo "  Failed:         $failed"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo
+  drop_sed_program
 }
+
+build_script_owner_map
 
 for dest in "${DESTS[@]}"; do
   install_into "$dest"
+  make_scripts_runnable "$dest"
 done
 
 # ── Legacy prompt cleanup + Copilot wrapper skills ───────────────────────────

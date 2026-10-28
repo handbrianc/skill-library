@@ -55,6 +55,24 @@ Entries use [Keep a Changelog](https://keepachangelog.com/) conventions: Added, 
 
 ### Fixed
 
+- `install-skills.sh`: installed skills could not find their supporting scripts in
+  VS Code / Copilot (agent CWD is the user's project, so `./skills/<skill>/scripts/…`
+  and bare `./install-missing-tools.sh` references failed with "No such file or
+  directory"). At install time every script reference in the installed SKILL.md
+  files is now rewritten to an absolute path under the install destination and all
+  bundled scripts are made executable; generated Copilot wrapper skills get the
+  same treatment. Idempotent; symlink (dev) installs keep repo-relative paths.
+  New integration test `tests/test-install-scripts.sh` asserts scripts run from a
+  foreign working directory
+- `skills/repo-health/scripts/install-missing-tools.sh`: the gnu-grep/coreutils/
+  gnu-date requests were reported as `Failed: 3` on Linux (and "missing" in
+  `--check-only`/`--list`) although `grep -P`, `realpath -m` and GNU `date +%s.%N`
+  were all available — the checks demanded the Homebrew-style binary names
+  (`ggrep`/`grealpath`/`gdate`). A shared `verify_target` capability check now
+  satisfies those targets via the underlying tools on Linux (and detects BSD
+  `date` printing a literal `N` for `%N`); the exact Phase 0 command
+  `install-missing-tools.sh gnu-grep coreutils gnu-date` reports
+  `Skipped: 3, Failed: 0`
 - Git branch `calm-beaver` now tracks `origin/main` (was previously tracking
   `origin/calm-beaver` which no longer exists on the remote) (pre-existing)
 - `skills/repo-health/scripts/lib/installers.sh`: Linux `install_gnu_grep` fallback

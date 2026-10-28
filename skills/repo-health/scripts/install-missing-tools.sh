@@ -122,6 +122,28 @@ tool_missing() {
   fi
 }
 
+# ---- Target Satisfaction Check ------------------------------------------------
+# A target counts as installed when its binary is on PATH. The Homebrew-style
+# gnu-* family is instead satisfied by the underlying capability: Linux ships
+# GNU grep/coreutils/date as grep/realpath/date (pcregrep as PCRE fallback), so
+# the g-prefixed binary names never appear there. Without this fallback,
+# `install-missing-tools.sh gnu-grep coreutils gnu-date` reports "Failed: 3" on
+# Linux even though `grep -P`, `realpath -m` and GNU `date +%s.%N` already work
+# (the Phase 0 capabilities these targets exist to provide).
+
+verify_target() {
+  # $1 = tool key, $2 = binary name that would satisfy it
+  local target="$1" bin="$2"
+  command -v "$bin" &>/dev/null && return 0
+  case "$target" in
+    gnu-grep)  printf 'test' | grep -P 't' &>/dev/null || command -v pcregrep &>/dev/null ;;
+    coreutils) realpath -m . &>/dev/null ;;
+    # %N must yield digits — BSD/BusyBox date print a literal 'N' with exit 0
+    gnu-date)  [[ "$(date +%s.%N 2>/dev/null)" =~ ^[0-9]+\.[0-9]+$ ]] ;;
+    *)         return 1 ;;
+  esac
+}
+
 # ---- Individual Tool Installers (sourced) ------------------------------------
 
 source "$SCRIPT_DIR/lib/installers.sh"
@@ -307,7 +329,9 @@ if $LIST_ONLY; then
   printf "  %-22s %-12s %s\n" "Tool" "Category" "Status"
   printf "  %-22s %-12s %s\n" "----" "--------" "------"
   for t in "${ALL_TOOLS[@]}"; do
-    if command -v "${t}" &>/dev/null || [[ "$t" == "typescript" && "$(command -v tsc)" ]]; then
+    bin="$t"
+    [[ "$t" == "typescript" ]] && bin="tsc"
+    if verify_target "$t" "$bin"; then
       printf "  ${GREEN}%-22s${NC} %-12s ${GREEN}installed${NC}\n" "$t" "${TOOL_CATEGORY[$t]:-}"
     else
       printf "  ${YELLOW}%-22s${NC} %-12s ${YELLOW}missing${NC}\n" "$t" "${TOOL_CATEGORY[$t]:-}"
@@ -321,10 +345,10 @@ if $CHECK_ONLY; then
   sec "Missing Tools Check"
   MISSING_COUNT=0
   for t in "${TARGETS[@]}"; do
-    # typescript is checked via tsc binary
-    local_bin="${t}"
-    [[ "$t" == "typescript" ]] && local_bin="tsc"
-    if command -v "$local_bin" &>/dev/null; then
+    # typescript is checked via tsc binary; gnu-* via their Linux capability
+    bin="$t"
+    [[ "$t" == "typescript" ]] && bin="tsc"
+    if verify_target "$t" "$bin"; then
       ok "$t (${TOOL_DESC[$t]:-})"
     else
       warn "$t — ${TOOL_DESC[$t]:-}"
@@ -354,7 +378,7 @@ for target in "${TARGETS[@]}"; do
   [[ "$target" == "coreutils" ]] && bin_name="grealpath"
   [[ "$target" == "gnu-date" ]] && bin_name="gdate"
 
-  if command -v "$bin_name" &>/dev/null; then
+  if verify_target "$target" "$bin_name"; then
     ok "$target already installed"
     ((SKIPPED++)) || true
     continue
@@ -383,7 +407,7 @@ for target in "${TARGETS[@]}"; do
   rc=$?
   set -euo pipefail
 
-  if [[ $rc -eq 0 ]] && command -v "$bin_name" &>/dev/null; then
+  if [[ $rc -eq 0 ]] && verify_target "$target" "$bin_name"; then
     ok "$target installed successfully"
     ((INSTALLED++)) || true
   else
