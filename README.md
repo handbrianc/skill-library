@@ -114,6 +114,15 @@ for you to copy/symlink into one of these):
 
 User-installed skills override project-local ones of the same name.
 
+**Windows:** use `install-skills.ps1` — the PowerShell port of `install-skills.sh`
+with the same flags (`--symlink`, `--force`, `--dry-run`, `--list`, `--skip`,
+`--no-copilot`, `--dest <path>`) and behavior. Run it with
+`powershell -ExecutionPolicy Bypass -File .\install-skills.ps1`. `--symlink`
+needs Developer Mode or elevation; the installer falls back to a directory
+junction automatically. Same destinations, same wrapper generation, same
+self-contained script-path rewrite (test: `pwsh -NoProfile -File
+tests/test-install-scripts.ps1`).
+
 ### Scripts work from any working directory
 
 SKILL.md files reference their supporting scripts with repo-relative paths
@@ -134,7 +143,10 @@ destination (`~/.config/opencode/skills/`, `~/.copilot/skills/`, or a custom
 
 The rewrite is idempotent (re-runs change nothing) and symlink installs are
 left untouched — dev mode keeps repo-relative paths. `tests/test-install-scripts.sh`
-asserts all of the above.
+asserts all of the above, mirrored for the Windows installer by
+`tests/test-install-scripts.ps1`. On Windows the executable-bit step is not
+applicable — the `.sh` scripts are run by bash (Git Bash/WSL), which needs no
+file attributes.
 
 ## Validation & Testing
 

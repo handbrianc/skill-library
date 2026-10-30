@@ -6,6 +6,8 @@
 # Runs all test suites:
 #   1. bats tests for bash scripts (skills/repo-health/scripts/)
 #   2. Python validation script tests (scripts/ traversing all skills)
+#   3. Installer integration tests (install-skills.sh, and install-skills.ps1
+#      when pwsh is available)
 #
 # Usage:
 #   ./tests/run-tests.sh              # Run all tests
@@ -15,6 +17,7 @@
 # Prerequisites:
 #   - bats (npm install -g bats)
 #   - python3 with pyyaml
+#   - pwsh (optional — runs the Windows installer test)
 
 set -euo pipefail
 
@@ -102,6 +105,30 @@ if [[ -f "$INSTALLER_TEST" ]]; then
     echo "  ✖ Failed"
     FAILURES=$((FAILURES+1))
   fi
+  echo ""
+fi
+
+# ── 4. Windows Installer Test (PowerShell port) ─────────────────────────────
+
+if command -v pwsh &>/dev/null; then
+  echo "─── Step 4: Windows installer (install-skills.ps1) test ───"
+  echo ""
+  PS_TEST="$SCRIPT_DIR/test-install-scripts.ps1"
+  if [[ -f "$PS_TEST" ]]; then
+    echo "  Running: $(basename "$PS_TEST")"
+    if pwsh -NoProfile -File "$PS_TEST"; then
+      echo "  ✓ Passed"
+    else
+      echo "  ✖ Failed"
+      FAILURES=$((FAILURES+1))
+    fi
+    echo ""
+  fi
+else
+  echo "─── Step 4: Windows installer (install-skills.ps1) test ───"
+  echo ""
+  echo "  ⚠ pwsh not installed. Skipping Windows installer test."
+  echo "  Install: https://learn.microsoft.com/powershell/scripting/install/installing-powershell"
   echo ""
 fi
 
