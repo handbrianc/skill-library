@@ -9,11 +9,12 @@ User-installed skills override project-local copies of the same name. When addin
 skill to this repo, also install it locally to
 `~/.config/opencode/skills/<skill-name>/` to test before contributing.
 
-Installed copies are self-contained: `install-skills.sh` rewrites the SKILL.md
-script references in each installed copy to absolute paths under the install
-destination and makes every bundled script executable, so the scripts run from
-any working directory (VS Code Copilot, Copilot CLI/app — not just this repo).
-Project-local skills keep repo-relative paths; symlink installs are untouched.
+Installed copies are self-contained: `install-skills.sh` (or `install-skills.ps1`
+on Windows) rewrites the SKILL.md script references in each installed copy to
+absolute paths under the install destination and makes every bundled script
+executable, so the scripts run from any working directory (VS Code Copilot,
+Copilot CLI/app — not just this repo). Project-local skills keep repo-relative
+paths; symlink installs are untouched.
 
 ## Background Task Rules
 

@@ -8,6 +8,18 @@ Entries use [Keep a Changelog](https://keepachangelog.com/) conventions: Added, 
 
 ### Added
 
+- `install-skills.ps1`: Windows installer — PowerShell port of `install-skills.sh`
+  with identical flags (`--symlink/--force/--dry-run/--list/--skip/--no-copilot/--dest`)
+  and behavior: same destinations (`~/.config/opencode/skills`, `~/.copilot/skills`),
+  same SKILL.md script-reference rewrite, same Copilot wrapper generation and
+  legacy prompt cleanup. Windows specifics: junction fallback for symlinks
+  (no Developer Mode/elevation needed), link-aware removal (junctions are
+  unlinked, never recursed), `Remove-Item`/`Get-ChildItem` hints in place of
+  `rm`/`ls`; runs on both Windows PowerShell 5.1+ and PowerShell 7+
+- `tests/test-install-scripts.ps1`: mirror of the bash installer integration
+  test for `install-skills.ps1`; `tests/run-tests.sh` runs it automatically when
+  pwsh is available (skipped otherwise)
+
 - `skills/repo-health/scripts/classify-finding.sh`: Automated NITPICK rubric
   classification — applies severity-based defaults, NITPICK test patterns (cosmetic,
   negligible, quick-manual), and non-negotiable CRITICAL override in a single jq

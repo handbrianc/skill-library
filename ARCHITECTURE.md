@@ -136,7 +136,8 @@ All scripts source: lib/common.sh
 - Feature branches named `<adjective>-<animal>` (e.g., `calm-beaver`, `groovy-falcon`)
 - 226 commits, 9 branches
 - Pre-commit hook at `githooks/pre-commit`
-- Skill installation script at `install-skills.sh`
+- Skill installation scripts at `install-skills.sh` (macOS/Linux) and
+  `install-skills.ps1` (Windows/PowerShell)
 
 ---
 
